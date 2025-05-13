@@ -1,5 +1,5 @@
 ---
-icon: hand-wave
+icon: money-bill-1-wave
 cover: https://gitbookio.github.io/onboarding-template-images/header.png
 coverY: 0
 layout:

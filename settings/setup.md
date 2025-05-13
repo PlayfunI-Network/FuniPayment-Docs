@@ -1,7 +1,3 @@
----
-icon: robot
----
-
 # 開始設定
 
 恭喜你！如果你再申請成功後收到相關通知\
@@ -12,7 +8,7 @@ icon: robot
 
 對，你必須先邀請機器人才可以開始設定\
 快點擊下方邀請機器人吧🤖🤖\
-連結：https://go.funipay.net/invite\
+連結：[https://go.funipay.net/invite](https://go.funipay.net/invite)\
 \
 \*註：邀請機器人時請 「**不要取消勾選」** 任何相關權限
 
@@ -25,7 +21,8 @@ icon: robot
 \
 \> 設定一個新的伺服器\
 如果你在輸入該指令後跳出錯誤訊息，代表您尚未開通使用權限\
-你可以到 [Broken link](broken-reference "mention")查看相關申請規則\
+你可以到 [Broken link](broken-reference "mention") 查看相關申請規則\
+若指令輸入成功，你會看到\
 \
 \> 修改伺服器設定\
 如果你在輸入該指令後跳出錯誤訊息，代表您不擁有任何伺服器設定\
