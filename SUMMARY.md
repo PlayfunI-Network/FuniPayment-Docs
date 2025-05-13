@@ -9,8 +9,22 @@
 ## 設定伺服器 <a href="#settings" id="settings"></a>
 
 * [安全性](settings/security.md)
-* [開始設定](settings/about.md)
+* [開始設定](settings/setup.md)
 
 ## 指令教學 <a href="#commands" id="commands"></a>
 
-* [Page 2](commands/page-2.md)
+* [付款指令 (Payment Commands)](commands/payment/README.md)
+  * [/payment create](commands/payment/payment-create.md)
+  * [/payment review](commands/payment/payment-review.md)
+  * [/payment history](commands/payment/payment-history.md)
+  * [/payment recheck](commands/payment/payment-recheck.md)
+  * [/fp](commands/payment/fp.md)
+* [/auto-publish](commands/auto-publish.md)
+
+***
+
+* [/dynamic-vc-rename](dynamic-vc-rename.md)
+
+## Group 1
+
+* [Page 1](group-1/page-1.md)

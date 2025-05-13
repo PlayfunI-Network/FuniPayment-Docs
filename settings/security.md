@@ -1,7 +1,3 @@
----
-icon: lock
----
-
 # 安全性
 
 各位商城老闆們最注重的不外乎就是 **「安全性」！**\
@@ -16,4 +12,4 @@ icon: lock
 4. 資料備份\
    \> 每日自動備份數據，即便出狀況仍能保存相關資料
 
-若您有更多相關疑問，歡迎在 \[Discord 伺服器]\(https://go.funipay.net/discord)內進行發問
+若您有更多相關疑問，歡迎在 [Discord 伺服器](https://go.funipay.net/discord) 內進行發問
