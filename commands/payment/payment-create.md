@@ -1,3 +1,17 @@
+---
+layout:
+  title:
+    visible: true
+  description:
+    visible: false
+  tableOfContents:
+    visible: true
+  outline:
+    visible: true
+  pagination:
+    visible: true
+---
+
 # /payment create
 
 ## 建立付款訂單 (payment create)
@@ -19,7 +33,7 @@
 
 ### 指令參數
 
-<table><thead><tr><th width="234.53338623046875">參數</th><th>說明</th></tr></thead><tbody><tr><td><code>method</code></td><td><strong>付款方式</strong>：選擇希望使用的付款方式</td></tr><tr><td><code>amount</code></td><td><strong>金額</strong>：建立的訂單金額（此金額<strong>不包含</strong>手續費）</td></tr><tr><td><code>buyer</code></td><td><strong>(選填) 我的暱稱</strong>：買家的暱稱</td></tr><tr><td><code>mail</code></td><td><strong>(選填) 我的信箱</strong>：買家的信箱</td></tr><tr><td><code>comment</code></td><td><strong>(選填) 訂單備註</strong>：其他備註</td></tr><tr><td><code>invoice_number</code></td><td><strong>(選填) 統一編號</strong>：買家公司之統一編號</td></tr><tr><td><code>invoice_title</code></td><td><strong>(選填) 發票抬頭</strong>：買家公司之發票抬頭</td></tr><tr><td><code>designated</code></td><td><strong>(選填) 指定付款者</strong>：管理員限定功能，能將此筆訂單直接指定給某位成員</td></tr></tbody></table>
+<table><thead><tr><th width="220.36669921875">參數</th><th>說明</th></tr></thead><tbody><tr><td><code>method</code></td><td><strong>付款方式</strong>：選擇希望使用的付款方式</td></tr><tr><td><code>amount</code></td><td><strong>金額</strong>：建立的訂單金額（此金額<strong>不包含</strong>手續費）</td></tr><tr><td><code>buyer</code></td><td><strong>(選填) 我的暱稱</strong>：買家的暱稱</td></tr><tr><td><code>mail</code></td><td><strong>(選填) 我的信箱</strong>：買家的信箱</td></tr><tr><td><code>comment</code></td><td><strong>(選填) 訂單備註</strong>：其他備註</td></tr><tr><td><code>invoice_number</code></td><td><strong>(選填) 統一編號</strong>：買家公司之統一編號</td></tr><tr><td><code>invoice_title</code></td><td><strong>(選填) 發票抬頭</strong>：買家公司之發票抬頭</td></tr><tr><td><code>designated</code></td><td><strong>(選填) 指定付款者</strong>：管理員限定功能，能將此筆訂單直接指定給某位成員</td></tr></tbody></table>
 
 ### 付款方式說明
 
