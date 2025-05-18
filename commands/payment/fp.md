@@ -45,14 +45,14 @@ layout:
 * 萊爾富 Life-ET 代碼（+手續費）
 * 商城點數（若伺服器啟用）
 
-<div align="left"><figure><img src="../../.gitbook/assets/image.png" alt="" width="375"><figcaption><p>選擇付款方式</p></figcaption></figure> <figure><img src="../../.gitbook/assets/image (1).png" alt="" width="375"><figcaption><p>確認付款方式</p></figcaption></figure></div>
+<div align="left"><figure><img src="../../.gitbook/assets/fp_choosepayment.png" alt="" width="375"><figcaption><p>選擇付款方式</p></figcaption></figure> <figure><img src="../../.gitbook/assets/fp_confirmpayment.png" alt="" width="375"><figcaption><p>確認付款方式</p></figcaption></figure></div>
 
 ### 根據訂單狀態自動命名/移動頻道
 
 你可以至 [伺服器設定](broken-reference) 調整訂單的自動命名及移動分類相關功能\
 訂單一共分為四種狀態：
 
-* 選擇中 - 使用 `/fp` 後且買家尚未選定付款方式
+* **選擇中** - 使用 `/fp` 後且買家尚未選定付款方式
 * **待付款** - 訂單一經建立即標示為待付款
 * **已付款** - 買家完成付款後標示為已付款
 * **已過期** - 買家未於指定時間內付款標示為已過期
