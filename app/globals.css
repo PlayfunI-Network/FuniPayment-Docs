@@ -1,0 +1,110 @@
+@import "tailwindcss";
+@import "fumadocs-ui/css/neutral.css";
+@import "fumadocs-ui/css/preset.css";
+
+/* 色彩 token 來自官網（funipay.net）：深色是預設，淺色用 next-themes 加上的 .light。 */
+:root {
+  /* 所有進場動畫共用同一條減速曲線：有把握、不彈跳。 */
+  --ease-expo: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+:root,
+.dark {
+  color-scheme: dark;
+  --ground: #0a0a0a;
+  --card: #121212;
+  --line: #232323;
+  --fg: #ececec;
+  --muted: #8c8c8c;
+  --positive: #5ccf8f;
+  --brand: #5aa9d6;
+  --brand-ink: #5aa9d6;
+  --discord: #5865f2;
+
+  --color-fd-background: var(--ground);
+  --color-fd-foreground: var(--fg);
+  --color-fd-muted: var(--card);
+  --color-fd-muted-foreground: var(--muted);
+  --color-fd-popover: var(--card);
+  --color-fd-popover-foreground: var(--fg);
+  --color-fd-card: var(--card);
+  --color-fd-card-foreground: var(--fg);
+  --color-fd-border: var(--line);
+  --color-fd-primary: var(--brand-ink);
+  --color-fd-primary-foreground: #0a0a0a;
+  --color-fd-secondary: var(--card);
+  --color-fd-secondary-foreground: var(--fg);
+  --color-fd-accent: color-mix(in srgb, var(--brand) 16%, transparent);
+  --color-fd-accent-foreground: var(--fg);
+  --color-fd-ring: var(--brand);
+}
+
+.light {
+  color-scheme: light;
+  --ground: #ffffff;
+  --card: #ffffff;
+  --line: #e7e7e7;
+  --fg: #171717;
+  --muted: #6b6b6b;
+  --positive: #1b8755;
+  --brand: #5aa9d6;
+  /* 文字用的品牌色：在白底有 4.8:1（#5aa9d6 只有約 2.6:1）；填色與光暈仍用 --brand。 */
+  --brand-ink: #2b78a6;
+  --discord: #5865f2;
+
+  --color-fd-primary-foreground: #ffffff;
+  --color-fd-muted: #f5f5f5;
+  --color-fd-secondary: #f5f5f5;
+}
+
+.dark #nd-sidebar {
+  --color-fd-muted: var(--card);
+  --color-fd-secondary: var(--card);
+  --color-fd-muted-foreground: var(--muted);
+}
+
+@theme inline {
+  --color-ground: var(--ground);
+  --color-card: var(--card);
+  --color-line: var(--line);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-brand: var(--brand);
+  --color-brand-ink: var(--brand-ink);
+  --color-positive: var(--positive);
+  --color-discord: var(--discord);
+  --ease-out-expo: var(--ease-expo);
+  --font-sans: var(--font-geist-sans), "PingFang TC", "Noto Sans TC", "Microsoft JhengHei",
+    system-ui, sans-serif;
+}
+
+body {
+  font-family: var(--font-sans);
+  line-height: 1.7;
+  text-wrap: pretty;
+}
+
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--brand) 38%, transparent);
+  color: var(--fg);
+}
+
+* {
+  scrollbar-color: var(--line) var(--ground);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
