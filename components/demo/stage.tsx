@@ -76,7 +76,7 @@ export function DemoStage({
         >
           <Camera shot={frame.shot} viewport={viewport}>
             {children(steps[index], index)}
-            <Cursor state={frame.cursor} />
+            <Cursor state={frame.cursor} pressId={index} />
           </Camera>
         </div>
         {caption &&
