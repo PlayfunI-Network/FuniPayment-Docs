@@ -224,3 +224,234 @@ Discord 畫面（`components/discord`，永遠深色）：
 - [ ] demo 每一格都和 ui.json 的對應 key 對照過，有疑問的地方列在回報裡。
 - [ ] humanizer 跑過，跑完又對了一次來源。
 - [ ] `npm test`、`npm run build && npm run check:export` 都通過，站內連結沒有斷。
+
+## 附錄：可用素材
+
+以下是 `npm run list:materials` 在 57efdd6 的輸出。之後重新產生素材，以指令的輸出為準。
+
+### Bot 畫面（`SnapshotMessage id=…`）
+
+每個 key 後面是它的情境（`SNAPSHOT_SCENARIOS`）和 `via`（訊息出現在哪裡，見 `lib/bot-ui-types.ts` 的 `MessageEntry.via`）。`key@part` 是同一個流程裡另一則訊息（私訊、日誌）。
+
+
+**/fp**
+
+- `flow/fp_command/ok`（fpStoreBarcode，response.send_message）
+- `flow/fp_reselect`（fpStoreBarcode，response.edit_message）
+- `builder/fp/famiport/0/designated=False`（fpStoreBarcode，builder）
+- `flow/fp_method_confirm`（fpStoreBarcode，response.edit_message）
+- `flow/fp_command/zero_amount`（fpStoreBarcode，response.send_message）
+- `flow/fp_command/suspended`（fpStoreBarcode，response.send_message）
+- `flow/fp_check_user/stranger`（fpStoreBarcode，response.send_message）
+- `builder/fp/balance/500/designated=False`（payWithBalance，builder）
+- `builder/fp/balance/50/designated=False`（balanceShort，builder）
+- `flow/fp_balance_confirm/500`（payWithBalance，response.edit_message）
+- `flow/fp_balance_confirm/500@Client.send_dm_to_user`（payWithBalance，Client.send_dm_to_user）
+- `flow/fp_balance_confirm/0`（payWithBalance，response.edit_message）
+
+**Buyer information**
+
+- `builder/consumer_info/filled=False/cancel_first=False`（fpStoreBarcode，builder）
+- `builder/consumer_info/filled=True/cancel_first=False`（fpStoreBarcode，builder）
+- `builder/consumer_info/filled=True/cancel_first=True`（payBankTransfer，builder）
+- `flow/consumer_info_permission/stranger`（fpStoreBarcode，response.send_message）
+
+**/payment create**
+
+- `flow/payment_create_command/ok`（payBankTransfer，followup.send）
+- `flow/payment_create_command/zero_amount`（payBankTransfer，response.send_message）
+- `flow/payment_create_command/designated_not_admin`（payBankTransfer，response.send_message）
+- `flow/payment_create_command/role_not_allowed`（payBankTransfer，response.send_message）
+- `flow/payment_create_command/suspended`（payBankTransfer，response.send_message）
+- `flow/payment_create_command/method_disabled`（payFamiport，response.send_message）
+- `builder/payment_create/bank_transfer/invoice=False`（payBankTransfer，builder）
+- `builder/payment_create/bank_transfer/invoice=True`（payBankTransfer，builder）
+- `builder/payment_create/store_barcode/invoice=False`（fpStoreBarcode，builder）
+- `builder/payment_create/store_barcode/invoice=True`（fpStoreBarcode，builder）
+- `builder/payment_create/ibon/invoice=False`（payIbon，builder）
+- `builder/payment_create/ibon/invoice=True`（payIbon，builder）
+- `builder/payment_create/famiport/invoice=False`（payFamiport，builder）
+- `builder/payment_create/famiport/invoice=True`（payFamiport，builder）
+- `builder/payment_create/hilife/invoice=False`（payHilife，builder）
+- `builder/payment_create/hilife/invoice=True`（payHilife，builder）
+- `flow/do_payment_create/db_failure`（payFamiport，followup.send）
+- `flow/do_payment_create/error-1`（payFamiport，followup.send）
+- `flow/do_payment_create/error-2001`（smilepayError，followup.send）
+- `flow/do_payment_create/error-3003`（payFamiport，followup.send）
+- `flow/do_payment_create/error-3003@client.notify_owner`（payFamiport，client.notify_owner）
+- `source/payment_create_cancelled`（payBankTransfer，response.edit_message）
+- `source/payment_create_confirming`（payBankTransfer，response.edit_message）
+
+**Paid, expired**
+
+- `builder/payment_complete`（fpStoreBarcode，builder）
+- `source/expired_order`（fpStoreBarcode，message.edit）
+
+**/payment review, history, recheck**
+
+- `builder/payment_review/pending`（fpStoreBarcode，builder）
+- `builder/payment_review/complete`（fpStoreBarcode，builder）
+- `builder/payment_review/expired`（fpStoreBarcode，builder）
+- `flow/payment_review/no_id_no_payments`（fpStoreBarcode，response.send_message）
+- `flow/payment_review/not_found`（fpStoreBarcode，response.send_message）
+- `flow/payment_review/other_as_customer`（fpStoreBarcode，response.send_message）
+- `flow/payment_history_command/0`（fpStoreBarcode，edit_original_response）
+- `flow/payment_history_command/1`（fpStoreBarcode，edit_original_response）
+- `builder/payment_history/page=-1`（fpStoreBarcode，builder）
+- `flow/payment_recheck/paid`（fpStoreBarcode，followup.send）
+- `flow/payment_recheck/not_paid`（fpStoreBarcode，followup.send）
+- `flow/payment_recheck/expired`（fpStoreBarcode，followup.send）
+- `flow/payment_recheck/not_found`（fpStoreBarcode，response.send_message）
+- `flow/payment_recheck/no_id_no_pending`（fpStoreBarcode，response.send_message）
+- `flow/payment_recheck/already_complete`（fpStoreBarcode，response.send_message）
+- `flow/payment_recheck/paid_underpaid`（fpStoreBarcode，followup.send）
+- `flow/payment_recheck/paid_underpaid@client.notify_owner`（fpStoreBarcode，client.notify_owner）
+- `text/payment/recheck_all_started`（fpStoreBarcode，followup.send）
+- `text/payment/recheck_all_progress`（fpStoreBarcode，message.edit）
+- `text/payment/recheck_all_summary`（fpStoreBarcode，followup.send）
+
+**Ticket channel automation**
+
+- `server/rename_rate_limited`（fpStoreBarcode，reply）
+- `server/move_category/50001`（fpStoreBarcode，client.notify_owner）
+- `server/move_category/50035`（fpStoreBarcode，client.notify_owner）
+- `server/notifier/ticket_channel_forbidden`（fpStoreBarcode，client.notify_owner）
+- `server/log_channel_forbidden/send_to_log_channel`（fpStoreBarcode，client.notify_owner）
+
+**/balance**
+
+- `flow/balance_show/self`（balanceHistory，response.send_message）
+- `flow/balance_show/other_as_customer`（balanceHistory，response.send_message）
+- `flow/balance_transfer_command/ok`（transfer，response.send_message）
+- `flow/balance_transfer_cancel`（transfer，response.edit_message）
+- `flow/balance_transfer_confirm/50`（transfer，response.edit_message）
+- `flow/balance_transfer_confirm/50@client.send_to_log_channel`（transfer，client.send_to_log_channel）
+- `flow/balance_transfer_confirm/50@client.send_dm_to_user#0`（transfer，client.send_dm_to_user）
+- `flow/balance_transfer_confirm/50@client.send_dm_to_user#1`（transfer，client.send_dm_to_user）
+- `flow/balance_transfer_confirm/10`（transfer，response.edit_message）
+- `flow/balance_transfer_command/disabled`（transfer，response.send_message）
+- `flow/balance_transfer_command/zero`（transfer，response.send_message）
+- `flow/balance_transfer_command/insufficient`（transferShort，response.send_message）
+- `flow/balance_transfer_command/to_bot`（transfer，response.send_message）
+- `flow/balance_transfer_command/to_self`（transfer，response.send_message）
+- `flow/balance_history_command/1`（balanceHistory，edit_original_response）
+- `flow/balance_history_command/0`（balanceHistory，edit_original_response）
+- `flow/balance_history_command/-1`（balanceHistory，edit_original_response）
+- `builder/balance_history/page=1/admin=True`（balanceHistory，builder）
+- `builder/balance_history/page=9/admin=False`（balanceHistory，builder）
+- `flow/balance_add/40/50/None`（balanceAdd，response.send_message）
+- `flow/balance_add/40/50/活動`（balanceAdd，response.send_message）
+- `flow/balance_add/40/50/None@client.send_dm_to_user`（balanceAdd，client.send_dm_to_user）
+- `flow/balance_add/-20/50/None`（balanceRemove，response.send_message）
+- `flow/balance_add/-20/50/None@client.send_dm_to_user`（balanceRemove，client.send_dm_to_user）
+- `flow/balance_add/-80/50/None`（balanceRemoveShort，response.send_message）
+- `flow/balance_add/0/50/None`（balanceAdd，response.send_message）
+- `flow/balance_set/80/50/None`（balanceSetUp，response.send_message）
+- `flow/balance_set/80/50/活動`（balanceSetUp，response.send_message）
+- `flow/balance_set/80/50/None@client.send_dm_to_user`（balanceSetUp，client.send_dm_to_user）
+- `flow/balance_set/20/50/None`（balanceSetDown，response.send_message）
+- `flow/balance_set/20/50/None@client.send_dm_to_user`（balanceSetDown，client.send_dm_to_user）
+- `flow/balance_set/50/50/None`（balanceSetSame，response.send_message）
+- `flow/balance_set/-1/50/None`（balanceSetDown，response.send_message）
+
+**/top-up**
+
+- `flow/topup_command/ok`（topUp，response.send_message）
+- `flow/topup_reselect`（topUp，response.edit_message）
+- `builder/topup/bank_transfer`（topUp，builder）
+- `flow/topup_confirm`（topUp，response.edit_message）
+- `flow/topup_command/zero_amount`（topUp，response.send_message）
+- `flow/topup_command/topup_disabled`（topUp，response.send_message）
+- `flow/topup_command/balance_disabled`（topUp，response.send_message）
+- `flow/topup_command/suspended`（topUp，response.send_message）
+- `builder/topup_success@dm`（topUp，builder）
+- `builder/topup_success@log`（topUp，builder）
+
+**/dashboard, /settings, welcome**
+
+- `guide/dashboard/set_up`（fpStoreBarcode，builder）
+- `guide/dashboard/not_set_up_web`（fpStoreBarcode，builder）
+- `guide/settings/set_up`（fpStoreBarcode，builder）
+- `guide/settings/not_set_up`（fpStoreBarcode，builder）
+- `guide/welcome/channel_web`（fpStoreBarcode，builder）
+- `guide/welcome/dm_web`（fpStoreBarcode，builder）
+
+**Shared checks, SmilePay**
+
+- `server/checks/wrong_channel`（fpStoreBarcode，reply）
+- `server/checks/no_permission`（fpStoreBarcode，reply）
+- `server/checks/dm`（fpStoreBarcode，reply）
+- `server/checks/balance_not_enabled`（fpStoreBarcode，reply）
+- `server/checks/not_in_service_web`（fpStoreBarcode，reply）
+- `server/notifier/payment_method_auto_disabled`（payFamiport，client.notify_owner）
+
+**/auto-publish, dynamic voice channel names, auto reply**
+
+- `server/auto_publish/add_ok`（fpStoreBarcode，reply）
+- `server/auto_publish/remove_ok`（fpStoreBarcode，reply）
+- `server/auto_publish/not_news`（fpStoreBarcode，reply）
+- `server/auto_publish/missing_permissions`（fpStoreBarcode，reply）
+- `server/auto_publish/add_failed`（fpStoreBarcode，reply）
+- `server/auto_publish/remove_failed`（fpStoreBarcode，reply）
+- `server/direct_rename/ok`（fpStoreBarcode，reply）
+- `server/direct_rename/cooldown`（fpStoreBarcode，reply）
+- `server/direct_rename/forbidden`（fpStoreBarcode，reply）
+- `server/direct_rename/not_found`（fpStoreBarcode，reply）
+- `server/direct_rename/db_failed`（fpStoreBarcode，reply）
+- `server/direct_rename/http_error`（fpStoreBarcode，reply）
+- `server/dynamic_vc_rename/delete_ok`（fpStoreBarcode，reply）
+- `server/dynamic_vc_rename/delete_failed`（fpStoreBarcode，reply）
+- `server/dynamic_vc_rename/channel_not_configured`（fpStoreBarcode，reply）
+- `server/dynamic_vc_rename/missing_permissions`（fpStoreBarcode，reply）
+- `server/dynamic_vc_loop/not_found`（fpStoreBarcode，client.notify_owner）
+- `server/auto_reply/dm_trigger`（fpStoreBarcode，reply）
+- `server/auto_reply/server_mention`（fpStoreBarcode，reply）
+
+**其他（沒有情境）**
+
+- `modal/consumer_info`（modal）
+- `defaults/channel_names`（channel_defaults）
+
+其他產生的資料：
+
+- `COMMANDS`（斜線指令與參數）：`auto-publish`、`balance`、`dashboard`、`dynamic-vc-rename`、`fp`、`payment`、`settings`、`top-up`、`-2001`、`-2002`、`-2003`、`-2004`、`-2005`、`-2006`、`-2007`、`-3001`、`-3002`、`-3003`、`-3004`、`-3005`、`-4000`、`-4001`、`-4002`、`-4003`、`-4004`、`-4005`、`-5000`、`-9999`、`dropdown`、`confirm`、`create`、`complete`、`review`、`balanceNickname`
+- `SMILEPAY_ERRORS`（速買配錯誤代碼）：`-2001`、`-2002`、`-2003`、`-2004`、`-2005`、`-2006`、`-2007`、`-3001`、`-3002`、`-3003`、`-3004`、`-3005`、`-4000`、`-4001`、`-4002`、`-4003`、`-4004`、`-4005`、`-5000`、`-9999`、`dropdown`、`confirm`、`create`、`complete`、`review`、`balanceNickname`
+- `BOT_METHOD_LABELS`：`dropdown`、`confirm`、`create`、`complete`、`review`、`balanceNickname`
+- `BOT_DEFAULTS`：`balanceNickname`
+
+### 後台截圖（`DashboardDemo shot=…`）
+
+每張截圖後面是它的目標（`target`）。只有桌面版有的目標標 *（手機版沒有，用到它的示範在手機上也會用桌面版截圖）；「無手機版」表示這張只有桌面版。
+
+- `login`：`login`、`highlights`*
+- `welcome`：`tour`、`next`、`skip`
+- `setup-1`：`server`、`next`
+- `setup-2`：`adminRole`、`logChannel`、`next`
+- `setup-3`：`storeNumber`、`paramCode`、`verifyKey`、`midParam`、`next`
+- `setup-4`：`bankTransfer`、`storeBarcode`、`ibon`、`famiport`、`hilife`、`next`
+- `setup-5`：`summary`、`agree`、`create`
+- `overview`：`checklist`、`scope`、`feeSwitch`、`period`、`periodToday`、`period7d`、`period30d`、`kpis`、`kpiRevenue`、`kpiCompleted`、`kpiAverage`、`kpiCompletion`、`trend`、`methods`、`recentOrders`、`viewAll`、`firstOrder`、`heatmap`、`customers`、`serverSwitcher`*、`navOverview`*、`navOrders`*、`navSettings`*、`navHistory`*、`navFeatures`*、`theme`*、`periodCustom`*
+- `overview-incl-fee`：`checklist`、`scope`、`feeSwitch`、`period`、`periodToday`、`period7d`、`period30d`、`kpis`、`kpiRevenue`、`kpiCompleted`、`kpiAverage`、`kpiCompletion`、`trend`、`methods`、`recentOrders`、`viewAll`、`firstOrder`、`heatmap`、`customers`、`periodCustom`*
+- `overview-custom-period`：`period`、`periodCustom`、`customForm`、`start`、`end`、`apply`
+- `orders`：`scope`、`statusTabs`、`statusAll`、`statusComplete`、`statusPending`、`statusExpired`、`search`、`methodFilter`、`typeFilter`、`dateFilter`、`firstOrder`、`pagination`、`list`、`serverSwitcher`*、`navOverview`*、`navOrders`*、`navSettings`*、`navHistory`*、`navFeatures`*、`theme`*
+- `orders-type-menu`：`scope`、`statusTabs`、`statusAll`、`statusComplete`、`statusPending`、`statusExpired`、`search`、`methodFilter`、`typeFilter`、`dateFilter`、`firstOrder`、`pagination`、`list`、`menu`、`typePayment`、`typeTopup`
+- `orders-complete`：`scope`、`statusTabs`、`statusAll`、`statusComplete`、`statusPending`、`statusExpired`、`search`、`methodFilter`、`typeFilter`、`dateFilter`、`firstOrder`、`pagination`、`list`
+- `orders-search`：`scope`、`statusTabs`、`statusAll`、`statusComplete`、`statusPending`、`statusExpired`、`search`、`methodFilter`、`typeFilter`、`dateFilter`、`firstOrder`、`pagination`、`list`
+- `order-detail`：`back`、`title`、`amount`、`timeline`、`order`、`copyId`、`customer`、`invoice`、`serverSwitcher`*、`navOverview`*、`navOrders`*、`navSettings`*、`navHistory`*、`navFeatures`*、`theme`*
+- `settings-basic`：`tabs`、`tabBasic`、`tabSmilepay`、`tabPayment`、`adminRole`、`adminRoleCard`、`createRoles`、`createRolesCard`、`logChannel`、`logChannelCard`、`commandChannels`、`commandChannelsCard`、`ticketCategories`、`ticketCategoriesCard`、`serverSwitcher`*、`navOverview`*、`navOrders`*、`navSettings`*、`navHistory`*、`navFeatures`*、`theme`*、`tabChannels`*、`tabBalance`*
+- `settings-basic-edited`：`tabs`、`tabBasic`、`tabSmilepay`、`tabPayment`、`adminRole`、`adminRoleCard`、`createRoles`、`createRolesCard`、`logChannel`、`logChannelCard`、`commandChannels`、`commandChannelsCard`、`ticketCategories`、`ticketCategoriesCard`、`saveBar`、`changes`、`revert`、`save`、`tabChannels`*、`tabBalance`*
+- `settings-basic-saved`：`tabs`、`tabBasic`、`tabSmilepay`、`tabPayment`、`adminRole`、`adminRoleCard`、`createRoles`、`createRolesCard`、`logChannel`、`logChannelCard`、`commandChannels`、`commandChannelsCard`、`ticketCategories`、`ticketCategoriesCard`、`saved`、`tabChannels`*、`tabBalance`*
+- `settings-smilepay`：`tabs`、`tabBasic`、`tabSmilepay`、`tabPayment`、`merchant`、`storeNumber`、`paramCode`、`verifyKey`、`midParam`、`clearMid`、`serverSwitcher`*、`navOverview`*、`navOrders`*、`navSettings`*、`navHistory`*、`navFeatures`*、`theme`*、`tabChannels`*、`tabBalance`*
+- `settings-smilepay-edited`：`tabs`、`tabBasic`、`tabSmilepay`、`tabPayment`、`merchant`、`storeNumber`、`paramCode`、`verifyKey`、`midParam`、`clearMid`、`saveBar`、`changes`、`revert`、`save`、`tabChannels`*、`tabBalance`*
+- `settings-smilepay-saved`：`tabs`、`tabBasic`、`tabSmilepay`、`tabPayment`、`merchant`、`storeNumber`、`paramCode`、`verifyKey`、`midParam`、`clearMid`、`saved`、`tabChannels`*、`tabBalance`*
+- `settings-payment`：`tabs`、`tabBasic`、`tabSmilepay`、`tabPayment`、`table`、`bankTransfer`、`bankTransferFee`、`storeBarcode`、`storeBarcodeFee`、`ibon`、`ibonFee`、`famiport`、`famiportFee`、`hilife`、`hilifeFee`、`extraFee`、`serverSwitcher`*、`navOverview`*、`navOrders`*、`navSettings`*、`navHistory`*、`navFeatures`*、`theme`*、`tabChannels`*、`tabBalance`*
+- `settings-payment-edited`：`tabs`、`tabBasic`、`tabSmilepay`、`tabPayment`、`table`、`bankTransfer`、`bankTransferFee`、`storeBarcode`、`storeBarcodeFee`、`ibon`、`ibonFee`、`famiport`、`famiportFee`、`hilife`、`hilifeFee`、`extraFee`、`saveBar`、`changes`、`revert`、`save`、`tabChannels`*、`tabBalance`*
+- `settings-payment-saved`：`tabs`、`tabBasic`、`tabSmilepay`、`tabPayment`、`table`、`bankTransfer`、`bankTransferFee`、`storeBarcode`、`storeBarcodeFee`、`ibon`、`ibonFee`、`famiport`、`famiportFee`、`hilife`、`hilifeFee`、`extraFee`、`saved`、`tabChannels`*、`tabBalance`*
+- `settings-channels`：`tabs`、`tabBasic`、`tabSmilepay`、`tabPayment`、`card`、`selectingRename`、`selectingName`、`pendingRename`、`pendingName`、`completeRename`、`completeName`、`expiredRename`、`nameHelp`、`serverSwitcher`*、`navOverview`*、`navOrders`*、`navSettings`*、`navHistory`*、`navFeatures`*、`theme`*、`tabChannels`*、`tabBalance`*、`table`*、`selectingCategory`*、`pendingCategory`*、`completeCategory`*、`expiredCategory`*
+- `settings-channels-edited`：`tabs`、`tabBasic`、`tabSmilepay`、`tabPayment`、`card`、`selectingRename`、`selectingName`、`pendingRename`、`pendingName`、`completeRename`、`completeName`、`expiredRename`、`nameHelp`、`saveBar`、`changes`、`revert`、`save`、`tabChannels`*、`tabBalance`*、`table`*、`selectingCategory`*、`pendingCategory`*、`completeCategory`*、`expiredCategory`*
+- `settings-channels-saved`：`tabs`、`tabBasic`、`tabSmilepay`、`tabPayment`、`card`、`selectingRename`、`selectingName`、`pendingRename`、`pendingName`、`completeRename`、`completeName`、`expiredRename`、`nameHelp`、`saved`、`tabChannels`*、`tabBalance`*、`table`*、`selectingCategory`*、`pendingCategory`*、`completeCategory`*、`expiredCategory`*
+- `settings-balance`：`tabs`、`tabBasic`、`tabSmilepay`、`tabPayment`、`switches`、`enable`、`transfer`、`payWithBalance`、`topup`、`leaderboard`、`name`、`adminRoles`、`serverSwitcher`*、`navOverview`*、`navOrders`*、`navSettings`*、`navHistory`*、`navFeatures`*、`theme`*、`tabChannels`*、`tabBalance`*
+- `settings-balance-edited`：`tabs`、`tabBasic`、`tabSmilepay`、`tabPayment`、`switches`、`enable`、`transfer`、`payWithBalance`、`topup`、`leaderboard`、`name`、`adminRoles`、`saveBar`、`changes`、`revert`、`save`、`tabChannels`*、`tabBalance`*
+- `settings-balance-saved`：`tabs`、`tabBasic`、`tabSmilepay`、`tabPayment`、`switches`、`enable`、`transfer`、`payWithBalance`、`topup`、`leaderboard`、`name`、`adminRoles`、`saved`、`tabChannels`*、`tabBalance`*
+- `settings-history`：`intro`、`list`、`webRow`、`secretRow`、`systemRow`、`createdRow`、`pagination`、`serverSwitcher`*、`navOverview`*、`navOrders`*、`navSettings`*、`navHistory`*、`navFeatures`*、`theme`*
+- `features`：`autoPublish`、`autoPublishChannels`、`dynamicVc`、`dynamicVcChannels`、`variables`、`serverSwitcher`*、`navOverview`*、`navOrders`*、`navSettings`*、`navHistory`*、`navFeatures`*、`theme`*
