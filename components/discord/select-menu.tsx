@@ -21,22 +21,26 @@ function Chevron({ open }: { open?: boolean }) {
 
 /**
  * Discord's string select. Closed it shows the selected option's label (or the placeholder);
- * open it lists the options below, the selected one highlighted.
+ * open it lists the options below (or above with `up`, as Discord does near the bottom of a
+ * channel, laid over the messages), the selected or `active` (pointed at) one highlighted.
  */
 export function SelectMenu({
   placeholder,
   options,
   open,
+  up,
 }: {
   placeholder: string;
-  options: { label: string; selected?: boolean }[];
+  options: { label: string; selected?: boolean; active?: boolean }[];
   open?: boolean;
+  up?: boolean;
 }) {
   const selected = options.find((o) => o.selected);
+  const corners = !open ? "rounded-lg" : up ? "rounded-b-lg" : "rounded-t-lg";
   return (
     <div className="relative mt-1 w-full max-w-[400px] min-w-0 text-base leading-5 whitespace-normal">
       <div
-        className={`flex min-h-10 items-center justify-between gap-2 border border-[#1e1f22] bg-[#1e1f22] py-2 pr-2 pl-3 ${open ? "rounded-t-lg" : "rounded-lg"}`}
+        className={`flex min-h-10 items-center justify-between gap-2 border border-[#1e1f22] bg-[#1e1f22] py-2 pr-2 pl-3 ${corners}`}
       >
         <span className={`min-w-0 truncate font-medium ${selected ? "text-[#dbdee1]" : "text-[#949ba4]"}`}>
           {selected ? selected.label : placeholder}
@@ -46,14 +50,18 @@ export function SelectMenu({
       {open && (
         <ul
           role="listbox"
-          className="overflow-hidden rounded-b-lg border border-t-0 border-[#1e1f22] bg-[#2b2d31] shadow-[0_8px_16px_rgb(0_0_0/0.24)]"
+          className={
+            up
+              ? "absolute inset-x-0 bottom-full z-10 overflow-hidden rounded-t-lg border border-b-0 border-[#1e1f22] bg-[#2b2d31] shadow-[0_-8px_16px_rgb(0_0_0/0.24)]"
+              : "overflow-hidden rounded-b-lg border border-t-0 border-[#1e1f22] bg-[#2b2d31] shadow-[0_8px_16px_rgb(0_0_0/0.24)]"
+          }
         >
           {options.map((o) => (
             <li
               key={o.label}
               role="option"
               aria-selected={!!o.selected}
-              className={`flex min-h-11 items-center px-3 py-2 font-medium ${o.selected ? "bg-[#404249] text-[#f2f3f5]" : "text-[#dbdee1]"}`}
+              className={`flex min-h-11 items-center px-3 py-2 font-medium transition-colors duration-150 ${o.selected || o.active ? "bg-[#404249] text-[#f2f3f5]" : "text-[#dbdee1]"}`}
             >
               <span className="min-w-0 break-words">{o.label}</span>
             </li>

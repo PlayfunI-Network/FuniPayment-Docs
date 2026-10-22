@@ -3,5 +3,5 @@ export { Camera, CAMERA_MS } from "./camera";
 export { Cursor, CURSOR_MS, type CursorState } from "./cursor";
 export { Caption } from "./caption";
 export { cameraTransform, type Rect, type Shot } from "@/lib/camera";
-export { SnapshotMessage, SnapshotEmbed } from "./snapshot";
+export { SnapshotMessage, SnapshotEmbed, type MenuState } from "./snapshot";
 export { DashboardShot, DASHBOARD_SHOTS, dashboardShot, shotTarget, type DashboardShotData } from "./dashboard-shot";

@@ -7,6 +7,7 @@ export { Embed, CodeBlock, embedColor, type EmbedField } from "./embed";
 export { SelectMenu, ChoiceMenu } from "./select-menu";
 export { DiscordButton } from "./button";
 export { SlashPicker } from "./slash-picker";
+export { ChatInput } from "./chat-input";
 export { Modal, type ModalField } from "./modal";
 export { Ephemeral } from "./ephemeral";
 export { DmWindow } from "./dm-window";

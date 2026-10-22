@@ -71,6 +71,54 @@ export const BOT_UI = {
     ],
     "ephemeral": false
   },
+  "builder/fp/famiport/0/designated=False": {
+    "kind": "message",
+    "via": "builder",
+    "embeds": [
+      {
+        "title": "再次確認您的付款方式",
+        "description": "訂單金額：{amount} 新台幣\n付款方式：{method_label:confirm}",
+        "color": 47103,
+        "fields": [
+          {
+            "name": "付款金額",
+            "value": "```{total} 元```",
+            "inline": false
+          },
+          {
+            "name": "手續費",
+            "value": "```{fee} 元```",
+            "inline": false
+          }
+        ],
+        "footer": {
+          "text": "Powered by PlayfunI Network",
+          "icon_url": "/brand/playfuni-icon.png"
+        },
+        "thumbnail": {
+          "url": "/demo/avatars/buyer.png"
+        },
+        "has_timestamp": true
+      }
+    ],
+    "components": [
+      {
+        "type": "button",
+        "label": "取消重選",
+        "style": "primary",
+        "disabled": false,
+        "url": null
+      },
+      {
+        "type": "button",
+        "label": "下一步: 確認購買資訊",
+        "style": "success",
+        "disabled": false,
+        "url": null
+      }
+    ],
+    "ephemeral": false
+  },
   "flow/fp_method_confirm": {
     "kind": "message",
     "via": "response.edit_message",
