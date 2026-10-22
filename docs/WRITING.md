@@ -90,6 +90,12 @@ bot 的字一律用 `SnapshotMessage` / `SnapshotEmbed` 畫，id 就是 ui.json 
 | 購買人資訊（已填） | `SnapshotEmbed` 用 `builder/consumer_info/filled=True/cancel_first=False`，按鈕取 `flow/fp_method_confirm`。測試會檢查兩者的 embed 一致 |
 | 訂單建立 | `builder/payment_create/store_barcode/invoice=False` |
 
+全部的 id 在本手冊最後的「可用素材」。讀 id 時要知道：
+
+- `key@part` 是同一個流程裡的另一則訊息，例如 `flow/balance_transfer_confirm/50@client.send_dm_to_user#0` 是轉帳成功後寄給轉出方的私訊，`@client.send_to_log_channel` 是日誌頻道那則。
+- 每個畫面的 `via` 說它出現在哪裡：回覆指令、改掉原本的訊息、私訊、日誌頻道、通知伺服器擁有者。意思寫在 `lib/bot-ui-types.ts` 的 `MessageEntry.via`。示範要把畫面放在 `via` 說的地方（私訊放 `DmWindow`，`ephemeral` 的放 `Ephemeral`）。
+- `components/demos/scenarios.ts` 的 `SNAPSHOT_SCENARIOS` 指定每個畫面用哪個情境畫。用這個畫面時，用它指定的情境，或欄位相同的另一個情境（例如四種超商代碼都有自己的情境）；欄位對不上會直接報錯。
+
 可以自己寫的只有：顧客和商家在指令之前的聊天句子、示範用的頻道名稱，以及 Discord 本身的介面（輸入框的「傳送訊息到 #…」、「使用了」）。頻道名稱 bot 沒有預設值，都是商家在後台自己設的，頁面上要講清楚，並連到 `/dashboard/settings-channels`。
 
 ### 4. 鏡頭與游標
@@ -115,9 +121,56 @@ import { FpDemo } from "@/components/demos/payments/fp-demo";
 
 測試照 `fp-demo.test.tsx` 寫：時間軸在 6 到 15 秒之間，座標都在 0 到 1 之內，每個畫面畫得出來；用到拼接畫面的話，也要檢查拼接的來源一致。
 
+## 後台示範
+
+後台的示範不用自己量座標。`npm run capture` 已經把後台每個要用的畫面拍好（深淺色、桌面 1280 和手機 375 各一張），連同畫面上每個「目標」元素的位置一起存進 `content/dashboard-shots.generated.json`。`DashboardDemo` 用目標的名字指揮游標和鏡頭：
+
+```tsx
+"use client";
+import { DashboardDemo, type DashboardStep } from "@/components/demo";
+
+// 一樣要是模組層級的常數
+const STEPS: DashboardStep[] = [
+  { at: 0, caption: "打開「付款方式與手續費」分頁", target: "tabPayment" },
+  { at: 1500, caption: "關掉「萊爾富超商代碼」", target: "hilife", zoom: 2 },
+  { at: 2400, target: "hilife", click: true },
+  { at: 2700, swapTo: "settings-payment-edited" },
+  { at: 4000, caption: "按「儲存變更」", target: "save", zoom: 1.6 },
+  { at: 4800, target: "save", click: true },
+  { at: 5100, caption: "看到「已儲存」就完成了", swapTo: "settings-payment-saved", target: "saved" },
+  { at: 7500, zoom: 1, hideCursor: true },
+];
+
+export function PaymentSaveDemo() {
+  return <DashboardDemo shot="settings-payment" steps={STEPS} label="示範：在後台關掉一種付款方式並儲存" />;
+}
+```
+
+每一步的欄位：
+
+| 欄位 | 作用 |
+|---|---|
+| `at` | 開始後第幾毫秒 |
+| `caption` | 畫面下方的說明，沿用到下一個 caption |
+| `target` | 游標移到這個目標（停在上面直到換目標） |
+| `zoom` | 鏡頭放大幾倍，對準這一步或上一個目標；`1` 拉回全景。會沿用 |
+| `click` / `typing` | 按下／變成打字的 I 字形游標 |
+| `hideCursor` | 藏起游標，直到下一個 `target` |
+| `swapTo` | 換成另一張截圖（按了之後的頁面、填好的表單、已儲存）。之後的 `target` 都在新截圖上找 |
+
+- 截圖比舞台高時（總覽、設定頁），畫面會像捲動網頁一樣自動捲到目標的位置，不用自己算。
+- 目標名字寫錯、或目標不在當下那張截圖上，會直接報錯並說是第幾步。
+- 舞台寬度小於 600 px 時用手機版截圖，前提是每張用到的截圖都有手機版，而且每個 `target` 手機版都有。「可用素材」裡標 * 的目標只有桌面版（側邊欄、表格的部分欄位），用到它的示範在手機上會改用桌面版截圖，字會很小：手機上要看清楚的示範，就只用沒有 * 的目標。
+- 減少動態時不播放，改成全景：每個 caption 一個數字標號，標在那一段第一個 `target` 上，說明列在圖下面。所以每個 caption 那段至少指一個目標。
+- 要讓人看到「按了才變」，跟 Discord 的示範一樣分兩步：先 `click`，300 ms 後再 `swapTo`。
+- 截圖上的數字（金額、訂單數）全部來自同一批示範訂單，手續費照 `calculateFee` 算，總覽、訂單列表、訂單明細彼此對得上。頁面文字引用數字時照截圖寫。
+- 開 `/dev/dashboard` 可以看每張截圖的範例示範，`/dev/shots` 可以看每個目標的框。
+
+挑目標：先在「可用素材」找截圖和目標名字，再到 `/dev/shots` 看框在哪裡。需要的元素沒有目標、或需要一個沒拍的狀態（例如某個篩選打開、某個欄位填錯的提示），不要自己截圖或疊東西上去，寫進回報：哪一頁（網址和 query）、要先做哪些操作、要點哪個元素（畫面上的字或 aria-label）。主 session 加進 `scripts/capture.config.mjs` 重拍。
+
 ## 可以用的元件
 
-MDX 裡不用 import 就能用的：`<Steps>` / `<Step>`、`<Callout>`、`<Cards>` / `<Card>`。`<Callout>` 的 `type` 有 `info`（預設）、`warn`、`error`、`success`、`idea`，可以加 `title`。
+MDX 裡不用 import 就能用的：`<Steps>` / `<Step>`、`<Callout>`、`<Cards>` / `<Card>`。`<Callout>` 的 `type` 有 `info`（預設）、`warn`、`warning`、`error`、`success`、`idea`，可以加 `title`。
 
 Discord 畫面（`components/discord`，永遠深色）：
 
@@ -149,7 +202,8 @@ Discord 畫面（`components/discord`，永遠深色）：
 | `Camera`、`Cursor`、`Caption` | 鏡頭、游標、說明列（`DemoStage` 已經包好，通常不用直接用） |
 | `SnapshotMessage` / `SnapshotEmbed` | 從 ui.json 畫出 bot 的訊息或單一 embed |
 | `Canvas`、`useWidth`、`canvasRect`、`canvasPoint`、`zoomTo` | 固定畫布與座標工具 |
-| `DashboardShot`、`shotTarget` | 後台截圖與截圖上元素的位置 |
+| `DashboardDemo` | 後台示範：用目標名字指揮游標和鏡頭，見「後台示範」 |
+| `DashboardShot`、`shotTarget` | 後台截圖（單獨放在頁面上時要給 `alt`）與截圖上元素的位置 |
 
 ## 要新的 ui.json key 或截圖
 
