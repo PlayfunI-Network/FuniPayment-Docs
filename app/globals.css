@@ -99,6 +99,80 @@ h3 {
   scrollbar-color: var(--line) var(--ground);
 }
 
+/* Scripted demos and the Discord kit (copied from the site): entrances keyed on mount, transform/opacity only */
+@keyframes demo-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+.demo-in {
+  animation: demo-in 0.45s var(--ease-expo) backwards;
+}
+@keyframes demo-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+}
+.demo-pop {
+  animation: demo-pop 0.5s var(--ease-expo) backwards;
+}
+@keyframes demo-ping {
+  from {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.5, 1.9);
+  }
+}
+.demo-ping {
+  animation: demo-ping 1.1s var(--ease-expo) 2 forwards;
+}
+@keyframes demo-glow {
+  0% {
+    opacity: 0;
+  }
+  25% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.35;
+  }
+}
+.demo-glow {
+  animation: demo-glow 2.4s var(--ease-expo) both;
+}
+/* Draws the eye to a control the visitor can use: a soft ring that breathes every few seconds. */
+@keyframes demo-nudge {
+  0%,
+  55%,
+  100% {
+    opacity: 0;
+    transform: scale(1);
+  }
+  20% {
+    opacity: 0.9;
+  }
+  45% {
+    opacity: 0;
+    transform: scale(1.04, 1.25);
+  }
+}
+.demo-nudge {
+  animation: demo-nudge 2.6s var(--ease-expo) 0.6s infinite;
+}
+@keyframes demo-blink {
+  50% {
+    opacity: 0;
+  }
+}
+.demo-caret {
+  animation: demo-blink 1s steps(1) infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
