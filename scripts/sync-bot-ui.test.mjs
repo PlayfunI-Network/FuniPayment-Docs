@@ -1,6 +1,7 @@
 import { expect, test } from "vitest";
 import {
   checkFees,
+  convertCommands,
   convertKeys,
   extractConstants,
   extractDicts,
@@ -213,4 +214,159 @@ test("手續費預設值和 bot 不同時丟錯", () => {
   expect(() => checkFees(schema, feesPy)).not.toThrow();
   expect(() => checkFees(schema.replace("fee=25", "fee=20"), feesPy)).toThrow(/store_barcode/);
   expect(() => checkFees(schema, feesPy.replace("1000", "2000"))).toThrow(/EXTRA_FEE_THRESHOLD/);
+});
+
+test("per-field override 勝過全域規則，且欄位不存在時丟錯", () => {
+  const ui = structuredClone(UI);
+  ui["builder/y"].embed.author = { name: "速買配－付款完成通知", icon_url: "https://i.imgur.com/ma5Gxaq.png" };
+  const keys = { ...KEYS, "builder/y": { ...KEYS["builder/y"], override: { "embeds.0.author.icon_url": "/demo/avatars/shop.png" } } };
+  const embed = convertKeys(ui, keys, GLOBAL)["builder/y"].embeds[0];
+  // 同一個 imgur 圖示：作者欄用 override，footer 照全域規則
+  expect(embed.author.icon_url).toBe("/demo/avatars/shop.png");
+  expect(embed.footer.icon_url).toBe("/brand/playfuni-icon.png");
+
+  const missing = { ...KEYS, "builder/y": { ...KEYS["builder/y"], override: { "embeds.0.thumbnail.url": "/x.png" } } };
+  expect(() => convertKeys(UI, missing, GLOBAL)).toThrow(/embeds\.0\.thumbnail\.url/);
+});
+
+test("Modal 欄位有不認得的參數就丟錯", () => {
+  const view = [
+    "class ConsumerInfoModal(Modal, title=consumer_text.MODAL_TITLE):",
+    "            self.buyer_name = TextInput(",
+    "                label=consumer_text.INPUT_NAME,",
+    '                placeholder="王小明",',
+    "                max_length=50",
+    "            )",
+    "            self.add_item(self.buyer_name)",
+  ].join("\n");
+  expect(() => extractModal(view, { MODAL_TITLE: "t", INPUT_NAME: "n" })).toThrow(/placeholder/);
+});
+
+/** A tiny commands.json in the bot's shape: a command with options and one with subcommands. */
+const COMMANDS = {
+  "command/fp": {
+    contexts: null,
+    default_member_permissions: null,
+    description: "[管理員] 快速為顧客建立付款訂單",
+    description_localizations: {},
+    dm_permission: true,
+    integration_types: null,
+    name: "fp",
+    name_localizations: {},
+    nsfw: false,
+    options: [
+      { description: "付款金額", name: "amount", name_localizations: { "zh-CN": "金額", "zh-TW": "金額" }, required: true, type: 4 },
+      {
+        description: "(選填) 指定顧客",
+        description_localizations: { "zh-TW": "僅該用戶能操作此筆訂單" },
+        name: "designated",
+        name_localizations: { "zh-TW": "指定付款者" },
+        required: false,
+        type: 6,
+      },
+    ],
+    type: 1,
+  },
+  "command/payment": {
+    contexts: [0],
+    default_member_permissions: 32,
+    description: "…",
+    description_localizations: {},
+    dm_permission: false,
+    integration_types: null,
+    name: "payment",
+    name_localizations: {},
+    nsfw: false,
+    options: [
+      {
+        description: "建立一筆新的付款訂單",
+        description_localizations: {},
+        name: "create",
+        name_localizations: {},
+        options: [
+          {
+            choices: [
+              { name: "銀行轉帳", value: "bank_transfer" },
+              { name: "x", value: 1, name_localizations: { "zh-TW": "否" } },
+            ],
+            description: "付款方式",
+            description_localizations: { "zh-TW": "請選擇付款方式" },
+            name: "method",
+            name_localizations: { "zh-TW": "付款方式" },
+            required: true,
+            type: 3,
+          },
+        ],
+        type: 1,
+      },
+    ],
+    type: 1,
+  },
+};
+
+test("commands.json：zh-TW 名稱與說明、參數、選項、權限", () => {
+  const out = convertCommands(COMMANDS);
+  expect(out.fp).toEqual({
+    name: "fp",
+    nameZh: "fp",
+    description: "[管理員] 快速為顧客建立付款訂單",
+    defaultMemberPermissions: null,
+    dmPermission: true,
+    contexts: null,
+    options: [
+      { name: "amount", nameZh: "金額", description: "付款金額", required: true, type: "integer" },
+      { name: "designated", nameZh: "指定付款者", description: "僅該用戶能操作此筆訂單", required: false, type: "user" },
+    ],
+    subcommands: [],
+  });
+  expect(out.payment.defaultMemberPermissions).toBe(32);
+  expect(out.payment.dmPermission).toBe(false);
+  expect(out.payment.contexts).toEqual([0]);
+  expect(out.payment.options).toEqual([]);
+  expect(out.payment.subcommands).toEqual([
+    {
+      name: "create",
+      nameZh: "create",
+      description: "建立一筆新的付款訂單",
+      options: [
+        {
+          name: "method",
+          nameZh: "付款方式",
+          description: "請選擇付款方式",
+          required: true,
+          type: "string",
+          choices: [
+            { label: "銀行轉帳", value: "bank_transfer" },
+            { label: "否", value: 1 },
+          ],
+        },
+      ],
+    },
+  ]);
+});
+
+test("commands.json：不認得的欄位、型別或子指令群組都丟錯", () => {
+  const extraKey = structuredClone(COMMANDS);
+  extraKey["command/fp"].name_localized = "x";
+  expect(() => convertCommands(extraKey)).toThrow(/command\/fp.*name_localized/);
+
+  const badType = structuredClone(COMMANDS);
+  badType["command/fp"].options[0].type = 99;
+  expect(() => convertCommands(badType)).toThrow(/99/);
+
+  const group = structuredClone(COMMANDS);
+  group["command/payment"].options[0].type = 2;
+  expect(() => convertCommands(group)).toThrow(/子指令群組/);
+
+  const optionKey = structuredClone(COMMANDS);
+  optionKey["command/fp"].options[1].placeholder = "x";
+  expect(() => convertCommands(optionKey)).toThrow(/placeholder/);
+
+  expect(() => convertCommands({ "menu/x": {} })).toThrow(/menu\/x/);
+});
+
+test("typed 匯出用 satisfies 檢查型別", () => {
+  const text = renderGenerated({ entries: {}, extra: {}, typed: { COMMANDS: { type: "Record<string, CommandData>", value: {} } }, commit: "c" });
+  expect(text).toContain("export const COMMANDS = {} satisfies Record<string, CommandData>;");
+  expect(text).toContain('import type { BotUiEntry, CommandData } from "@/lib/bot-ui-types";');
 });

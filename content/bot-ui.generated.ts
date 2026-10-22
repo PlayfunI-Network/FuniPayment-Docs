@@ -1,7 +1,7 @@
 // 產生檔，勿手改。執行 `npm run sync:bot` 重新產生（scripts/sync-bot-ui.mjs）。
-// 來源：bot 專案 FuniPayment 7b7f148 (release/v1.0.0) 的 tests/snapshots/ui.json 與 app/ 原始碼。
+// 來源：bot 專案 FuniPayment 7b7f148 (release/v1.0.0) 的 tests/snapshots/ui.json、commands.json 與 app/ 原始碼。
 // 字串裡的 {token} 由 lib/scenario.ts 依示範情境填入。
-import type { BotUiEntry } from "@/lib/bot-ui-types";
+import type { BotUiEntry, CommandData } from "@/lib/bot-ui-types";
 
 export const BOT_SOURCE_COMMIT = "7b7f148 (release/v1.0.0)";
 
@@ -284,7 +284,7 @@ export const BOT_UI = {
           "url": "/demo/avatars/buyer.png"
         },
         "image": {
-          "url": "/demo/barcodes.png"
+          "url": "{barcodeImage}"
         },
         "has_timestamp": true
       }
@@ -304,7 +304,7 @@ export const BOT_UI = {
         "url": "https://discord.com/channels/111111111111111111/777777777777777777/8888",
         "author": {
           "name": "速買配－付款完成通知（{method_label:complete}）",
-          "icon_url": "/brand/playfuni-icon.png"
+          "icon_url": "/demo/avatars/shop.png"
         },
         "fields": [
           {
@@ -443,6 +443,462 @@ export const BOT_UI = {
     "maxLength": 50
   }
 } satisfies Record<string, BotUiEntry>;
+
+export const COMMANDS = {
+  "auto-publish": {
+    "name": "auto-publish",
+    "nameZh": "auto-publish",
+    "description": "[管理員] 將此公告頻道設為自動發佈",
+    "defaultMemberPermissions": null,
+    "dmPermission": true,
+    "contexts": null,
+    "options": [],
+    "subcommands": []
+  },
+  "balance": {
+    "name": "balance",
+    "nameZh": "balance",
+    "description": "…",
+    "defaultMemberPermissions": null,
+    "dmPermission": true,
+    "contexts": null,
+    "options": [],
+    "subcommands": [
+      {
+        "name": "show",
+        "nameZh": "show",
+        "description": "顯示您的點數餘額",
+        "options": [
+          {
+            "name": "mode",
+            "nameZh": "顯示模式",
+            "description": "[公開/私人] 顯示點數餘額",
+            "required": true,
+            "type": "string",
+            "choices": [
+              {
+                "label": "公開顯示",
+                "value": "公開顯示"
+              },
+              {
+                "label": "僅自己看到",
+                "value": "僅自己看到"
+              }
+            ]
+          },
+          {
+            "name": "user",
+            "nameZh": "指定使用者",
+            "description": "[管理員] 查看其他使用者的點數餘額",
+            "required": false,
+            "type": "user"
+          }
+        ]
+      },
+      {
+        "name": "transfer",
+        "nameZh": "transfer",
+        "description": "轉移您的點數給其他使用者",
+        "options": [
+          {
+            "name": "to",
+            "nameZh": "接收者",
+            "description": "請輸入你要轉移的對象",
+            "required": true,
+            "type": "user"
+          },
+          {
+            "name": "amount",
+            "nameZh": "金額",
+            "description": "請輸入要轉移的金額",
+            "required": true,
+            "type": "integer"
+          },
+          {
+            "name": "reason",
+            "nameZh": "備註",
+            "description": "(選填) 這個備註只有你能看到",
+            "required": false,
+            "type": "string"
+          }
+        ]
+      },
+      {
+        "name": "add",
+        "nameZh": "add",
+        "description": "[管理員] 增加/減少使用者的點數餘額",
+        "options": [
+          {
+            "name": "user",
+            "nameZh": "指定使用者",
+            "description": "請輸入欲調整之用戶",
+            "required": true,
+            "type": "user"
+          },
+          {
+            "name": "amount",
+            "nameZh": "金額",
+            "description": "請輸入要增加的金額 (負數可以減少)",
+            "required": true,
+            "type": "integer"
+          },
+          {
+            "name": "reason",
+            "nameZh": "備註",
+            "description": "(選填) 請輸入原因",
+            "required": false,
+            "type": "string"
+          }
+        ]
+      },
+      {
+        "name": "set",
+        "nameZh": "set",
+        "description": "[管理員] 直接設定使用者的餘額",
+        "options": [
+          {
+            "name": "user",
+            "nameZh": "指定使用者",
+            "description": "請輸入欲調整之用戶",
+            "required": true,
+            "type": "user"
+          },
+          {
+            "name": "amount",
+            "nameZh": "金額",
+            "description": "請輸入要設定的金額",
+            "required": true,
+            "type": "integer"
+          },
+          {
+            "name": "reason",
+            "nameZh": "備註",
+            "description": "(選填) 請輸入變更的原因",
+            "required": false,
+            "type": "string"
+          }
+        ]
+      },
+      {
+        "name": "history",
+        "nameZh": "history",
+        "description": "查看您的餘額交易紀錄",
+        "options": [
+          {
+            "name": "mode",
+            "nameZh": "顯示模式",
+            "description": "[公開/私人] 顯示歷史紀錄",
+            "required": true,
+            "type": "string",
+            "choices": [
+              {
+                "label": "公開顯示",
+                "value": "公開顯示"
+              },
+              {
+                "label": "僅自己看到",
+                "value": "僅自己看到"
+              }
+            ]
+          },
+          {
+            "name": "page",
+            "nameZh": "查詢頁數",
+            "description": "(選填) 請輸入查詢頁數",
+            "required": false,
+            "type": "integer"
+          },
+          {
+            "name": "user",
+            "nameZh": "指定使用者",
+            "description": "[管理員] 查看指定使用者的交易紀錄",
+            "required": false,
+            "type": "user"
+          }
+        ]
+      }
+    ]
+  },
+  "dashboard": {
+    "name": "dashboard",
+    "nameZh": "dashboard",
+    "description": "[管理員] 開啟網頁後台（訂單、報表與設定）",
+    "defaultMemberPermissions": 32,
+    "dmPermission": false,
+    "contexts": [
+      0
+    ],
+    "options": [],
+    "subcommands": []
+  },
+  "dynamic-vc-rename": {
+    "name": "dynamic-vc-rename",
+    "nameZh": "dynamic-vc-rename",
+    "description": "[管理員] 將語音頻道設為狀態顯示",
+    "defaultMemberPermissions": null,
+    "dmPermission": true,
+    "contexts": null,
+    "options": [
+      {
+        "name": "channel",
+        "nameZh": "channel",
+        "description": "選擇語音頻道",
+        "required": true,
+        "type": "channel",
+        "channelTypes": [
+          2
+        ]
+      },
+      {
+        "name": "rename_name",
+        "nameZh": "rename_name",
+        "description": "動態頻道名稱（輸入 delete 停用服務）",
+        "required": true,
+        "type": "string"
+      }
+    ],
+    "subcommands": []
+  },
+  "fp": {
+    "name": "fp",
+    "nameZh": "fp",
+    "description": "[管理員] 快速為顧客建立付款訂單",
+    "defaultMemberPermissions": null,
+    "dmPermission": true,
+    "contexts": null,
+    "options": [
+      {
+        "name": "amount",
+        "nameZh": "金額",
+        "description": "付款金額",
+        "required": true,
+        "type": "integer"
+      },
+      {
+        "name": "designated",
+        "nameZh": "指定付款者",
+        "description": "僅該用戶能操作此筆訂單",
+        "required": false,
+        "type": "user"
+      }
+    ],
+    "subcommands": []
+  },
+  "payment": {
+    "name": "payment",
+    "nameZh": "payment",
+    "description": "…",
+    "defaultMemberPermissions": null,
+    "dmPermission": true,
+    "contexts": null,
+    "options": [],
+    "subcommands": [
+      {
+        "name": "create",
+        "nameZh": "create",
+        "description": "建立一筆新的付款訂單",
+        "options": [
+          {
+            "name": "method",
+            "nameZh": "付款方式",
+            "description": "請選擇付款方式",
+            "required": true,
+            "type": "string",
+            "choices": [
+              {
+                "label": "銀行轉帳",
+                "value": "bank_transfer"
+              },
+              {
+                "label": "四大超商條碼繳費",
+                "value": "store_barcode"
+              },
+              {
+                "label": "7-11 ibon 代碼繳費",
+                "value": "ibon"
+              },
+              {
+                "label": "全家 FamiPort 代碼繳費",
+                "value": "famiport"
+              },
+              {
+                "label": "萊爾富 Life-ET 代碼繳費",
+                "value": "hilife"
+              }
+            ]
+          },
+          {
+            "name": "amount",
+            "nameZh": "金額",
+            "description": "請輸入付款金額",
+            "required": true,
+            "type": "integer"
+          },
+          {
+            "name": "buyer",
+            "nameZh": "我的姓名",
+            "description": "(選填) 請輸入您的姓名",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "mail",
+            "nameZh": "我的信箱",
+            "description": "(選填) 請輸入您的信箱",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "phone",
+            "nameZh": "我的電話",
+            "description": "(選填) 請輸入您的電話號碼",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "comment",
+            "nameZh": "備註",
+            "description": "(選填) 請輸入備註",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "invoice_number",
+            "nameZh": "統一編號",
+            "description": "(選填) 請輸入統一編號",
+            "required": false,
+            "type": "integer"
+          },
+          {
+            "name": "invoice_title",
+            "nameZh": "發票抬頭",
+            "description": "(選填) 請輸入發票抬頭",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "designated",
+            "nameZh": "指定付款者",
+            "description": "[管理員] 協助顧客開設付款訂單",
+            "required": false,
+            "type": "user"
+          }
+        ]
+      },
+      {
+        "name": "review",
+        "nameZh": "review",
+        "description": "查詢最近一筆訂單的付款狀態",
+        "options": [
+          {
+            "name": "smilepay_id",
+            "nameZh": "付款編號",
+            "description": "(選填) 請輸入付款編號",
+            "required": false,
+            "type": "integer"
+          }
+        ]
+      },
+      {
+        "name": "history",
+        "nameZh": "history",
+        "description": "查詢我的歷史付款紀錄",
+        "options": [
+          {
+            "name": "mode",
+            "nameZh": "顯示模式",
+            "description": "[公開/私人] 顯示歷史紀錄",
+            "required": true,
+            "type": "string",
+            "choices": [
+              {
+                "label": "公開顯示",
+                "value": "公開顯示"
+              },
+              {
+                "label": "僅自己看到",
+                "value": "僅自己看到"
+              }
+            ]
+          },
+          {
+            "name": "page",
+            "nameZh": "查詢頁數",
+            "description": "(選填) 請輸入查詢頁數",
+            "required": false,
+            "type": "integer"
+          },
+          {
+            "name": "user",
+            "nameZh": "查詢使用者",
+            "description": "[管理員] 查詢指定使用者",
+            "required": false,
+            "type": "user"
+          }
+        ]
+      },
+      {
+        "name": "recheck",
+        "nameZh": "recheck",
+        "description": "[管理員] 複查頻道內最後一筆未付款訂單",
+        "options": [
+          {
+            "name": "smilepay_id",
+            "nameZh": "付款編號",
+            "description": "(選填) 請輸入標記為未付款的付款編號",
+            "required": false,
+            "type": "integer"
+          },
+          {
+            "name": "scan_all",
+            "nameZh": "檢查所有未付款訂單",
+            "description": "(選填) 是否複查所有未付款訂單",
+            "required": false,
+            "type": "integer",
+            "choices": [
+              {
+                "label": "(預設) 否",
+                "value": 0
+              },
+              {
+                "label": "(謹慎使用) 複查伺服器內所有未付款的訂單",
+                "value": 1
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "settings": {
+    "name": "settings",
+    "nameZh": "settings",
+    "description": "伺服器設定已移到網頁後台",
+    "defaultMemberPermissions": null,
+    "dmPermission": true,
+    "contexts": null,
+    "options": [],
+    "subcommands": []
+  },
+  "top-up": {
+    "name": "top-up",
+    "nameZh": "top-up",
+    "description": "購買/儲值此商城的點數",
+    "defaultMemberPermissions": null,
+    "dmPermission": true,
+    "contexts": null,
+    "options": [
+      {
+        "name": "amount",
+        "nameZh": "金額",
+        "description": "請輸入儲值金額",
+        "required": true,
+        "type": "integer"
+      }
+    ],
+    "subcommands": []
+  }
+} satisfies Record<string, CommandData>;
 
 export const BOT_METHOD_LABELS = {
   "dropdown": {

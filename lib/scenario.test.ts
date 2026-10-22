@@ -100,6 +100,22 @@ test("同一個情境，訂單建立與付款完成的金額、手續費、訂�
   expect(done.fields?.map((f) => f.value).slice(0, 3)).toEqual(["```500```", "```25```", "```525```"]);
 });
 
+test("條碼圖的總額和情境不同就丟錯，不默默畫出錯的條碼", () => {
+  const id = "builder/payment_create/store_barcode/invoice=False";
+  expect(fillSnapshot(id, scenario, now).embeds[0].image?.url).toBe("/demo/barcodes.png");
+  expect(() => fillSnapshot(id, { ...scenario, amount: 600 }, now)).toThrow(/條碼圖.*525.*625/);
+  // 沒有條碼圖的畫面不受影響
+  expect(() => fillSnapshot("builder/payment_complete", { ...scenario, amount: 600 }, now)).not.toThrow();
+});
+
+test("付款完成通知的作者圖示是商店圖示，和訂單建立一致", () => {
+  const created = fillSnapshot("builder/payment_create/store_barcode/invoice=False", scenario, now).embeds[0];
+  const done = fillSnapshot("builder/payment_complete", scenario, now).embeds[0];
+  expect(done.author?.icon_url).toBe("/demo/avatars/shop.png");
+  expect(done.author?.icon_url).toBe(created.author?.icon_url);
+  expect(done.footer?.icon_url).toBe("/brand/playfuni-icon.png");
+});
+
 test("只適用某個付款方式的畫面，情境不同就丟錯", () => {
   expect(() =>
     fillSnapshot("builder/payment_create/store_barcode/invoice=False", { ...scenario, method: "ibon" }, now),

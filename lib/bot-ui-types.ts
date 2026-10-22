@@ -64,3 +64,50 @@ export type ChannelDefaultsEntry = {
 };
 
 export type BotUiEntry = MessageEntry | ModalEntry | ChannelDefaultsEntry;
+
+// ---- Slash commands (tests/snapshots/commands.json) ----
+
+/** Discord's application command option types, by name. */
+export type CommandOptionType =
+  | "string"
+  | "integer"
+  | "boolean"
+  | "user"
+  | "channel"
+  | "role"
+  | "mentionable"
+  | "number"
+  | "attachment";
+
+/** Names and descriptions are what a zh-TW Discord client shows (the zh-TW localization, else the default). */
+export type CommandOption = {
+  name: string;
+  nameZh: string;
+  description: string;
+  required: boolean;
+  type: CommandOptionType;
+  /** Choice labels as zh-TW Discord shows them, with the value the bot receives. */
+  choices?: { label: string; value: string | number }[];
+  channelTypes?: number[];
+  minValue?: number;
+  maxValue?: number;
+  minLength?: number;
+  maxLength?: number;
+  autocomplete?: boolean;
+};
+
+export type Subcommand = { name: string; nameZh: string; description: string; options: CommandOption[] };
+
+export type CommandData = {
+  /** The command name users type (English; none of the bot's commands has a zh-TW name today). */
+  name: string;
+  nameZh: string;
+  description: string;
+  /** A permission bit field as Discord stores it (e.g. 32 = 管理伺服器), or null for everyone. */
+  defaultMemberPermissions: number | null;
+  dmPermission: boolean;
+  contexts: number[] | null;
+  /** Options of a command without subcommands. */
+  options: CommandOption[];
+  subcommands: Subcommand[];
+};

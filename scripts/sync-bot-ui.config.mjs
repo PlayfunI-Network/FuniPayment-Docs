@@ -5,6 +5,8 @@
 // match at least once, so a changed bot text fails the sync instead of leaving a test value.
 // `optionFees` turns a select option's 「（+N元）」 into 「（+{fee:<method>}元）」.
 // `method` marks a screen that exists for one payment method only; the demo's scenario must use it.
+// `override` sets one field by its path ("embeds.0.author.icon_url"), winning over the global
+// rules; the path must exist.
 // Tokens are filled by lib/scenario.ts (scenarioTokens).
 
 /** Replaced in every key: images (never linked from outside) and the test server's name. */
@@ -13,7 +15,7 @@ export const URL_RULES = [
   [/https:\/\/cdn\.test\/icon\/\d+\.png/, "/demo/avatars/shop.png"],
   ["https://cdn.test/avatar/333333333333333333.png", "/demo/avatars/buyer.png"],
   ["https://cdn.test/avatar/444444444444444444.png", "/demo/avatars/admin.png"],
-  ["attachment://barcodes.png", "/demo/barcodes.png"],
+  ["attachment://barcodes.png", "{barcodeImage}"],
 ];
 
 export const TEXT_RULES = [["測試商店", "{shop}"]];
@@ -56,6 +58,10 @@ export const KEYS = {
   },
   // Payment complete notice (any SmilePay method; the fixture paid with 全家)
   "builder/payment_complete": {
+    // The bot uses the server icon when the server has one (views/payment.py, notifier.py
+    // _with_server_icon); the fixture server has none, so it fell back to the PlayfunI icon.
+    // 星光遊戲社 has an icon on every other screen of the story.
+    override: { "embeds.0.author.icon_url": "/demo/avatars/shop.png" },
     replace: [
       ["042723549378", "{orderId}"],
       ["100", "{amount}"],
