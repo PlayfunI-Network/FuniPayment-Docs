@@ -8,6 +8,7 @@
     "build": "next build",
     "test": "vitest run",
     "check:export": "node scripts/check-export.mjs",
+    "sync:bot": "node scripts/sync-bot-ui.mjs",
     "lint": "eslint",
     "typecheck": "tsc --noEmit"
   },

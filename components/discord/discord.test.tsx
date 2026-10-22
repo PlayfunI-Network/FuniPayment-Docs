@@ -166,3 +166,20 @@ describe("Attachment", () => {
     expect(img.getAttribute("height")).toBe("120");
   });
 });
+
+describe("DiscordMarkdown lists and code", () => {
+  it("draws `code` as inline code", () => {
+    const { container } = render(<DiscordMarkdown text="就能用 `/fp` 建立" />);
+    expect(container.querySelector("code")?.textContent).toBe("/fp");
+    expect(container.textContent).toBe("就能用 /fp 建立");
+  });
+
+  it("draws 「N. 」 lines as one numbered list, keeping the text around it", () => {
+    const { container } = render(<DiscordMarkdown text={"**開始使用**\n1. 第一步\n2. 第二步 **粗**\n\n之後"} />);
+    const items = [...container.querySelectorAll("ol > li")].map((li) => li.textContent);
+    expect(items).toEqual(["第一步", "第二步 粗"]);
+    expect(container.querySelector("ol")?.getAttribute("start")).toBe("1");
+    expect(container.querySelector("strong")?.textContent).toBe("開始使用");
+    expect(container.textContent?.endsWith("\n之後")).toBe(true);
+  });
+});

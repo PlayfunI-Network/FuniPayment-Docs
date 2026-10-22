@@ -8,22 +8,26 @@ const STYLES = {
 
 /**
  * A Discord message button (blurple / grey / green / red / link). `active` shows the pressed
- * state the demos use when a click lands.
+ * state the demos use when a click lands; `disabled` is Discord's half-transparent, unclickable look.
  */
 export function DiscordButton({
   label,
   style,
   active,
+  disabled,
 }: {
   label: string;
   style: "primary" | "secondary" | "success" | "danger" | "link";
   active?: boolean;
+  disabled?: boolean;
 }) {
   const c = STYLES[style];
   return (
     <span
       data-active={active || undefined}
-      className="inline-flex h-8 min-w-[60px] items-center justify-center gap-2 rounded-lg px-4 text-sm leading-4 font-medium whitespace-nowrap text-white transition-[background-color,transform] duration-150 data-[active]:translate-y-px"
+      data-disabled={disabled || undefined}
+      aria-disabled={disabled || undefined}
+      className="inline-flex h-8 min-w-[60px] items-center justify-center gap-2 rounded-lg px-4 text-sm leading-4 font-medium whitespace-nowrap text-white transition-[background-color,transform] duration-150 data-[active]:translate-y-px data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50"
       style={{ backgroundColor: active ? c.active : c.base }}
     >
       {label}

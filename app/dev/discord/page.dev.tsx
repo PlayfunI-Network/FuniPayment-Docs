@@ -1,5 +1,6 @@
 // Dev-only showcase of the Discord kit (exists under `next dev` only, see next.config.mjs).
-// The texts here are placeholders for checking the layout, not the bot's copy.
+// The kit sections use placeholder texts for checking the layout; the 「bot 原文」 section draws
+// the bot's real messages from content/bot-ui.generated.ts (npm run sync:bot).
 import type { ReactNode } from "react";
 import {
   ActionRow,
@@ -17,6 +18,9 @@ import {
   SlashPicker,
   VoiceChannel,
 } from "@/components/discord";
+import { SnapshotMessage } from "@/components/demo";
+import { BOT_UI } from "@/content/bot-ui.generated";
+import { DEMO_BUYER_INFO, DEMO_NOW, DEMO_PEOPLE, DEMO_SCENARIO, discordTime } from "@/lib/scenario";
 
 export const metadata = { title: "Discord 元件（開發用）", robots: { index: false } };
 
@@ -106,6 +110,56 @@ export default function DiscordShowcase() {
           <SlashPicker command="fp" description="指令說明文字" appName="FunI 付款系統" />
           <SlashPicker command="fp" description="指令說明文字" appName="FunI 付款系統" option={{ name: "金額", value: "500" }} />
         </DiscordWindow>
+      </Section>
+
+      <Section title="bot 原文（ui.json 第一批 key，示範情境 500 元・四大超商條碼）">
+        <DiscordWindow title="訂單-a1024" kind="channel">
+          <Message
+            author="FunI 付款系統"
+            avatar={BOT}
+            bot
+            time={discordTime(DEMO_NOW)}
+            interaction={{ user: DEMO_PEOPLE.admin.name, avatar: DEMO_PEOPLE.admin.avatar, command: "fp" }}
+          >
+            <SnapshotMessage id="flow/fp_command/ok" scenario={DEMO_SCENARIO} />
+          </Message>
+          <Message author="FunI 付款系統" avatar={BOT} bot time={discordTime(DEMO_NOW)}>
+            <SnapshotMessage id="flow/fp_command/ok" scenario={DEMO_SCENARIO} selected="store_barcode" />
+          </Message>
+          <Message author="FunI 付款系統" avatar={BOT} bot time={discordTime(DEMO_NOW)}>
+            <SnapshotMessage id="flow/fp_method_confirm" scenario={DEMO_SCENARIO} />
+          </Message>
+          <Message author="FunI 付款系統" avatar={BOT} bot time={discordTime(DEMO_NOW)}>
+            <SnapshotMessage id="builder/consumer_info/filled=False/cancel_first=False" scenario={DEMO_SCENARIO} />
+          </Message>
+          <Message author="FunI 付款系統" avatar={BOT} bot time={discordTime(DEMO_NOW)}>
+            <SnapshotMessage id="builder/consumer_info/filled=True/cancel_first=False" scenario={DEMO_SCENARIO} />
+          </Message>
+          <Message author="FunI 付款系統" avatar={BOT} bot time={discordTime(DEMO_NOW)}>
+            <SnapshotMessage id="builder/payment_create/store_barcode/invoice=False" scenario={DEMO_SCENARIO} />
+          </Message>
+          <Message author="FunI 付款系統" avatar={BOT} bot time={discordTime(DEMO_NOW)}>
+            <SnapshotMessage id="builder/payment_complete" scenario={DEMO_SCENARIO} />
+          </Message>
+          <Message author="FunI 付款系統" avatar={BOT} bot time={discordTime(DEMO_NOW)}>
+            <SnapshotMessage id="guide/welcome/channel_web" scenario={DEMO_SCENARIO} />
+          </Message>
+        </DiscordWindow>
+        <DmWindow peer="FunI 付款系統" avatar={BOT}>
+          <Message author="FunI 付款系統" avatar={BOT} bot time={discordTime(DEMO_NOW)}>
+            <SnapshotMessage id="guide/welcome/dm_web" scenario={DEMO_SCENARIO} />
+          </Message>
+        </DmWindow>
+        <div className="flex min-w-0 justify-center rounded-lg bg-black/70 p-4 sm:p-10">
+          <Modal
+            title={BOT_UI["modal/consumer_info"].title}
+            fields={BOT_UI["modal/consumer_info"].fields.map((f) => ({
+              label: f.label,
+              required: f.required,
+              value: { name: DEMO_BUYER_INFO.name, mail: DEMO_BUYER_INFO.email, phone: DEMO_BUYER_INFO.phone }[f.id],
+            }))}
+          />
+        </div>
       </Section>
 
       <Section title="私訊視窗與附件">

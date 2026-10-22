@@ -135,7 +135,8 @@ export function Embed({
         )}
         {thumbnail && (
           <div className="col-start-2 row-span-6 row-start-1 mt-2 ml-4 shrink-0 justify-self-end">
-            <Avatar src={thumbnail} size={80} shape="square" className="max-sm:!size-16" />
+            {/* max-w-none: preflight's img max-width:100% would size the min-content column to 0. */}
+            <Avatar src={thumbnail} size={80} shape="square" className="max-w-none max-sm:!size-16" />
           </div>
         )}
         {image && (

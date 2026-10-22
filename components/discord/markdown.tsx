@@ -2,11 +2,12 @@ import type { ReactNode } from "react";
 
 /*
  * The subset of Discord markdown the bot's copy uses, rendered as Discord's dark theme does:
- * **bold**, __underline__, *italic*, [link](url), <@name> mentions and <t:label:R> timestamps.
- * Newlines are kept (the container uses pre-wrap).
+ * **bold**, __underline__, *italic*, `code`, [link](url), <@name> mentions, <t:label:R> timestamps
+ * and numbered lists (lines starting 「1. 」). Newlines are kept (the container uses pre-wrap).
  */
 const TOKEN =
-  /(\*\*(.+?)\*\*)|(__(.+?)__)|(<@([^>]+)>)|(<t:([^>]+?):R>)|(\[([^\]]+)\]\(([^)\s]+)\))|(\*([^*\n]+?)\*)/;
+  /(\*\*(.+?)\*\*)|(__(.+?)__)|(<@([^>]+)>)|(<t:([^>]+?):R>)|(\[([^\]]+)\]\(([^)\s]+)\))|(\*([^*\n]+?)\*)|(`([^`\n]+)`)/;
+const LIST_ITEM = /^(\d+)\. (.*)$/;
 
 function parse(text: string, keyPrefix: string): ReactNode[] {
   const out: ReactNode[] = [];
@@ -53,6 +54,15 @@ function parse(text: string, keyPrefix: string): ReactNode[] {
           {m[10]}
         </span>,
       );
+    } else if (m[14]) {
+      out.push(
+        <code
+          key={key}
+          className="rounded-[4px] bg-[#1e1f22] px-[0.2em] font-mono text-[0.85em] leading-[1.125rem]"
+        >
+          {m[15]}
+        </code>,
+      );
     } else {
       out.push(
         <em key={key} className="italic">
@@ -65,6 +75,41 @@ function parse(text: string, keyPrefix: string): ReactNode[] {
   return out;
 }
 
+/**
+ * Lines are text except runs of 「N. 」 lines, which Discord draws as a numbered list (a block, so
+ * the newline before and after it is the list's own line break).
+ */
 export function DiscordMarkdown({ text }: { text: string }) {
-  return <>{parse(text, "md")}</>;
+  const out: ReactNode[] = [];
+  let lines: string[] = [];
+  let items: RegExpMatchArray[] = [];
+  const flushText = () => {
+    if (lines.length > 0) out.push(...parse(lines.join("\n"), `md${out.length}`));
+    lines = [];
+  };
+  const flushList = () => {
+    if (items.length === 0) return;
+    const key = `md${out.length}`;
+    out.push(
+      <ol key={key} start={Number(items[0][1])} className="my-0 list-decimal pl-[1.4em] whitespace-normal">
+        {items.map((m, i) => (
+          <li key={i}>{parse(m[2], `${key}-${i}`)}</li>
+        ))}
+      </ol>,
+    );
+    items = [];
+  };
+  for (const line of text.split("\n")) {
+    const item = line.match(LIST_ITEM);
+    if (item) {
+      flushText();
+      items.push(item);
+    } else {
+      flushList();
+      lines.push(line);
+    }
+  }
+  flushList();
+  flushText();
+  return <>{out}</>;
 }
