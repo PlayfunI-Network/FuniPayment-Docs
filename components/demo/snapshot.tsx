@@ -56,17 +56,36 @@ function rows(components: ComponentData[]): ComponentData[][] {
   return out;
 }
 
-function Components({ components, selected }: { components: ComponentData[]; selected?: string }) {
+/** The select menu opened, upward or downward, with the option `active` (by value) pointed at. */
+export type MenuState = { open: "up" | "down"; active?: string };
+
+function Components({
+  components,
+  selected,
+  menu,
+}: {
+  components: ComponentData[];
+  selected?: string;
+  menu?: MenuState;
+}) {
   return rows(components).map((row, i) => {
     const first = row[0];
     if (first.type === "select") {
       if (first.options.some((o) => o.description)) throw new Error("選單選項的說明文字還畫不出來");
-      if (selected && !first.options.some((o) => o.value === selected)) throw new Error(`選單沒有選項 ${selected}`);
+      for (const value of [selected, menu?.active]) {
+        if (value && !first.options.some((o) => o.value === value)) throw new Error(`選單沒有選項 ${value}`);
+      }
       return (
         <SelectMenu
           key={i}
           placeholder={first.placeholder}
-          options={first.options.map((o) => ({ label: o.label, selected: selected ? o.value === selected : o.default }))}
+          open={!!menu}
+          up={menu?.open === "up"}
+          options={first.options.map((o) => ({
+            label: o.label,
+            selected: selected ? o.value === selected : o.default,
+            active: o.value === menu?.active,
+          }))}
         />
       );
     }
@@ -90,19 +109,22 @@ function pick(id: SnapshotId, scenario: Scenario, now: Date, at: "send" | "follo
 /**
  * The message's content: text, embeds, then the button rows and select menus, with the
  * 「只有你看得到這則訊息」 line when the bot sent it ephemeral. Put it inside a `Message`.
- * `selected` shows that option (by value, e.g. "store_barcode") chosen in the select menu.
+ * `selected` shows that option (by value, e.g. "store_barcode") chosen in the select menu;
+ * `menu` shows the menu open.
  */
 export function SnapshotMessage({
   id,
   scenario,
   at = "send",
   selected,
+  menu,
   now = DEMO_NOW,
 }: {
   id: SnapshotId;
   scenario: Scenario;
   at?: "send" | "followup";
   selected?: string;
+  menu?: MenuState;
   now?: Date;
 }) {
   const msg = pick(id, scenario, now, at);
@@ -116,7 +138,7 @@ export function SnapshotMessage({
       {msg.embeds.map((e, i) => (
         <SnapshotEmbedView key={i} embed={e} now={now} />
       ))}
-      <Components components={msg.components} selected={selected} />
+      <Components components={msg.components} selected={selected} menu={menu} />
     </>
   );
   return <div className="flex min-w-0 flex-col gap-1">{msg.ephemeral ? <Ephemeral>{body}</Ephemeral> : body}</div>;

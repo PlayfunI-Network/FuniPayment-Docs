@@ -36,7 +36,18 @@ export const KEYS = {
     ],
     optionFees: true,
   },
-  // /fp: after choosing, the buyer information step (edit_message)
+  // /fp: after choosing a method, 「再次確認您的付款方式」 with 取消重選 / 下一步. The fixture chose
+  // 全家; every SmilePay method draws this screen the same way (views/fp.py create_embed), so
+  // the method name, amount and fee are tokens.
+  "builder/fp/famiport/0/designated=False": {
+    replace: [
+      ["100", "{amount}"],
+      ["135", "{total}"],
+      ["35", "{fee}"],
+      ["全家代碼繳費", "{method_label:confirm}"],
+    ],
+  },
+  // /fp: after 下一步: 確認購買資訊, the buyer information step (edit_message; 上一步 first)
   "flow/fp_method_confirm": { replace: [] },
   "builder/consumer_info/filled=False/cancel_first=False": { replace: [] },
   "builder/consumer_info/filled=True/cancel_first=False": {
