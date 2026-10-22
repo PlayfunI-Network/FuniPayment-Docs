@@ -4,12 +4,24 @@
 // its barcode lands in the channel. The channel list beside it shows the channel being renamed
 // and moved, with names a merchant could set on the dashboard (the bot has no default names).
 //
-// The screen is drawn on a fixed canvas (WIDE with the channel list, NARROW without it for
-// phones) and scaled to the stage, so the camera and cursor can aim at canvas pixels. Every
-// bot text comes from content/bot-ui.generated.ts; only the two chat lines before /fp, the
+// The screen is drawn on a fixed canvas (components/demo/canvas.tsx), one per stage size: WIDE
+// with the channel list, NARROW (a phone-width window, so the text stays readable) without it.
+// Every bot text comes from content/bot-ui.generated.ts; only the two chat lines before /fp, the
 // channel names and Discord's own chrome are written here.
-import { useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
-import { DemoStage, SnapshotEmbed, SnapshotMessage, type CursorState, type DemoStep, type Rect, type Shot } from "@/components/demo";
+import { useRef } from "react";
+import {
+  Canvas,
+  DemoStage,
+  SnapshotEmbed,
+  SnapshotMessage,
+  canvasPoint,
+  useWidth,
+  zoomTo,
+  type CanvasArea,
+  type CanvasLayout,
+  type CanvasPoint,
+  type DemoStep,
+} from "@/components/demo";
 import {
   ActionRow,
   ChannelList,
@@ -30,7 +42,7 @@ const AMOUNT = FP.options.find((o) => o.name === "amount")!;
 
 /**
  * The ticket channel's name and category at each stage. Illustrative: a merchant who set
- * 「選擇中｜<name:ticket->」 and 「待付款｜<name:ticket->」 on the dashboard's channels tab, and a
+ * 選擇中｜<name:ticket-> and 待付款｜<name:ticket-> on the dashboard's channels tab, and a
  * category for each stage (the bot moves and renames only inside the ticket categories).
  */
 const CHANNEL = {
@@ -40,54 +52,86 @@ const CHANNEL = {
 } as const;
 type ChannelStage = keyof typeof CHANNEL;
 
-type Input = { kind: "empty" } | { kind: "command"; typed: string } | { kind: "option"; value: string };
+type InputState = { kind: "empty" } | { kind: "command"; typed: string } | { kind: "option"; value: string };
 /** Which bot message is on screen: the /fp reply as it is edited step by step, then the order. */
 type Bot = "none" | "select" | "menu" | "menuPick" | "confirm" | "buyer" | "order";
-export type Screen = { input: Input; bot: Bot; channel: ChannelStage };
+export type Screen = { input: InputState; bot: Bot; channel: ChannelStage };
 type FpStep = DemoStep & { screen: Screen };
 
-// ---- Canvas and where things are on it (CSS px of the canvas, measured in Chrome) ----
+// ---- Layouts and where things are on them ----
 
-const H = 740;
-const WINDOW_W = 640;
+type Targets = {
+  typing: CanvasPoint;
+  input: CanvasArea;
+  reply: CanvasArea;
+  select: CanvasPoint;
+  menu: CanvasArea;
+  option: CanvasPoint;
+  confirmScreen: CanvasArea;
+  /** Where the pointer waits after the pick: off the embed text the caption asks you to read. */
+  aside: CanvasPoint;
+  next: CanvasPoint;
+  buyer: CanvasArea;
+  confirm: CanvasPoint;
+  order: CanvasArea;
+};
+type Layout = CanvasLayout & { left: number; list: boolean; at: Targets };
+
 const LIST_W = 240;
-type Layout = { w: number; left: number };
-const WIDE: Layout = { w: LIST_W + WINDOW_W, left: LIST_W };
-const NARROW: Layout = { w: WINDOW_W, left: 0 };
-/** Below this stage width the channel list is left out (the header still shows the renames). */
-const NARROW_BELOW = 600;
 
 /**
- * Points and areas inside the Discord window (x from the window's left edge), measured with
- * app/dev/fp (next dev) in Chrome at a 1280px and a 375px viewport; the points sit inside the
- * buttons at both (the kit's sm: paddings move them by up to 8px).
+ * Points and areas inside the Discord window (x from the window's left edge, CSS px), measured
+ * on app/dev/fp under next dev in Chrome at 1280px and 375px viewports; each point sits inside
+ * its button at both (the kit's sm: paddings move things by up to 8px).
  */
-const AT = {
-  // Right of the typed text, so the I-beam never covers it.
-  typing: { x: 420, y: 701 },
-  input: { x: 0, y: 540, w: 440, h: 200 },
-  reply: { x: 40, y: 430, w: 560, h: 250 },
-  select: { x: 230, y: 641 },
-  menu: { x: 40, y: 340, w: 520, h: 340 },
-  option: { x: 200, y: 422 },
-  confirmScreen: { x: 40, y: 350, w: 560, h: 330 },
-  next: { x: 251, y: 646 },
-  buyer: { x: 40, y: 330, w: 560, h: 350 },
-  confirm: { x: 377, y: 646 },
-  order: { x: 40, y: 60, w: 600, h: 620 },
+const WIDE: Layout = {
+  w: LIST_W + 640,
+  h: 780,
+  left: LIST_W,
+  list: true,
+  at: {
+    // Right of the typed text, so the I-beam never covers it.
+    typing: { x: 420, y: 741 },
+    input: { x: 0, y: 580, w: 440, h: 200 },
+    reply: { x: 40, y: 470, w: 560, h: 250 },
+    select: { x: 230, y: 681 },
+    menu: { x: 40, y: 380, w: 520, h: 340 },
+    option: { x: 200, y: 462 },
+    confirmScreen: { x: 40, y: 390, w: 560, h: 330 },
+    aside: { x: 560, y: 600 },
+    next: { x: 251, y: 686 },
+    buyer: { x: 40, y: 370, w: 560, h: 350 },
+    confirm: { x: 377, y: 686 },
+    order: { x: 40, y: 100, w: 600, h: 620 },
+  },
 };
-
-function rect(l: Layout, r: { x: number; y: number; w: number; h: number }): Rect {
-  return { x: (l.left + r.x) / l.w, y: r.y / H, w: r.w / l.w, h: r.h / H };
-}
-/** Zoom `zoom` times onto `area`, but never so close that the area no longer fits the stage. */
-function zoomTo(l: Layout, zoom: number, area: { x: number; y: number; w: number; h: number }): Shot {
-  const focus = rect(l, area);
-  return { zoom: Math.min(zoom, 1 / focus.w, 1 / focus.h), focus };
-}
-function point(l: Layout, p: { x: number; y: number }, extra: Partial<CursorState> = {}): CursorState {
-  return { x: (l.left + p.x) / l.w, y: p.y / H, ...extra };
-}
+/**
+ * A phone-width window: at a 343px stage it is drawn at 0.86, so the embeds' 14px text shows at
+ * about 12px even in the wide shot (a 640px window there came out at 7–8px).
+ */
+const NARROW: Layout = {
+  w: 400,
+  h: 760,
+  left: 0,
+  list: false,
+  at: {
+    typing: { x: 300, y: 721 },
+    input: { x: 0, y: 560, w: 400, h: 200 },
+    reply: { x: 20, y: 410, w: 380, h: 290 },
+    select: { x: 200, y: 661 },
+    menu: { x: 20, y: 360, w: 380, h: 340 },
+    option: { x: 180, y: 442 },
+    confirmScreen: { x: 20, y: 370, w: 380, h: 330 },
+    aside: { x: 384, y: 600 },
+    next: { x: 243, y: 666 },
+    buyer: { x: 20, y: 270, w: 380, h: 430 },
+    // The buttons wrap: 確認並獲取付款碼 is alone on the second row.
+    confirm: { x: 136, y: 666 },
+    order: { x: 20, y: 160, w: 380, h: 560 },
+  },
+};
+/** Below this stage width the narrow layout is used (the header still shows the renames). */
+const NARROW_BELOW = 600;
 
 // ---- Timeline ----
 
@@ -100,10 +144,12 @@ function timeline(l: Layout): FpStep[] {
     screen = { ...screen, ...change };
     out.push({ at, screen, ...rest });
   };
-  const typing = point(l, AT.typing, { typing: true });
+  const at = l.at;
+  const point = (p: CanvasPoint, extra?: Parameters<typeof canvasPoint>[2]) => canvasPoint(l, p, extra);
+  const typing = point(at.typing, { typing: true });
 
   step(0, {}, { caption: "商家在訂單頻道輸入 /fp", shot: { zoom: 1 }, cursor: { ...typing, hidden: true } });
-  step(600, {}, { shot: zoomTo(l, 1.9, AT.input), cursor: typing });
+  step(600, {}, { shot: zoomTo(l, 1.9, at.input), cursor: typing });
   step(1000, { input: { kind: "command", typed: "/" } }, { cursor: { ...typing, click: true } });
   step(1250, { input: { kind: "command", typed: "/f" } });
   step(1500, { input: { kind: "command", typed: "/fp" } });
@@ -112,35 +158,40 @@ function timeline(l: Layout): FpStep[] {
   step(2650, { input: { kind: "option", value: "50" } });
   step(2800, { input: { kind: "option", value: String(SCENARIO.amount) } });
   step(3500, { input: { kind: "empty" }, bot: "select", channel: "selecting" }, {
-    caption: "機器人回覆付款方式選單，頻道改名並移到「選擇中」",
+    caption: "機器人回覆付款方式選單，頻道也跟著改名、換分類",
     // The whole screen, so the renamed channel in its new category is in view.
     shot: { zoom: 1 },
     cursor: { ...typing, hidden: true },
   });
   step(4900, {}, {
     caption: "顧客打開選單，選「四大超商條碼」",
-    shot: zoomTo(l, 1.35, AT.reply),
-    cursor: point(l, AT.select),
+    shot: zoomTo(l, 1.35, at.reply),
+    cursor: point(at.select),
   });
-  step(5800, {}, { cursor: point(l, AT.select, { click: true }) });
-  step(6000, { bot: "menu" }, { shot: zoomTo(l, 1.6, AT.menu) });
-  step(6800, {}, { cursor: point(l, AT.option) });
-  step(7500, { bot: "menuPick" }, { cursor: point(l, AT.option, { click: true }) });
-  step(7800, { bot: "confirm" }, { caption: "確認金額和手續費，按「下一步」", shot: zoomTo(l, 1.35, AT.confirmScreen) });
-  step(8500, {}, { cursor: point(l, AT.next) });
-  step(9300, {}, { cursor: point(l, AT.next, { click: true }) });
-  step(9600, { bot: "buyer" }, { caption: "確認購買人資訊，取得付款碼", shot: zoomTo(l, 1.4, AT.buyer) });
-  step(10300, {}, { cursor: point(l, AT.confirm) });
-  step(11100, {}, { cursor: point(l, AT.confirm, { click: true }) });
+  step(5800, {}, { cursor: point(at.select, { click: true }) });
+  step(6000, { bot: "menu" }, { shot: zoomTo(l, 1.6, at.menu) });
+  step(6800, {}, { cursor: point(at.option) });
+  step(7500, { bot: "menuPick" }, { cursor: point(at.option, { click: true }) });
+  step(7800, { bot: "confirm" }, {
+    caption: "確認金額和手續費，按「下一步」",
+    shot: zoomTo(l, 1.35, at.confirmScreen),
+    cursor: point(at.aside),
+  });
+  step(8500, {}, { cursor: point(at.next) });
+  step(9300, {}, { cursor: point(at.next, { click: true }) });
+  step(9600, { bot: "buyer" }, { caption: "確認購買人資訊，取得付款碼", shot: zoomTo(l, 1.4, at.buyer) });
+  step(10300, {}, { cursor: point(at.confirm) });
+  step(11100, {}, { cursor: point(at.confirm, { click: true }) });
   step(11500, { bot: "order", channel: "pending" }, {
-    caption: "訂單成立，條碼貼在頻道裡，頻道移到「待付款」",
-    shot: zoomTo(l, 1.1, AT.order),
-    cursor: { ...point(l, AT.confirm), hidden: true },
+    caption: "訂單成立，條碼貼在頻道裡，頻道再換到待付款的分類",
+    shot: zoomTo(l, 1.1, at.order),
+    cursor: { ...point(at.confirm), hidden: true },
   });
   step(13300, {}, { shot: { zoom: 1 } });
   return out;
 }
 
+export const LAYOUTS = { wide: WIDE, narrow: NARROW };
 export const WIDE_STEPS = timeline(WIDE);
 export const NARROW_STEPS = timeline(NARROW);
 
@@ -202,19 +253,20 @@ function FpReply({ bot }: { bot: Exclude<Bot, "none" | "order"> }) {
   }
 }
 
-export function FpScreen({ screen, wide }: { screen: Screen; wide: boolean }) {
+export function FpScreen({ screen, layout }: { screen: Screen; layout: Layout }) {
   const channel = CHANNEL[screen.channel];
   const now = discordTime(DEMO_NOW);
   return (
     <div className="flex h-full w-full bg-[#313338]">
-      {wide && (
+      {layout.list && (
         <div className="h-full shrink-0" style={{ width: LIST_W }}>
           <Categories stage={screen.channel} />
         </div>
       )}
       <DiscordWindow title={channel.name} kind="channel" className="h-full rounded-none! border-0! shadow-none!">
-        <div className="flex flex-col" style={{ height: H - 48 - 4 - 16 }}>
-          <div className="flex min-h-0 flex-1 flex-col justify-end overflow-hidden [mask-image:linear-gradient(to_bottom,transparent,black_48px)]">
+        {/* The window's header (48px) and its top and bottom padding (4px, 16px) take the rest. */}
+        <div className="flex flex-col" style={{ height: layout.h - 48 - 4 - 16 }}>
+          <div className="flex min-h-0 flex-1 flex-col justify-end overflow-hidden [mask-image:linear-gradient(to_bottom,transparent,black_24px)]">
             <Message author={DEMO_PEOPLE.buyer.name} avatar={DEMO_PEOPLE.buyer.avatar} time={time(3)}>
               {`你好，我想買 ${SCENARIO.amount} 元的方案`}
             </Message>
@@ -249,7 +301,7 @@ export function FpScreen({ screen, wide }: { screen: Screen; wide: boolean }) {
   );
 }
 
-function Input({ input, channel }: { input: Input; channel: string }) {
+function Input({ input, channel }: { input: InputState; channel: string }) {
   if (input.kind === "empty") return <ChatInput channel={channel} />;
   if (input.kind === "command") {
     return <SlashPicker command={FP.name} description={FP.description} appName={BOT.name} placeholder={input.typed} />;
@@ -264,34 +316,6 @@ function Input({ input, channel }: { input: Input; channel: string }) {
   );
 }
 
-/** Draws `children` on a `w` × H canvas scaled to the width of the box it fills. */
-function Canvas({ w, children }: { w: number; children: ReactNode }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const width = useWidth(ref);
-  return (
-    <div ref={ref} className="absolute inset-0 overflow-hidden">
-      <div
-        className="origin-top-left"
-        style={{ width: w, height: H, transform: `scale(${width ? width / w : 1})`, visibility: width ? undefined : "hidden" }}
-      >
-        {children}
-      </div>
-    </div>
-  );
-}
-
-function useWidth(ref: RefObject<HTMLElement | null>): number {
-  const [width, setWidth] = useState(0);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el || typeof ResizeObserver === "undefined") return;
-    const ro = new ResizeObserver(([entry]) => setWidth(entry.contentRect.width));
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, [ref]);
-  return width;
-}
-
 export function FpDemo() {
   const ref = useRef<HTMLDivElement>(null);
   const width = useWidth(ref);
@@ -304,13 +328,13 @@ export function FpDemo() {
         // A new layout is a new timeline: start it from the top.
         key={wide ? "wide" : "narrow"}
         label={`示範：商家在訂單頻道輸入 /fp 金額 ${SCENARIO.amount}，顧客從選單選四大超商條碼，確認付款方式和購買人資訊後，機器人在頻道貼出含條碼的訂單，頻道也跟著改名、換分類`}
-        aspect={`${layout.w} / ${H}`}
+        aspect={`${layout.w} / ${layout.h}`}
         steps={steps}
         caption
       >
         {(_, index) => (
-          <Canvas w={layout.w}>
-            <FpScreen screen={steps[index].screen} wide={wide} />
+          <Canvas w={layout.w} h={layout.h}>
+            <FpScreen screen={steps[index].screen} layout={layout} />
           </Canvas>
         )}
       </DemoStage>

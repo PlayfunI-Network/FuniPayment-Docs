@@ -27,6 +27,8 @@
 
 - 繁體中文、台灣用語，稱呼讀者「你」。
 - bot 和後台上的字一律用「」括起來，逐字照抄來源（見下一節）。連半形冒號、空白、全形括號、表情符號都要一樣，例如「下一步: 確認購買資訊」「✏️ 填寫/修改資訊」。
+- 「」只給真的出現在 bot 或後台上的字。示範用的名稱（頻道名、分類名、顧客說的話）不加「」，要說清楚那是舉例。
+- 頁面文字不寫英文的 demo，寫「示範」或「動畫」。
 - 段落寫短。不要用表情符號裝飾，bot 原文裡本來就有的除外。少用粗體，不要用破折號把句子串起來。
 - 只寫 v1.0.0 現在會發生的事。從程式碼確認不了的就不寫，列在回報裡。
 - 禁用字詞（建置會檢查）：信用卡、免費試用、申請試用、NewebPay、藍新、公測期間全部免費。
@@ -75,7 +77,7 @@
 - 畫面狀態和步驟放在一起。fp 用 `FpStep = DemoStep & { screen }`，`children(step, index)` 用 `steps[index].screen` 決定要畫什麼。
 - 有點擊的地方分成兩步：先移過去並按下（`click: true`），過 300 ms 左右畫面再變。看的人才看得出是「按了才變」。
 - caption 寫「誰做了什麼」，一行就好，例如「顧客打開選單，選「四大超商條碼」」。
-- 減少動態時只會顯示最後一格，所以最後一格要能單獨看懂。fp 最後一格是頻道已經移到「待付款」、訂單訊息完整的全景。
+- 減少動態時只會顯示最後一格，所以最後一格要能單獨看懂。fp 最後一格是頻道已經換到待付款分類、訂單訊息完整的全景。
 
 ### 3. 哪一步用哪個 SnapshotMessage
 
@@ -92,15 +94,62 @@ bot 的字一律用 `SnapshotMessage` / `SnapshotEmbed` 畫，id 就是 ui.json 
 
 ### 4. 鏡頭與游標
 
-- fp 把畫面畫在固定大小的畫布上（寬版 880×740 有頻道列表，窄版 640×740 沒有），再縮放到舞台寬度，所以座標可以用畫布的 px 來算。舞台寬度小於 600 px 時換成窄版，換版就重播。
+- 畫面畫在固定大小的畫布上，再縮放到舞台寬度，所以座標可以用畫布的 px 來算。共用的工具在 `components/demo`：`Canvas`（畫布）、`useWidth`（量寬度，用來選版面）、`canvasRect` / `canvasPoint`（畫布 px 換成鏡頭和游標要的比例）、`zoomTo`（放大）。
+- 每種舞台寬度一個版面，各自量座標。fp 的寬版是 880×780，有頻道列表；舞台寬度小於 600 px 時換成窄版 400×760，沒有頻道列表，換版就重播。
+- 手機上的字要看得清楚：放大時文字換算後至少要有 11 px。窄版的畫布要做窄，不要把桌機的畫布直接縮小。fp 窄版在 343 px 的舞台上縮成 0.86 倍，embed 的 14 px 字約 12 px。
 - 座標要實際量，不要用猜的。開 `npm run dev`，到 `/dev/fp` 這類開發頁把每個畫面原尺寸畫出來，用 Playwright 讀元素的 `getBoundingClientRect`。1280 和 375 兩種寬度都要量：元件的 `sm:` 樣式在手機上會讓位置差到 8 px，點的位置要選在兩種寬度都還在按鈕裡的地方。
 - 放大用 `zoomTo(layout, zoom, area)`。它會限制倍率，讓 area 整塊都留在畫面裡，窄畫面也不會把選單切掉。
+- 按下之後游標移到旁邊空白處，不要停在 caption 要人看的字上。
 - 有東西要讓人看到變化時（頻道改名、換分類），鏡頭要拉回全景，不能剛好切在外面。
 - 打字時游標是 I 字形（`typing: true`），擺在文字右邊，不要蓋住打出來的字。
 
 ### 5. 註冊與檢查
 
-demo 元件放在 `components/demos/<章節>/`，在 `mdx-components.tsx` 註冊後，MDX 裡直接寫 `<FpDemo />`。測試照 `fp-demo.test.tsx` 寫：時間軸在 6 到 15 秒之間，座標都在 0 到 1 之內，每個畫面畫得出來；用到拼接畫面的話，也要檢查拼接的來源一致。
+demo 元件放在 `components/demos/<章節>/`，在自己的 MDX 開頭直接 import，不要改 `mdx-components.tsx`（那是共用檔）：
+
+```mdx
+import { FpDemo } from "@/components/demos/payments/fp-demo";
+
+<FpDemo />
+```
+
+測試照 `fp-demo.test.tsx` 寫：時間軸在 6 到 15 秒之間，座標都在 0 到 1 之內，每個畫面畫得出來；用到拼接畫面的話，也要檢查拼接的來源一致。
+
+## 可以用的元件
+
+MDX 裡不用 import 就能用的：`<Steps>` / `<Step>`、`<Callout>`、`<Cards>` / `<Card>`。`<Callout>` 的 `type` 有 `info`（預設）、`warn`、`error`、`success`、`idea`，可以加 `title`。
+
+Discord 畫面（`components/discord`，永遠深色）：
+
+| 元件 | 用途 |
+|---|---|
+| `DiscordWindow` | 頻道視窗外框：標題列加訊息區 |
+| `ChannelHeader` | 頻道標題列，改名時會換字 |
+| `Message` / `ActionRow` | 一則訊息（頭像、名字、時間、「使用了 /指令」那行）／一排按鈕 |
+| `Embed`、`CodeBlock` | embed 本體；一般用 `SnapshotMessage`，不要手寫 |
+| `DiscordMarkdown` | Discord 的粗體、底線、連結、mention、`<t:…>` |
+| `DiscordButton` | 按鈕，有 `disabled` 和按下的樣子 |
+| `SelectMenu` | 選單，可以打開（`open`、往上開 `up`）、標出選到的項目 |
+| `ChoiceMenu` | 讓讀者自己點的選單（互動用） |
+| `SlashPicker` | 輸入斜線指令時的提示框，和填了參數的輸入框 |
+| `ChatInput` | 空的輸入框 |
+| `Modal` | 表單視窗（例如填購買人資訊） |
+| `Ephemeral` | 「只有你看得到」的訊息 |
+| `DmWindow` | 私訊視窗 |
+| `ChannelList` / `ChannelRow` | 左側頻道列表，看改名和換分類 |
+| `VoiceChannel` | 語音頻道名稱 |
+| `Attachment` | 訊息附加的圖片 |
+| `Avatar` | 頭像（圖片或彩色字） |
+
+示範系統（`components/demo`）：
+
+| 元件 | 用途 |
+|---|---|
+| `DemoStage` | 示範外框：比例、播放、暫停、循環、減少動態、caption |
+| `Camera`、`Cursor`、`Caption` | 鏡頭、游標、說明列（`DemoStage` 已經包好，通常不用直接用） |
+| `SnapshotMessage` / `SnapshotEmbed` | 從 ui.json 畫出 bot 的訊息或單一 embed |
+| `Canvas`、`useWidth`、`canvasRect`、`canvasPoint`、`zoomTo` | 固定畫布與座標工具 |
+| `DashboardShot`、`shotTarget` | 後台截圖與截圖上元素的位置 |
 
 ## 要新的 ui.json key 或截圖
 
