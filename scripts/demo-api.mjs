@@ -22,7 +22,15 @@ createServer((req, res) => {
           let body = Buffer.concat(parts);
           const isJson = (up.headers["content-type"] ?? "").includes("json") && up.statusCode === 200 && req.method === "GET";
           if (isJson) {
-            const text = JSON.stringify(rewrite(url.pathname, JSON.parse(body.toString("utf8"))));
+            let parsed;
+            try {
+              parsed = JSON.parse(body.toString("utf8"));
+            } catch {
+              console.error(`demo-api: ${url.pathname} 的回應不是 JSON`);
+              res.writeHead(502);
+              return res.end();
+            }
+            const text = JSON.stringify(rewrite(url.pathname, parsed));
             const left = findBanned(text);
             if (left.length) console.error(`demo-api: ${url.pathname} 還有「${left.join("」「")}」`);
             body = Buffer.from(text);

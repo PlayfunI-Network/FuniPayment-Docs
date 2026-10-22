@@ -2,6 +2,8 @@
 // dashboard API (web/e2e/fake-api.mjs + fixtures.mjs) into 星光遊戲社's invented data.
 // scripts/demo-api.mjs applies it to every GET; scripts/demo-data.test.mjs checks it against the
 // bot's real fixtures. Started from funipay_site/scripts/demo-api.mjs (overview and settings).
+// The settings themselves are not rewritten: npm run capture saves DEMO_SETTINGS_CHANGES through
+// the fake API, so a save on the settings pages answers with the same values.
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -21,8 +23,21 @@ export const DEMO = Object.freeze({
   storeNumber: 24680,
 });
 
-/** Words that must never reach a screenshot. */
-export const BANNED = Object.freeze(["測試", "開發者"]);
+/**
+ * Words that must never reach a screenshot: the fixtures' test values, and the site's banned words
+ * (the same list scripts/check-export.mjs checks the built pages for).
+ */
+export const BANNED = Object.freeze([
+  "測試",
+  "開發者",
+  "沒有遷移的伺服器",
+  "信用卡",
+  "免費試用",
+  "申請試用",
+  "NewebPay",
+  "藍新",
+  "公測期間全部免費",
+]);
 /** The dashboard's own wording that contains a banned word (step 5 of /setup recommends a small test order). */
 const ALLOWED_UI = Object.freeze(["小額測試訂單"]);
 
@@ -97,7 +112,7 @@ function demoOrderDetail(detail) {
   };
 }
 
-// ---- overview (from the site's demo-api) -------------------------------------------------
+// ---- overview: every number summed from one invented order book ---------------------------
 
 // Deterministic noise, reset on every call, so the dark and light captures match.
 let seed = 0;
@@ -107,98 +122,243 @@ const rand = () => {
   t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
   return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
 };
-// Totals only (no single order): the fee is about 4.3% of the amount, as on the site.
-const money = (excl, fee = 0.043) => ({ excl_fee: Math.round(excl), incl_fee: Math.round(excl * (1 + fee)) });
-const pct = (now, before) => Math.round(((now - before) / before) * 1000) / 10;
-const moneyMetric = (cur, prev) => ({ current: money(cur), previous: money(prev), change_pct: { excl_fee: pct(cur, prev), incl_fee: pct(cur, prev) } });
-const countMetric = (cur, prev) => ({ current: cur, previous: prev, change_pct: pct(cur, prev) });
-
-function demoOverview(base) {
-  seed = 20261012;
-  const AVG = 560;
-  const WEEKDAY = [0.9, 0.85, 0.9, 0.95, 1.05, 1.25, 1.2]; // Mon..Sun; weekends busier
-  const trend = base.trend.map((point, i, all) => {
-    const day = point.bucket.match(/^(\d+)-(\d+)-(\d+)/);
-    const weekday = day ? (new Date(Number(day[1]), Number(day[2]) - 1, Number(day[3])).getDay() + 6) % 7 : 4;
-    const growth = 3300 + (3700 * i) / Math.max(1, all.length - 1);
-    const revenue = Math.round((growth * WEEKDAY[weekday] * (0.82 + rand() * 0.36)) / 5) * 5;
-    const completed = Math.max(1, Math.round(revenue / (AVG * (0.9 + rand() * 0.2))));
-    return { bucket: point.bucket, revenue: money(revenue), completed_orders: completed, created_orders: Math.round(completed / (0.8 + rand() * 0.06)) };
-  });
-  const sum = (key) => trend.reduce((total, p) => total + (key === "revenue" ? p.revenue.excl_fee : p[key]), 0);
-  const revenue = sum("revenue");
-  const completed = sum("completed_orders");
-  const created = sum("created_orders");
-  const topup = Math.round(revenue * 0.05);
-  const payment = revenue - topup;
-  const prevRevenue = revenue / 1.184;
-  const revDetail = money(revenue);
-  const rate = Math.round((completed / created) * 1000) / 10;
-  const kpis = {
-    ...base.kpis,
-    revenue: {
-      total: moneyMetric(revenue, prevRevenue),
-      payment: moneyMetric(payment, prevRevenue * 0.95),
-      topup: moneyMetric(topup, prevRevenue * 0.05 * 0.8),
-    },
-    revenue_detail: { order_amount: revDetail.excl_fee, fee: revDetail.incl_fee - revDetail.excl_fee, pay_amount: revDetail.incl_fee },
-    completed_orders: {
-      total: countMetric(completed, Math.round(completed / 1.126)),
-      payment: countMetric(completed - 6, Math.round((completed - 6) / 1.12)),
-      topup: countMetric(6, 5),
-    },
-    created_orders: {
-      total: countMetric(created, Math.round(created / 1.09)),
-      payment: countMetric(created - 7, Math.round((created - 7) / 1.09)),
-      topup: countMetric(7, 6),
-    },
-    average_order_value: {
-      current: money(revenue / completed),
-      previous: money(prevRevenue / (completed / 1.126)),
-      change_pct: { excl_fee: 5.1, incl_fee: 5.1 },
-    },
-    completion_rate: { current: rate, previous: Math.round((rate - 2.6) * 10) / 10, change_pp: 2.6 },
-    pending: { orders: 9, amount: money(9 * 520) },
-  };
-  const shares = [["ibon", 0.34], ["famiport", 0.22], ["store_barcode", 0.17], ["bank_transfer", 0.15], ["hilife", 0.12]];
-  let left = payment;
-  const payment_methods = shares.map(([method, share], i) => {
-    const amount = i === shares.length - 1 ? left : Math.round(payment * share);
-    left -= amount;
-    return { method, orders: Math.round(completed * share), amount: money(amount) };
-  });
-  const heatmap = Array.from({ length: 168 }, (_, i) => {
-    const weekday = Math.floor(i / 24);
-    const hour = i % 24;
-    const evening = hour >= 19 && hour <= 23 ? 1 : hour >= 12 && hour <= 18 ? 0.55 : hour >= 8 ? 0.25 : 0.08;
-    return { weekday, hour, orders: Math.round(7 * WEEKDAY[weekday] * evening * (0.6 + rand() * 0.8)) };
-  });
-  const top = [
-    ["夜貓子", 11, 8450],
-    ["小海豹", 9, 6720],
-    ["Kenji", 8, 5980],
-    ["米米醬", 7, 4390],
-    ["阿哲", 6, 3610],
-  ].map(([name, orders, amount], i) => ({ user_id: String(900000000000000010n + BigInt(i)), name, avatar_url: null, orders, amount: money(amount) }));
-  const customers = {
-    unique_payers: countMetric(Math.round(completed * 0.62), Math.round((completed * 0.62) / 1.081)),
-    repeat_rate: { current: 38.4, previous: 34.9, change_pp: 3.5 },
-    top: { excl_fee: top, incl_fee: top },
-  };
-  return { ...base, kpis, trend, payment_methods, heatmap, customers, recent_orders: base.recent_orders.map(demoOrder) };
+/** One of `items`, picked with the given weights. */
+function weighted(items, weights) {
+  let r = rand() * weights.reduce((a, b) => a + b, 0);
+  for (let i = 0; i < items.length; i++) if ((r -= weights[i]) < 0) return items[i];
+  return items[items.length - 1];
 }
 
-// ---- settings (from the site's demo-api, with the bot's default fees) ---------------------
+const WEEKDAY = [0.9, 0.85, 0.9, 0.95, 1.05, 1.25, 1.2]; // Mon..Sun; weekends busier
+/** How busy each hour is: evenings most, nights least. */
+const HOUR_WEIGHTS = Array.from({ length: 24 }, (_, h) => (h >= 19 ? 1 : h >= 12 ? 0.55 : h >= 8 ? 0.25 : 0.08));
+const HOURS = HOUR_WEIGHTS.map((_, h) => h);
+const HOUR_TOTAL = HOUR_WEIGHTS.reduce((a, b) => a + b, 0);
+const METHOD_SHARES = [["ibon", 34], ["famiport", 22], ["store_barcode", 17], ["bank_transfer", 15], ["hilife", 12]];
+/** The regulars (the overview's 大戶) and how often each orders; everyone else orders about once. */
+const REGULARS = ["夜貓子", "小海豹", "Kenji", "米米醬", "阿哲", "阿凱", "小柚子", "Momo", "布丁", "阿翔"];
+const REGULAR_WEIGHTS = [14, 12, 10, 9, 8, 6, 6, 5, 5, 4];
+const OTHER_PAYERS = 110;
+const FIRST_PAYER = 900000000000000010n;
+const PAYERS = Array.from({ length: REGULARS.length + OTHER_PAYERS }, (_, i) => i);
+const PAYER_WEIGHTS = PAYERS.map((i) => REGULAR_WEIGHTS[i] ?? 1);
+/** A payer's name on the overview: a regular's nickname, otherwise the role name (like the fixture's buyer). */
+const payerName = (id) => REGULARS[Number(BigInt(id) - FIRST_PAYER)] ?? DEMO.buyer;
 
-function demoSettings(base) {
-  const payment = Object.fromEntries(Object.entries(DEFAULT_FEES).map(([method, fee]) => [method, { enabled: true, fee }]));
+const pad = (n) => String(n).padStart(2, "0");
+/** Naive "YYYY-MM-DDTHH:MM:SS" <-> Date in UTC fields, so no time zone gets in between. */
+const parse = (text) => new Date(`${text.slice(0, 19).replace(" ", "T")}Z`);
+const format = (d) => `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}T${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:00`;
+/** The trend bucket of a time ("2026-10-12" or "2026-10-12 14:00"). */
+const bucketOf = (text, granularity) => (granularity === "hour" ? `${text.slice(0, 10)} ${text.slice(11, 13)}:00` : text.slice(0, 10));
+const bucketStart = (bucket) => parse(bucket.length > 10 ? bucket : `${bucket}T00:00:00`);
+
+/**
+ * Invented orders created in `buckets` (the overview's trend buckets: days or hours), `scale` times
+ * the usual volume. Orders of the last `recentBuckets` buckets may still be pending; nothing is
+ * created in or after the hour of `before` (where the fixture's recent orders start).
+ */
+function inventOrders(buckets, granularity, { scale, recentBuckets, before }) {
+  const orders = [];
+  buckets.forEach((bucket, i) => {
+    const start = bucketStart(bucket);
+    const weekday = (start.getUTCDay() + 6) % 7;
+    const growth = 0.7 + (0.6 * i) / Math.max(1, buckets.length - 1);
+    const perBucket = granularity === "hour" ? (9 * HOUR_WEIGHTS[start.getUTCHours()]) / HOUR_TOTAL : 9;
+    // Hours the recent orders already fill (or later) get no invented order
+    const cutoff = before === undefined ? Infinity : bucketStart(bucketOf(before, "hour")).getTime();
+    const hours = HOUR_WEIGHTS.map((w, h) => (start.getTime() + h * 3_600_000 >= cutoff ? 0 : w));
+    const open = granularity === "day" ? hours.some((w) => w > 0) : start.getTime() < cutoff;
+    // Rounded at random, so quiet hours still get an order now and then
+    const count = open ? Math.floor(perBucket * growth * WEEKDAY[weekday] * (0.75 + rand() * 0.5) * scale + rand()) : 0;
+    for (let n = 0; n < count; n++) {
+      const created = new Date(start);
+      if (granularity === "day") created.setUTCHours(weighted(HOURS, hours));
+      created.setUTCMinutes(Math.floor(rand() * 30));
+      const paid = new Date(created.getTime() + (5 + Math.floor(rand() * 20)) * 60_000);
+      const topup = rand() < 0.04;
+      const amount = topup ? TOPUP_AMOUNTS[Math.floor(rand() * TOPUP_AMOUNTS.length)] : ORDER_AMOUNTS[Math.floor(rand() * ORDER_AMOUNTS.length)];
+      const method = weighted(METHOD_SHARES.map(([m]) => m), METHOD_SHARES.map(([, w]) => w));
+      const roll = rand();
+      const status = i >= buckets.length - recentBuckets && roll < 0.3 ? "pending" : roll < 0.86 ? "complete" : "expired";
+      const fee = calculateFee(method, amount);
+      orders.push({
+        order_type: topup ? "topup" : "payment",
+        status,
+        payment_method: method,
+        order_amount: amount,
+        fee,
+        pay_amount: amount + fee,
+        user_id: String(FIRST_PAYER + BigInt(weighted(PAYERS, PAYER_WEIGHTS))),
+        created_at: format(created),
+        paid_at: status === "complete" ? format(paid) : null,
+      });
+    }
+  });
+  return orders;
+}
+
+/** The same buckets one period earlier (the period the overview compares with). */
+function earlierBuckets(period, buckets) {
+  const shift = parse(period.start).getTime() - parse(period.previous_start).getTime();
+  return buckets.map((bucket) => bucketOf(format(new Date(bucketStart(bucket).getTime() - shift)), bucket.length > 10 ? "hour" : "day"));
+}
+
+/**
+ * The orders the overview `base` (a fake-api answer) is summed from: `current` holds the period's
+ * invented orders plus the fixture's recent orders (rewritten like the order list), `previous` the
+ * period before it.
+ */
+export function overviewBook(base) {
+  seed = 20261012;
+  const { period } = base;
+  const buckets = base.trend.map((p) => p.bucket);
+  const recent = base.recent_orders.map(demoOrder).filter((o) => o.created_at >= period.start && o.created_at < period.end);
+  const before = recent.map((o) => o.created_at).sort()[0];
+  const recentBuckets = period.granularity === "hour" ? 6 : 2;
+  return {
+    current: [...inventOrders(buckets, period.granularity, { scale: 1, recentBuckets, before }), ...recent],
+    previous: inventOrders(earlierBuckets(period, buckets), period.granularity, { scale: 0.86, recentBuckets: 0 }),
+  };
+}
+
+// The bot's rounding (app/services/stats.py): one decimal for percentages, whole dollars for
+// averages, half up (away from zero), from exact integers.
+/** num / den rounded half up to a whole number. */
+function halfUp(num, den) {
+  const sign = Math.sign(num) * Math.sign(den);
+  const [a, b] = [Math.abs(num), Math.abs(den)];
+  return sign * Math.floor((2 * a + b) / (2 * b)) + 0;
+}
+const changePct = (current, previous) => (previous === 0 ? null : halfUp((current - previous) * 1000, previous) / 10);
+const ratePct = (part, whole) => (whole === 0 ? null : halfUp(part * 1000, whole) / 10);
+const changePp = (part, whole, prevPart, prevWhole) =>
+  whole === 0 || prevWhole === 0 ? null : halfUp((part * prevWhole - prevPart * whole) * 1000, whole * prevWhole) / 10;
+const average = (total, count) => (count === 0 ? null : halfUp(total, count));
+
+const sumOf = (orders) => ({
+  orders: orders.length,
+  order_amount: orders.reduce((s, o) => s + o.order_amount, 0),
+  fee: orders.reduce((s, o) => s + o.fee, 0),
+  pay_amount: orders.reduce((s, o) => s + o.pay_amount, 0),
+});
+const moneyOf = (t) => ({ excl_fee: t.order_amount, incl_fee: t.pay_amount });
+const changeOf = (cur, prev) => ({ excl_fee: changePct(cur.excl_fee, prev.excl_fee), incl_fee: changePct(cur.incl_fee, prev.incl_fee) });
+const moneyMetric = (cur, prev) => ({ current: cur, previous: prev, change_pct: changeOf(cur, prev) });
+const countMetric = (cur, prev) => ({ current: cur, previous: prev, change_pct: changePct(cur, prev) });
+const rateMetric = (part, whole, prevPart, prevWhole) => ({
+  current: ratePct(part, whole),
+  previous: ratePct(prevPart, prevWhole),
+  change_pp: changePp(part, whole, prevPart, prevWhole),
+});
+
+const paid = (orders, type) => orders.filter((o) => o.status === "complete" && (!type || o.order_type === type));
+const created = (orders, type) => orders.filter((o) => !type || o.order_type === type);
+
+/** What app/services/stats.py answers for these orders: KPIs, trend, methods, heatmap, customers. */
+function summarise(base, { current, previous }) {
+  /** { total, payment, topup } of `metric` over the orders `pick` takes from each period. */
+  const byType = (pick, metric) =>
+    Object.fromEntries([["total", undefined], ["payment", "payment"], ["topup", "topup"]].map(([key, type]) => [key, metric(pick(current, type), pick(previous, type))]));
+  const avg = (orders) => {
+    const t = sumOf(paid(orders));
+    return t.orders === 0 ? null : { excl_fee: average(t.order_amount, t.orders), incl_fee: average(t.pay_amount, t.orders) };
+  };
+  const [avgNow, avgBefore] = [avg(current), avg(previous)];
+  /** Created in the period: [complete, complete + expired]. */
+  const finished = (orders) => {
+    const complete = orders.filter((o) => o.status === "complete").length;
+    return [complete, complete + orders.filter((o) => o.status === "expired").length];
+  };
+  const done = sumOf(paid(current));
+  const pending = sumOf(current.filter((o) => o.status === "pending"));
+  const kpis = {
+    revenue: byType(paid, (cur, prev) => moneyMetric(moneyOf(sumOf(cur)), moneyOf(sumOf(prev)))),
+    revenue_detail: { order_amount: done.order_amount, fee: done.fee, pay_amount: done.pay_amount },
+    completed_orders: byType(paid, (cur, prev) => countMetric(cur.length, prev.length)),
+    created_orders: byType(created, (cur, prev) => countMetric(cur.length, prev.length)),
+    average_order_value: {
+      current: avgNow,
+      previous: avgBefore,
+      change_pct: avgNow && avgBefore ? changeOf(avgNow, avgBefore) : { excl_fee: null, incl_fee: null },
+    },
+    completion_rate: rateMetric(...finished(current), ...finished(previous)),
+    pending: { orders: pending.orders, amount: moneyOf(pending) },
+  };
+
+  const { granularity } = base.period;
+  const trend = base.trend.map(({ bucket }) => {
+    const inBucket = sumOf(paid(current).filter((o) => bucketOf(o.paid_at, granularity) === bucket));
+    return {
+      bucket,
+      revenue: moneyOf(inBucket),
+      completed_orders: inBucket.orders,
+      created_orders: current.filter((o) => bucketOf(o.created_at, granularity) === bucket).length,
+    };
+  });
+
+  const group = (orders, key) => {
+    const map = new Map();
+    for (const o of orders) map.set(key(o), [...(map.get(key(o)) ?? []), o]);
+    return map;
+  };
+  const payment_methods = [...group(paid(current), (o) => o.payment_method)]
+    .map(([method, orders]) => ({ method, orders: orders.length, amount: moneyOf(sumOf(orders)) }))
+    .sort((a, b) => b.amount.excl_fee - a.amount.excl_fee || a.method.localeCompare(b.method));
+  const heat = group(paid(current), (o) => {
+    const at = parse(o.paid_at);
+    return ((at.getUTCDay() + 6) % 7) * 24 + at.getUTCHours();
+  });
+  const heatmap = Array.from({ length: 168 }, (_, i) => ({ weekday: Math.floor(i / 24), hour: i % 24, orders: heat.get(i)?.length ?? 0 }));
+
+  const [payers, payersBefore] = [group(paid(current), (o) => o.user_id), group(paid(previous), (o) => o.user_id)];
+  const repeat = (map) => [...map.values()].filter((orders) => orders.length >= 2).length;
+  const top = (column) =>
+    [...payers]
+      .map(([user_id, orders]) => ({ user_id, orders, total: sumOf(orders) }))
+      .sort((a, b) => b.total[column] - a.total[column] || b.orders.length - a.orders.length || a.user_id.localeCompare(b.user_id))
+      .slice(0, 10)
+      .map(({ user_id, orders, total }) => ({ user_id, name: payerName(user_id), avatar_url: null, orders: orders.length, amount: moneyOf(total) }));
+  const customers = {
+    unique_payers: countMetric(payers.size, payersBefore.size),
+    repeat_rate: rateMetric(repeat(payers), payers.size, repeat(payersBefore), payersBefore.size),
+    top: { excl_fee: top("order_amount"), incl_fee: top("pay_amount") },
+  };
+  return { kpis: { ...base.kpis, ...kpis }, trend, payment_methods, heatmap, customers };
+}
+
+function demoOverview(base) {
+  return { ...base, ...summarise(base, overviewBook(base)), recent_orders: base.recent_orders.map(demoOrder) };
+}
+
+// ---- settings and the Discord lists the settings pages pick from ---------------------------
+
+/**
+ * The settings changes (a dashboard PUT body's `changes`) that turn the fixture's settings into
+ * 星光遊戲社's: its store number, every SmilePay secret set, every method on with the bot's default
+ * fees. `npm run capture` saves them through the fake API after every reset, so the settings pages
+ * show them and a save there answers with them too.
+ */
+export const DEMO_SETTINGS_CHANGES = Object.freeze({
+  smilepay_store_number: String(DEMO.storeNumber),
+  smilepay_param_code: "A1B2C3",
+  smilepay_verify_key: "D4E5F6",
+  smilepay_mid_verify_param: "G7H8",
+  payment: Object.freeze({
+    ...Object.fromEntries(Object.entries(DEFAULT_FEES).map(([method, fee]) => [method, { enabled: true, fee: String(fee) }])),
+    ibon_extra_fee: String(IBON_EXTRA_FEE),
+  }),
+});
+
+/** The channels the settings pages offer: the bot may post and manage everywhere, plus #指令區. */
+function demoChannels(base) {
   return {
     ...base,
-    smilepay_store_number: DEMO.storeNumber,
-    smilepay_param_code_set: true,
-    smilepay_verify_key_set: true,
-    smilepay_mid_verify_param_set: true,
-    payment: { ...payment, ibon_extra_fee: IBON_EXTRA_FEE },
+    text_channels: [
+      ...base.text_channels.map((c) => ({ ...c, bot_can_send: true })),
+      { id: "700000000000000003", name: "指令區", category_id: null, bot_can_send: true },
+    ],
+    categories: base.categories.map((c) => ({ ...c, bot_can_manage: true })),
   };
 }
 
@@ -210,7 +370,7 @@ const ROUTES = [
   [new RegExp(`^${server}/overview$`), demoOverview],
   [new RegExp(`^${server}/orders$`), (body) => ({ ...body, items: body.items.map(demoOrder) })],
   [new RegExp(`^${server}/orders/\\d+$`), demoOrderDetail],
-  [new RegExp(`^${server}/settings$`), demoSettings],
+  [new RegExp(`^${server}/discord/channels$`), demoChannels],
   [new RegExp(`^${server}/features$`), (body) => ({ ...body, auto_publish: body.auto_publish.map((c) => ({ ...c, name: c.name ?? "活動消息" })) })],
 ];
 
