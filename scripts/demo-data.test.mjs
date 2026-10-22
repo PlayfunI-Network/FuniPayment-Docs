@@ -1,0 +1,147 @@
+// rewrite() against the bot's real fake-api data (web/e2e/fixtures.mjs), so a fixture change that
+// brings in a new test value fails here before it reaches a screenshot.
+// Needs the bot repo: FUNIPAY_BOT_DIR, default ../../PycharmProjects/FuniPayment (like sync:bot).
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
+import { beforeAll, describe, expect, test } from "vitest";
+import { calculateFee, DEFAULT_FEES } from "../lib/fees.mjs";
+import { DEMO_BUYER_INFO, DEMO_PEOPLE } from "../lib/scenario";
+import { BANNED, DEMO, findBanned, rewrite } from "./demo-data.mjs";
+
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const botDir = path.resolve(root, process.env.FUNIPAY_BOT_DIR ?? "../../PycharmProjects/FuniPayment");
+const fixturesFile = path.join(botDir, "web", "e2e", "fixtures.mjs");
+
+/** @type {any} */
+let F;
+beforeAll(async () => {
+  if (!fs.existsSync(fixturesFile)) throw new Error(`找不到 bot 專案的 ${fixturesFile}（設定 FUNIPAY_BOT_DIR）`);
+  F = await import(pathToFileURL(fixturesFile).href);
+});
+
+const S = "111111111111111111";
+// fake-api.mjs's inline answers (not exported from fixtures.mjs)
+const ME = { id: "222222222222222222", name: "測試商家", avatar_url: null, is_bot_owner: false, needs_terms: false, welcome_seen: true };
+const SERVERS = [
+  { id: S, name: "測試伺服器", icon_url: null, suspended: false, has_orders: true },
+  { id: "111111111111111777", name: "沒有遷移的伺服器", icon_url: null, suspended: false, has_orders: true },
+  { id: "111111111111111666", name: null, icon_url: null, suspended: false, has_orders: false },
+];
+
+/** The fake-api answer for every path the dashboard demos open. */
+function responses() {
+  return {
+    "/api/me": ME,
+    "/api/servers": SERVERS,
+    [`/api/servers/${S}`]: SERVERS[0],
+    "/api/onboarding/state": {
+      daily_remaining: F.DAILY_CREATE_LIMIT, invite_url: F.INVITE_URL, owner_suspended: false, servers: F.NEWBIE_SERVERS,
+      terms_accepted: false, terms_version: F.LEGAL.terms.version, welcome_seen: false,
+    },
+    [`/api/onboarding/servers/${F.NEW_SERVER_ID}/options`]: { roles: F.ROLES, channels: F.CHANNELS },
+    [`/api/servers/${S}/overview`]: F.overview("last_30d", true),
+    [`/api/servers/${S}/orders`]: F.orderPage(new URLSearchParams()),
+    [`/api/servers/${S}/orders/50000000001`]: F.orderDetail("50000000001"),
+    [`/api/servers/${S}/orders/50000000005`]: F.orderDetail("50000000005"),
+    [`/api/servers/${S}/settings`]: F.SETTINGS,
+    [`/api/servers/${S}/settings/audit`]: F.AUDIT,
+    [`/api/servers/${S}/features`]: F.FEATURES,
+    "/api/admin/overview": F.ADMIN_OVERVIEW,
+  };
+}
+
+const rewritten = () => Object.fromEntries(Object.entries(responses()).map(([p, body]) => [p, rewrite(p, structuredClone(body))]));
+
+/** Every order row in an answer: list items, the overview's recent orders, or one order's detail. */
+function ordersIn(body) {
+  if (Array.isArray(body?.items) && body.items[0]?.smilepay_id) return body.items;
+  if (Array.isArray(body?.recent_orders)) return body.recent_orders;
+  if (body?.smilepay_id) return [body];
+  return [];
+}
+
+describe("rewrite", () => {
+  test("沒有任何測試字樣", () => {
+    for (const [p, body] of Object.entries(rewritten())) {
+      const text = JSON.stringify(body);
+      for (const word of [...BANNED, "沒有遷移的伺服器"]) expect(text, `${p} 還有「${word}」`).not.toContain(word);
+    }
+  });
+
+  test("fixture 本來就有測試字樣（測試真的有在檢查）", () => {
+    const all = JSON.stringify(responses());
+    for (const word of ["測試", "開發者", "沒有遷移的伺服器"]) expect(all).toContain(word);
+  });
+
+  test("伺服器名稱是星光遊戲社", () => {
+    const r = rewritten();
+    expect(DEMO.shop).toBe("星光遊戲社");
+    const state = r["/api/onboarding/state"];
+    expect(state.servers.find((s) => s.id === F.NEW_SERVER_ID)).toMatchObject({ name: DEMO.shop, state: "available" });
+    expect(state.servers.find((s) => s.id === F.NEW_SERVER_ID).icon_url).toMatch(/^data:image\/png;base64,/);
+    expect(r["/api/servers"]).toEqual([expect.objectContaining({ id: S, name: DEMO.shop })]);
+    expect(r[`/api/servers/${S}`].name).toBe(DEMO.shop);
+    const group = r[`/api/servers/${S}/orders`].scope.group.map((g) => g.name);
+    expect(group[0]).toBe(DEMO.shop);
+  });
+
+  test("人物用角色名，和 Discord demo 同一批", () => {
+    const r = rewritten();
+    expect(DEMO.merchant).toBe(DEMO_PEOPLE.admin.name);
+    expect(DEMO.buyer).toBe(DEMO_PEOPLE.buyer.name);
+    expect(r["/api/me"]).toMatchObject({ name: DEMO.merchant, is_bot_owner: false });
+    for (const row of r[`/api/servers/${S}/orders`].items) expect(row.user_name).toBe(DEMO.buyer);
+    const detail = r[`/api/servers/${S}/orders/50000000001`];
+    expect(detail).toMatchObject({ buyer_name: DEMO_BUYER_INFO.name, buyer_mail: DEMO_BUYER_INFO.email, buyer_phone: DEMO_BUYER_INFO.phone });
+    for (const item of r[`/api/servers/${S}/settings/audit`].items) if (item.actor_name !== null) expect(item.actor_name).toBe(DEMO.merchant);
+  });
+
+  test("訂單的金額與手續費符合 calculateFee", () => {
+    let count = 0;
+    for (const body of Object.values(rewritten())) {
+      for (const row of ordersIn(body)) {
+        count += 1;
+        expect(row.fee, `${row.smilepay_id} ${row.payment_method} ${row.order_amount}`).toBe(calculateFee(row.payment_method, row.order_amount));
+        expect(row.pay_amount).toBe(row.order_amount + row.fee);
+      }
+    }
+    expect(count).toBeGreaterThan(20);
+  });
+
+  test("訂單明細和列表裡同一筆訂單一致", () => {
+    const r = rewritten();
+    for (const id of ["50000000001", "50000000005"]) {
+      const row = r[`/api/servers/${S}/orders`].items.find((o) => o.smilepay_id === id);
+      const detail = r[`/api/servers/${S}/orders/${id}`];
+      for (const key of ["order_amount", "fee", "pay_amount", "payment_method", "status", "order_type"]) expect(detail[key]).toBe(row[key]);
+    }
+  });
+
+  test("不改狀態、編號與筆數（篩選與分頁照 fixture）", () => {
+    const before = responses()[`/api/servers/${S}/orders`];
+    const after = rewritten()[`/api/servers/${S}/orders`];
+    expect(after.items.map((o) => [o.smilepay_id, o.status, o.order_type])).toEqual(before.items.map((o) => [o.smilepay_id, o.status, o.order_type]));
+    expect(after.status_counts).toEqual(before.status_counts);
+  });
+
+  test("設定的手續費是 bot 的預設值，付款方式全開", () => {
+    const settings = rewritten()[`/api/servers/${S}/settings`];
+    for (const [method, fee] of Object.entries(DEFAULT_FEES)) expect(settings.payment[method]).toEqual({ enabled: true, fee });
+    expect(settings.smilepay_store_number).toBe(DEMO.storeNumber);
+  });
+
+  test("同樣的輸入每次都得到同樣的結果（深色、淺色兩張圖一致）", () => {
+    expect(JSON.stringify(rewritten())).toBe(JSON.stringify(rewritten()));
+  });
+
+  test("沒列出的路徑也會換掉名稱", () => {
+    expect(rewrite("/api/admin/servers", { name: "測試伺服器", owner: "開發者" })).toEqual({ name: DEMO.shop, owner: DEMO.botOwner });
+  });
+});
+
+test("findBanned 找出殘留字樣，允許的介面原文除外", () => {
+  expect(findBanned("你好，測試商家")).toEqual(["測試"]);
+  expect(findBanned("建議先在 Discord 用 /fp 建立一筆小額測試訂單")).toEqual([]);
+  expect(findBanned("開發者")).toEqual(["開發者"]);
+});
