@@ -4,7 +4,17 @@ export { Cursor, CURSOR_MS, type CursorState } from "./cursor";
 export { Caption } from "./caption";
 export { cameraTransform, type Rect, type Shot } from "@/lib/camera";
 export { SnapshotMessage, SnapshotEmbed, type MenuState } from "./snapshot";
-export { DashboardShot, DASHBOARD_SHOTS, dashboardShot, shotTarget, type DashboardShotData } from "./dashboard-shot";
+export {
+  DashboardShot,
+  DASHBOARD_SHOTS,
+  dashboardPicture,
+  dashboardShot,
+  shotTarget,
+  type DashboardLayout,
+  type DashboardPicture,
+  type DashboardShotData,
+} from "./dashboard-shot";
+export { DashboardDemo, useReducedMotion, type DashboardStep } from "./dashboard-demo";
 export {
   Canvas,
   canvasPoint,
