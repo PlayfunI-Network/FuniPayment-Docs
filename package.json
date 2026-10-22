@@ -10,6 +10,7 @@
     "check:export": "node scripts/check-export.mjs",
     "sync:bot": "node scripts/sync-bot-ui.mjs",
     "capture": "node scripts/capture-dashboard.mjs",
+    "list:materials": "node scripts/list-materials.mjs",
     "lint": "eslint",
     "typecheck": "tsc --noEmit"
   },
