@@ -1,0 +1,176 @@
+{
+  "welcome": {
+    "dark": "/demo/dashboard/welcome-dark.webp",
+    "light": "/demo/dashboard/welcome-light.webp",
+    "width": 1040,
+    "height": 1220,
+    "targets": {
+      "tour": {
+        "x": 0.0769,
+        "y": 0.0666,
+        "w": 0.8462,
+        "h": 0.8668
+      },
+      "next": {
+        "x": 0.7365,
+        "y": 0.8268,
+        "w": 0.1231,
+        "h": 0.0525
+      },
+      "skip": {
+        "x": 0.7681,
+        "y": 0.1207,
+        "w": 0.0916,
+        "h": 0.0459
+      }
+    }
+  },
+  "setup-1": {
+    "dark": "/demo/dashboard/setup-1-dark.webp",
+    "light": "/demo/dashboard/setup-1-light.webp",
+    "width": 1616,
+    "height": 1288,
+    "targets": {
+      "server": {
+        "x": 0.0297,
+        "y": 0.3273,
+        "w": 0.4641,
+        "h": 0.1044
+      },
+      "next": {
+        "x": 0.8911,
+        "y": 0.9119,
+        "w": 0.0792,
+        "h": 0.0497
+      }
+    }
+  },
+  "setup-2": {
+    "dark": "/demo/dashboard/setup-2-dark.webp",
+    "light": "/demo/dashboard/setup-2-light.webp",
+    "width": 1616,
+    "height": 1512,
+    "targets": {
+      "adminRole": {
+        "x": 0.0594,
+        "y": 0.3237,
+        "w": 0.8812,
+        "h": 0.0317
+      },
+      "logChannel": {
+        "x": 0.0594,
+        "y": 0.4888,
+        "w": 0.8812,
+        "h": 0.0317
+      },
+      "next": {
+        "x": 0.8911,
+        "y": 0.9259,
+        "w": 0.0792,
+        "h": 0.0423
+      }
+    }
+  },
+  "setup-3": {
+    "dark": "/demo/dashboard/setup-3-dark.webp",
+    "light": "/demo/dashboard/setup-3-light.webp",
+    "width": 1616,
+    "height": 1552,
+    "targets": {
+      "storeNumber": {
+        "x": 0.0507,
+        "y": 0.4596,
+        "w": 0.4752,
+        "h": 0.0422
+      },
+      "paramCode": {
+        "x": 0.0507,
+        "y": 0.5457,
+        "w": 0.4752,
+        "h": 0.0422
+      },
+      "verifyKey": {
+        "x": 0.0507,
+        "y": 0.6317,
+        "w": 0.4752,
+        "h": 0.0422
+      },
+      "next": {
+        "x": 0.8911,
+        "y": 0.9274,
+        "w": 0.0792,
+        "h": 0.0412
+      }
+    }
+  },
+  "setup-4": {
+    "dark": "/demo/dashboard/setup-4-dark.webp",
+    "light": "/demo/dashboard/setup-4-light.webp",
+    "width": 1616,
+    "height": 1532,
+    "targets": {
+      "bankTransfer": {
+        "x": 0.672,
+        "y": 0.3459,
+        "w": 0.0396,
+        "h": 0.024
+      },
+      "storeBarcode": {
+        "x": 0.672,
+        "y": 0.4343,
+        "w": 0.0396,
+        "h": 0.024
+      },
+      "ibon": {
+        "x": 0.672,
+        "y": 0.5227,
+        "w": 0.0396,
+        "h": 0.024
+      },
+      "famiport": {
+        "x": 0.672,
+        "y": 0.6112,
+        "w": 0.0396,
+        "h": 0.024
+      },
+      "hilife": {
+        "x": 0.672,
+        "y": 0.6996,
+        "w": 0.0396,
+        "h": 0.024
+      },
+      "next": {
+        "x": 0.8911,
+        "y": 0.9259,
+        "w": 0.0792,
+        "h": 0.0418
+      }
+    }
+  },
+  "setup-5": {
+    "dark": "/demo/dashboard/setup-5-dark.webp",
+    "light": "/demo/dashboard/setup-5-light.webp",
+    "width": 1616,
+    "height": 1996,
+    "targets": {
+      "summary": {
+        "x": 0.0297,
+        "y": 0.1764,
+        "w": 0.9406,
+        "h": 0.5311
+      },
+      "agree": {
+        "x": 0.0507,
+        "y": 0.8307,
+        "w": 0.0198,
+        "h": 0.016
+      },
+      "create": {
+        "x": 0.0507,
+        "y": 0.8595,
+        "w": 0.0619,
+        "h": 0.0321
+      }
+    }
+  }
+}

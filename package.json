@@ -9,6 +9,7 @@
     "test": "vitest run",
     "check:export": "node scripts/check-export.mjs",
     "sync:bot": "node scripts/sync-bot-ui.mjs",
+    "capture": "node scripts/capture-dashboard.mjs",
     "lint": "eslint",
     "typecheck": "tsc --noEmit"
   },
@@ -32,6 +33,7 @@
     "eslint": "9.39.5",
     "eslint-config-next": "16.4.2",
     "jsdom": "29.1.1",
+    "playwright": "1.64.1",
     "postcss": "8.5.31",
     "tailwindcss": "4.3.3",
     "typescript": "6.0.3",
