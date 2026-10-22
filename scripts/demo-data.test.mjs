@@ -89,6 +89,11 @@ describe("rewrite", () => {
     expect(group[0]).toBe(DEMO.shop);
   });
 
+  test("步驟 1 有四種伺服器狀態", () => {
+    const states = rewritten()["/api/onboarding/state"].servers.map((s) => s.state).sort();
+    expect(states).toEqual(["available", "no_permission", "set_up_by_other", "set_up_by_you"]);
+  });
+
   test("人物用角色名，和 Discord demo 同一批", () => {
     const r = rewritten();
     expect(DEMO.merchant).toBe(DEMO_PEOPLE.admin.name);

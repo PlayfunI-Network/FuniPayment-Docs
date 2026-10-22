@@ -365,7 +365,14 @@ function demoChannels(base) {
 // ---- the rewrite ------------------------------------------------------------------------
 
 const server = String.raw`/api/servers/\d+`;
+/**
+ * A server the user already set up (fake-api shows 已由你設定 only after the wizard created one,
+ * and that ends the wizard), so step 1's screenshot has all four states.
+ */
+export const DEMO_EXTRA_SERVER = Object.freeze({ id: "222222222222222004", name: "星光桌遊館", icon_url: null, state: "set_up_by_you" });
+
 const ROUTES = [
+  [new RegExp("^/api/onboarding/state$"), (body) => ({ ...body, servers: [...body.servers, { ...DEMO_EXTRA_SERVER }] })],
   [new RegExp(`^/api/servers$`), (body) => body.filter((s) => s.id === SERVER_ID)],
   [new RegExp(`^${server}/overview$`), demoOverview],
   [new RegExp(`^${server}/orders$`), (body) => ({ ...body, items: body.items.map(demoOrder) })],

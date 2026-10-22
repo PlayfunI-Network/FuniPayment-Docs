@@ -160,7 +160,7 @@ export function PaymentSaveDemo() {
 
 - 截圖比舞台高時（總覽、設定頁），畫面會像捲動網頁一樣自動捲到目標的位置，不用自己算。
 - 目標名字寫錯、或目標不在當下那張截圖上，會直接報錯並說是第幾步。
-- 舞台寬度小於 600 px 時用手機版截圖，前提是每張用到的截圖都有手機版，而且每個 `target` 手機版都有。「可用素材」裡標 * 的目標只有桌面版（側邊欄、表格的部分欄位），用到它的示範在手機上會改用桌面版截圖，字會很小：手機上要看清楚的示範，就只用沒有 * 的目標。
+- 舞台寬度小於 600 px 時用手機版截圖，前提是每張用到的截圖都有手機版，而且每個 `target` 手機版都有。「可用素材」裡標 * 的目標只有桌面版（側邊欄、表格的部分欄位），用到它的示範在手機上會改用桌面版截圖，字會很小：手機上要看清楚的示範，就只用沒有 * 的目標。設定頁的分頁列在手機上要橫向捲動，所以 `tabChannels`（訂單頻道流程）和 `tabBalance`（點數系統）這兩個分頁只有桌面版：凡是游標要點這兩個分頁的示範，在 375 px 一律改用桌面版截圖，這是常態不是例外。要在手機上看清楚，就從 `settings-channels`、`settings-balance` 這兩張截圖開始，不要再點分頁。
 - 減少動態時不播放，改成全景：每個 caption 一個數字標號，標在那一段第一個 `target` 上，說明列在圖下面。所以每個 caption 那段至少指一個目標。
 - 要讓人看到「按了才變」，跟 Discord 的示範一樣分兩步：先 `click`，300 ms 後再 `swapTo`。
 - 截圖上的數字（金額、訂單數）全部來自同一批示範訂單，手續費照 `calculateFee` 算，總覽、訂單列表、訂單明細彼此對得上。頁面文字引用數字時照截圖寫。
@@ -227,7 +227,9 @@ Discord 畫面（`components/discord`，永遠深色）：
 
 ## 附錄：可用素材
 
-以下是 `npm run list:materials` 在 57efdd6 的輸出。之後重新產生素材，以指令的輸出為準。
+以下是 `npm run list:materials` 在 d3a32d2 加上本次改動 的輸出。之後重新產生素材，以指令的輸出為準。
+
+訂單頁的 `methodFilter`（付款方式）和 `dateFilter`（建立日期）只有按鈕的目標，沒有拍打開後的選單：付款方式的選單會列出機器人網站 `web/src/lib/format.ts` 裡殘留的「信用卡」標籤（本站禁用字詞），日期選單則還沒要求拍。需要這兩個選單的畫面，不要等截圖，改在文字裡描述；只有訂單類型選單（`orders-type-menu`）有拍。
 
 ### Bot 畫面（`SnapshotMessage id=…`）
 
@@ -425,7 +427,10 @@ Discord 畫面（`components/discord`，永遠深色）：
 
 - `login`：`login`、`highlights`*
 - `welcome`：`tour`、`next`、`skip`
-- `setup-1`：`server`、`next`
+- `setup-1`：`server`、`stateAvailable`、`stateSetUpByYou`、`openDashboard`、`stateSetUpByOther`、`stateNoPermission`、`noPermissionNote`、`invite`、`refresh`、`help`、`helpSummary`、`next`
+- `setup-1-help`：`server`、`stateAvailable`、`stateSetUpByYou`、`openDashboard`、`stateSetUpByOther`、`stateNoPermission`、`noPermissionNote`、`invite`、`refresh`、`help`、`helpSummary`、`next`、`helpList`
+- `setup-daily-limit`：`card`、`title`、`home`、`logout`
+- `setup-owner-suspended`：`card`、`title`、`home`、`logout`、`contact`
 - `setup-2`：`adminRole`、`logChannel`、`next`
 - `setup-3`：`storeNumber`、`paramCode`、`verifyKey`、`midParam`、`next`
 - `setup-4`：`bankTransfer`、`storeBarcode`、`ibon`、`famiport`、`hilife`、`next`
@@ -455,3 +460,4 @@ Discord 畫面（`components/discord`，永遠深色）：
 - `settings-balance-saved`：`tabs`、`tabBasic`、`tabSmilepay`、`tabPayment`、`switches`、`enable`、`transfer`、`payWithBalance`、`topup`、`leaderboard`、`name`、`adminRoles`、`saved`、`tabChannels`*、`tabBalance`*
 - `settings-history`：`intro`、`list`、`webRow`、`secretRow`、`systemRow`、`createdRow`、`pagination`、`serverSwitcher`*、`navOverview`*、`navOrders`*、`navSettings`*、`navHistory`*、`navFeatures`*、`theme`*
 - `features`：`autoPublish`、`autoPublishChannels`、`dynamicVc`、`dynamicVcChannels`、`variables`、`serverSwitcher`*、`navOverview`*、`navOrders`*、`navSettings`*、`navHistory`*、`navFeatures`*、`theme`*
+- `features-variables-open`：`dynamicVc`、`variables`、`variablesSummary`、`variablesList`、`varServerMembers`、`varCompletedAmount`、`varPendingOrders`、`varMonthlyOrders`

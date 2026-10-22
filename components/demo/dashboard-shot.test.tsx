@@ -26,7 +26,10 @@ describe("DashboardShot", () => {
 describe("dashboard-shots.generated.json", () => {
   it("has the wizard and the welcome tour with the brief's targets", () => {
     for (const id of WIZARD) expect(DASHBOARD_SHOTS[id], id).toBeTruthy();
-    expect(Object.keys(DASHBOARD_SHOTS["setup-1"].targets)).toEqual(["server", "next"]);
+    expect(Object.keys(DASHBOARD_SHOTS["setup-1"].targets)).toEqual([
+      "server", "stateAvailable", "stateSetUpByYou", "openDashboard", "stateSetUpByOther", "stateNoPermission",
+      "noPermissionNote", "invite", "refresh", "help", "helpSummary", "next",
+    ]);
     expect(Object.keys(DASHBOARD_SHOTS["setup-2"].targets)).toContain("adminRole");
     expect(Object.keys(DASHBOARD_SHOTS["setup-3"].targets)).toEqual(expect.arrayContaining(["storeNumber", "paramCode", "verifyKey"]));
     expect(Object.keys(DASHBOARD_SHOTS["setup-4"].targets)).toEqual(expect.arrayContaining(["bankTransfer", "famiport"]));
