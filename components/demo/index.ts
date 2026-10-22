@@ -1,0 +1,5 @@
+export { DemoStage, frameAt, type DemoStep, type DemoFrame } from "./stage";
+export { Camera, CAMERA_MS } from "./camera";
+export { Cursor, CURSOR_MS, type CursorState } from "./cursor";
+export { Caption } from "./caption";
+export { cameraTransform, type Rect, type Shot } from "@/lib/camera";

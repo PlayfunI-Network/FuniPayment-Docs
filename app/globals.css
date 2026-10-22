@@ -173,6 +173,38 @@ h3 {
   animation: demo-blink 1s steps(1) infinite;
 }
 
+/* Demo camera and cursor (components/demo). The camera transitions --camera-scale together
+   with its transform, so the cursor can divide by it every frame and keep its on-screen size. */
+@property --camera-scale {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 1;
+}
+@keyframes demo-press {
+  40% {
+    transform: scale(0.8);
+  }
+}
+.demo-press {
+  animation: demo-press 0.32s ease-out;
+}
+@keyframes demo-ripple {
+  from {
+    opacity: 0.9;
+    transform: scale(0.2);
+  }
+  35% {
+    opacity: 0.8;
+  }
+  to {
+    opacity: 0;
+    transform: scale(1);
+  }
+}
+.demo-ripple {
+  animation: demo-ripple 0.8s cubic-bezier(0.2, 0.6, 0.35, 1) forwards;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
