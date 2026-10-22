@@ -192,6 +192,9 @@ async function takeShot(browser, encoder, shot, variant, theme) {
     await page.mouse.move(0, 0);
     // No focus ring left on the last field an action used (demos draw their own cursor)
     await page.evaluate(() => (document.activeElement instanceof HTMLElement ? document.activeElement.blur() : undefined));
+    // Back to the top: an action may have scrolled, and a full-page shot of a scrolled page draws
+    // the sticky header in the middle of it
+    await page.evaluate(() => window.scrollTo(0, 0));
     await page.waitForTimeout(300);
 
     const here = new URL(page.url());
