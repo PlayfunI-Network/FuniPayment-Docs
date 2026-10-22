@@ -1,11 +1,16 @@
 import { expect, test } from "vitest";
 import {
+  assertClean,
   checkFees,
   convertCommands,
   convertKeys,
   extractConstants,
   extractDicts,
+  extractExpiredOrder,
   extractModal,
+  extractTemplate,
+  extractTextEdit,
+  rawEntry,
   renderGenerated,
 } from "./sync-bot-ui-lib.mjs";
 import * as realConfig from "./sync-bot-ui.config.mjs";
@@ -142,7 +147,8 @@ test("輸出不含 cdn.test、imgur、測試", () => {
 
 test("沒對應到的頭像、mention 或測試字樣會丟錯，不默默留下", () => {
   const withAvatar = structuredClone(UI);
-  withAvatar["builder/y"].embed.thumbnail = { url: "https://cdn.test/avatar/999.png" };
+  // (999 is the bot's own avatar, which URL_RULES maps; 555 is nobody)
+  withAvatar["builder/y"].embed.thumbnail = { url: "https://cdn.test/avatar/555.png" };
   expect(() => convertKeys(withAvatar, KEYS, GLOBAL)).toThrow(/cdn\.test/);
 
   const withMention = structuredClone(UI);
@@ -369,4 +375,191 @@ test("typed 匯出用 satisfies 檢查型別", () => {
   const text = renderGenerated({ entries: {}, extra: {}, typed: { COMMANDS: { type: "Record<string, CommandData>", value: {} } }, commit: "c" });
   expect(text).toContain("export const COMMANDS = {} satisfies Record<string, CommandData>;");
   expect(text).toContain('import type { BotUiEntry, CommandData } from "@/lib/bot-ui-types";');
+});
+
+// ---- Parts, server texts, channels and the source extractors ----
+
+const DM_EMBED = { color: 47103, title: "餘額異動通知", description: "您在 __測試商店__ 被增加了 **40** 點", has_timestamp: true, type: "rich", flags: 0 };
+const LOG_EMBED = { color: 47103, title: "使用者轉帳紀錄", description: "從 <@333333333333333333> 轉帳給 <@444444444444444444>", has_timestamp: true, type: "rich", flags: 0 };
+
+/** A flow that records state: its calls are under `calls`, one call name used twice. */
+const FLOW_UI = {
+  "flow/z": {
+    balance: 90,
+    calls: {
+      order: ["response.edit_message", "client.send_to_log_channel", "client.send_dm_to_user", "client.send_dm_to_user", "client.notify_owner"],
+      "response.edit_message": [{ args: [], kwargs: { embed: { embed: { ...DM_EMBED, title: "成功" } }, view: null } }],
+      "client.send_to_log_channel": [{ args: ["<ServerSettings>", { embed: LOG_EMBED }], kwargs: {} }],
+      "client.send_dm_to_user": [
+        { args: [333333333333333333], kwargs: { embed: { embed: DM_EMBED } } },
+        { args: [444444444444444444], kwargs: { embed: { embed: { ...DM_EMBED, title: "第二則" } } } },
+      ],
+      "client.notify_owner": [{ args: [111111111111111111, "伺服器 **__測試商店__** 的類別 <#234567890123456789>"], kwargs: {} }],
+    },
+  },
+  "builder/w": {
+    dm: DM_EMBED,
+    confirm: { ...DM_EMBED, title: "確認" },
+    view: { children: [{ type: "Button", label: "確認並轉帳", style: "success", disabled: false, url: null }], timeout: 600 },
+  },
+  "server/x": [{ args: ["您無法在此頻道使用此指令，請前往 <#888888888888888888> 使用"], kwargs: { ephemeral: true } }],
+  "server/owner": [{ args: [111111111111111111, "伺服器 **__測試商店__** 的日誌頻道 <#123>"], kwargs: {} }],
+};
+const CH_GLOBAL = { ...GLOBAL, channels: realConfig.CHANNELS };
+
+test("flow 的 part：互動回覆、log 頻道、第 n 則私訊、私訊擁有者", () => {
+  const out = convertKeys(
+    FLOW_UI,
+    {
+      "flow/z": { replace: [] },
+      "flow/z@client.send_to_log_channel": { replace: [] },
+      "flow/z@client.send_dm_to_user#1": { replace: [["**40**", "**{amount}**"]] },
+      "flow/z@client.notify_owner": { replace: [] },
+    },
+    CH_GLOBAL,
+  );
+  expect(out["flow/z"]).toMatchObject({ via: "response.edit_message", embeds: [{ title: "成功" }], components: [] });
+  expect(out["flow/z@client.send_to_log_channel"]).toMatchObject({
+    via: "client.send_to_log_channel",
+    embeds: [{ description: "從 <@{buyer}> 轉帳給 <@{admin}>" }],
+  });
+  expect(out["flow/z@client.send_dm_to_user#1"].embeds[0]).toMatchObject({
+    title: "第二則",
+    description: "您在 __{shop}__ 被增加了 **{amount}** 點",
+  });
+  expect(out["flow/z@client.notify_owner"]).toEqual({
+    kind: "message",
+    via: "client.notify_owner",
+    content: "伺服器 **__{shop}__** 的類別 <#{channel:category}>",
+    embeds: [],
+    components: [],
+    ephemeral: false,
+  });
+  expect(() => convertKeys(FLOW_UI, { "flow/z@client.send_dm_to_user#2": { replace: [] } }, CH_GLOBAL)).toThrow(/第 3 個/);
+  expect(() => convertKeys(FLOW_UI, { "flow/z@client.unknown": { replace: [] } }, CH_GLOBAL)).toThrow(/不認得的訊息呼叫/);
+});
+
+test("builder 的 part：哪一則帶按鈕由 config 決定", () => {
+  const out = convertKeys(
+    FLOW_UI,
+    { "builder/w@confirm": { replace: [], view: true }, "builder/w@dm": { replace: [], view: false } },
+    CH_GLOBAL,
+  );
+  expect(out["builder/w@confirm"].components).toEqual([
+    { type: "button", label: "確認並轉帳", style: "success", disabled: false, url: null },
+  ]);
+  expect(out["builder/w@dm"].components).toEqual([]);
+  expect(() => convertKeys(FLOW_UI, { "builder/w@dm": { replace: [] } }, CH_GLOBAL)).toThrow(/view: true 或 false/);
+  expect(() => convertKeys(FLOW_UI, { "builder/w@log": { replace: [], view: false } }, CH_GLOBAL)).toThrow(/builder 沒有 log/);
+});
+
+test("server 訊息：回覆（ephemeral）與給擁有者的私訊，頻道 mention 換成 token", () => {
+  const out = convertKeys(FLOW_UI, { "server/x": { replace: [] }, "server/owner": { replace: [] } }, CH_GLOBAL);
+  expect(out["server/x"]).toEqual({
+    kind: "message",
+    via: "reply",
+    content: "您無法在此頻道使用此指令，請前往 <#{channel:command}> 使用",
+    embeds: [],
+    components: [],
+    ephemeral: true,
+  });
+  expect(out["server/owner"]).toMatchObject({
+    via: "client.notify_owner",
+    content: "伺服器 **__{shop}__** 的日誌頻道 <#{channel:log}>",
+  });
+  // 沒有對應的頻道 ID 不默默留下
+  expect(() => convertKeys(FLOW_UI, { "server/x": { replace: [] } }, GLOBAL)).toThrow(/頻道 mention/);
+});
+
+test("per-key mentions：同一個 ID 在這個 key 是另一個人", () => {
+  const out = convertKeys(
+    FLOW_UI,
+    { "flow/z@client.send_to_log_channel": { replace: [], mentions: { "444444444444444444": "recipient" } } },
+    CH_GLOBAL,
+  );
+  expect(out["flow/z@client.send_to_log_channel"].embeds[0].description).toBe("從 <@{buyer}> 轉帳給 <@{recipient}>");
+});
+
+test("新的殘留檢查：指令 mention、文字裡的 Discord ID、測試物件", () => {
+  const ui = {
+    "server/a": [{ args: ["歡迎使用 </payment review:424242> 查看"], kwargs: {} }],
+    "server/b": [{ args: ["找不到頻道 123456789012345678"], kwargs: {} }],
+  };
+  expect(() => convertKeys(ui, { "server/a": { replace: [] } }, CH_GLOBAL)).toThrow(/指令 mention/);
+  expect(() => convertKeys(ui, { "server/b": { replace: [] } }, CH_GLOBAL)).toThrow(/Discord ID/);
+  const ok = convertKeys(
+    ui,
+    {
+      "server/a": { replace: [["</payment review:424242>", "</payment review>"]] },
+      "server/b": { replace: [["123456789012345678", "{channelId:voice}"]] },
+    },
+    CH_GLOBAL,
+  );
+  expect(ok["server/b"].content).toBe("找不到頻道 {channelId:voice}");
+  expect(() => assertClean("x", { a: ["<FakeClient>"] })).toThrow(/測試用的物件/);
+  expect(() => assertClean("x", { a: "{amount}" })).toThrow(/token/);
+  expect(() => assertClean("x", { a: "測試商店" })).toThrow(/測試/);
+  expect(() => assertClean("x", { a: "一般文字" })).not.toThrow();
+});
+
+test("rawEntry：同樣的形狀，但不做任何替換", () => {
+  const raw = rawEntry(FLOW_UI, "flow/z@client.send_dm_to_user#1");
+  expect(raw.embeds[0].description).toBe("您在 __測試商店__ 被增加了 **40** 點");
+});
+
+test("i18n 函式的 f-string 依 config 的值填好", () => {
+  const src = [
+    "def recheck_all_started(total: int, eta_minutes: int) -> str:",
+    '    return (f"開始檢查所有未付款訂單... (0/{total})\\n"',
+    '            f"預計完成時間：約 {eta_minutes} 分鐘")',
+    "",
+    "def plain() -> str:",
+    '    return "固定文字"',
+    "",
+    "def fancy(total: int) -> str:",
+    '    return f"共 {total:,} 筆"',
+  ].join("\n");
+  expect(extractTemplate(src, "recheck_all_started", { total: 12, eta_minutes: 0 })).toBe(
+    "開始檢查所有未付款訂單... (0/12)\n預計完成時間：約 0 分鐘",
+  );
+  expect(extractTemplate(src, "plain", {})).toBe("固定文字");
+  expect(() => extractTemplate(src, "recheck_all_started", { total: 12 })).toThrow(/eta_minutes/);
+  expect(() => extractTemplate(src, "fancy", { total: 1 })).toThrow(/total:,/);
+  expect(() => extractTemplate(src, "missing", {})).toThrow(/missing/);
+});
+
+test("過期訊息：兩個 view 畫法一致才產生", () => {
+  const view = (color) =>
+    [
+      `            embed = discord.Embed(color=${color})`,
+      "            embed.title = common_text.EXPIRED_TITLE",
+      "            embed.description = common_text.EXPIRED_DESCRIPTION",
+      "            try:",
+      "                await message.edit(embed=embed, view=None)",
+    ].join("\n");
+  const constants = { EXPIRED_TITLE: "付款單已過期，請聯繫客服處理", EXPIRED_DESCRIPTION: "請直接告知客服" };
+  expect(extractExpiredOrder([["a.py", view("0xff0000")], ["b.py", view("0xff0000")]], constants)).toEqual({
+    kind: "message",
+    via: "message.edit",
+    embeds: [{ title: "付款單已過期，請聯繫客服處理", description: "請直接告知客服", color: 0xff0000, has_timestamp: false }],
+    components: [],
+    ephemeral: false,
+  });
+  expect(() => extractExpiredOrder([["a.py", view("0xff0000")], ["b.py", view("0x00ff00")]], constants)).toThrow(/顏色/);
+  expect(() => extractExpiredOrder([["a.py", view("0xff0000").replace("view=None", "view=self")]], constants)).toThrow(
+    /a\.py/,
+  );
+});
+
+test("只有一個常數的文字回覆，要確認 cog 真的這樣送", () => {
+  const cog = "await btn_interaction.response.edit_message(content=payment_text.OPERATION_CANCELLED,\n      embed=None, view=None)";
+  expect(extractTextEdit(cog, "payment_text", "OPERATION_CANCELLED", { OPERATION_CANCELLED: "操作已取消！" })).toEqual({
+    kind: "message",
+    via: "response.edit_message",
+    content: "操作已取消！",
+    embeds: [],
+    components: [],
+    ephemeral: false,
+  });
+  expect(() => extractTextEdit(cog, "payment_text", "CONFIRMING_INFO", { CONFIRMING_INFO: "x" })).toThrow(/CONFIRMING_INFO/);
 });

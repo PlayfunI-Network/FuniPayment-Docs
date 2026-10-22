@@ -1,10 +1,16 @@
 // A demo "scenario" (shop, people, amount, method, order id) and the values it gives every
 // {token} in content/bot-ui.generated.ts. One scenario per story keeps the amount, fee and order
 // id the same across every screen of that story (/fp -> order -> payment complete).
-import { BOT_DEFAULTS, BOT_METHOD_LABELS, BOT_UI } from "@/content/bot-ui.generated";
+import { BOT_DEFAULTS, BOT_METHOD_LABELS, BOT_UI, SMILEPAY_ERRORS } from "@/content/bot-ui.generated";
 import type { MessageEntry } from "./bot-ui-types";
 import { calculateFee, METHODS, type Method } from "./fees";
 
+/**
+ * One story. `amount` is the story's main number: the order amount (without the fee), the
+ * points paid, transferred, added, removed or bought, or the new balance of /balance set.
+ * The optional fields only matter to the screens that show them; a screen whose token needs a
+ * field the scenario leaves out throws instead of drawing an empty value.
+ */
 export type Scenario = {
   shop: string;
   buyer: string;
@@ -14,6 +20,15 @@ export type Scenario = {
   orderId: string;
   /** The server's balance name; the bot's default (「商城點數」) when left out. */
   balanceName?: string;
+  /** The buyer's balance before the story ({balance}, {balancePlus}, {balanceMinus}, {setIncrease} / {setDecrease}). */
+  balance?: number;
+  /** The member receiving a /balance transfer, and their balance before it. */
+  recipient?: string;
+  recipientBalance?: number;
+  /** The reason typed with /balance add, set or transfer. */
+  reason?: string;
+  /** A SmilePay status code (a key of SMILEPAY_ERRORS, e.g. "-3004") for a failed order. */
+  errorCode?: string;
 };
 
 /** The demo people and their avatars (the files the generated snapshots point to). */
@@ -21,10 +36,33 @@ export const DEMO_PEOPLE = {
   shop: { name: "星光遊戲社", avatar: "/demo/avatars/shop.png" },
   buyer: { name: "顧客", avatar: "/demo/avatars/buyer.png" },
   admin: { name: "商家", avatar: "/demo/avatars/admin.png" },
+  /** Another member of the server (the /balance transfer receiver). */
+  member: { name: "會員", avatar: "/demo/avatars/member.png" },
 } as const;
 
 /** The buyer information the demo buyer types into the form (synthetic, as on the site). */
 export const DEMO_BUYER_INFO = { name: "王○○", phone: "0912345678", email: "customer@example.com" } as const;
+
+/** The invoice fields /payment create can take (synthetic). */
+export const DEMO_INVOICE = { title: "範例科技有限公司", number: "24681357" } as const;
+
+/**
+ * The demo server's channels, as `<#{channel:<name>}>` and `{channelId:<name>}` in the texts
+ * (sync-bot-ui.config.mjs CHANNELS). Illustrative names; the IDs are made up.
+ */
+export const DEMO_CHANNELS = {
+  command: { name: "指令區", id: "1297385046129384751" },
+  ticket: { name: "ticket-0042", id: "1297385046129384752" },
+  log: { name: "付款紀錄", id: "1297385046129384753" },
+  voice: { name: "訂單 128", id: "1297385046129384754" },
+  category: { name: "待付款", id: "1297385046129384755" },
+} as const;
+
+/** The demo server's ID (the setup link in a plain-text reply shows it). */
+export const DEMO_SERVER_ID = "1297384615023847936";
+
+/** The first letters of the payment code SmilePay gives per store (illustrative). */
+const PAY_CODE_PREFIX: Partial<Record<Method, string>> = { ibon: "IB", famiport: "FM", hilife: "HL" };
 
 /** The default story: 星光遊戲社 bills the customer 500 and the customer pays at a store. */
 export const DEMO_SCENARIO: Scenario = {
@@ -88,7 +126,39 @@ export function scenarioTokens(s: Scenario, now: Date): Record<string, string> {
     buyerPhone: DEMO_BUYER_INFO.phone,
     buyerEmail: DEMO_BUYER_INFO.email,
     balanceName: s.balanceName ?? BOT_DEFAULTS.balanceNickname,
+    createdAt: botDateTime(now),
+    paidAtBot: botDateTime(now),
+    invoiceTitle: DEMO_INVOICE.title,
+    invoiceNumber: DEMO_INVOICE.number,
+    serverId: DEMO_SERVER_ID,
   };
+  for (const [name, channel] of Object.entries(DEMO_CHANNELS)) {
+    tokens[`channel:${name}`] = channel.name;
+    tokens[`channelId:${name}`] = channel.id;
+  }
+  // What the SmilePay order shows: a virtual account for a bank transfer, a code for a store.
+  if (s.method === "bank_transfer") tokens.bankAccount = `9100${s.orderId.slice(3)}`;
+  const prefix = PAY_CODE_PREFIX[s.method];
+  if (prefix) tokens.payCode = `${prefix}${s.orderId.slice(2)}`;
+  if (s.balance != null) {
+    tokens.balance = String(s.balance);
+    tokens.balancePlus = String(s.balance + s.amount);
+    if (s.amount <= s.balance) tokens.balanceMinus = String(s.balance - s.amount);
+    // /balance set: amount is the new balance
+    if (s.amount > s.balance) tokens.setIncrease = String(s.amount - s.balance);
+    if (s.amount < s.balance) tokens.setDecrease = String(s.balance - s.amount);
+  }
+  if (s.recipient != null) tokens.recipient = s.recipient;
+  if (s.recipientBalance != null) {
+    tokens.recipientBalance = String(s.recipientBalance);
+    tokens.recipientBalancePlus = String(s.recipientBalance + s.amount);
+  }
+  if (s.reason != null) tokens.reason = s.reason;
+  if (s.errorCode != null) {
+    const description = (SMILEPAY_ERRORS as Record<string, string>)[s.errorCode];
+    if (!description) throw new Error(`SMILEPAY_ERRORS 沒有 ${s.errorCode}`);
+    tokens.errorDescription = description;
+  }
   const barcode = BARCODE_IMAGES[tokens.total];
   if (barcode) tokens.barcodeImage = barcode;
   // Every method's fee for the same amount (the /fp menu lists them all).

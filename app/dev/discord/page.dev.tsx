@@ -1,7 +1,11 @@
 // Dev-only showcase of the Discord kit (exists under `next dev` only, see next.config.mjs).
-// The kit sections use placeholder texts for checking the layout; the 「bot 原文」 section draws
-// the bot's real messages from content/bot-ui.generated.ts (npm run sync:bot).
-import type { ReactNode } from "react";
+// The kit sections use placeholder texts for checking the layout; the 「bot 原文」 sections draw
+// the bot's real messages from content/bot-ui.generated.ts (npm run sync:bot): the /fp story,
+// then every screen, each with the scenario SNAPSHOT_SCENARIOS gives it.
+import { Fragment, type ReactNode } from "react";
+import { SCENARIOS, SNAPSHOT_SCENARIOS } from "@/components/demos/scenarios";
+import type { MessageEntry } from "@/lib/bot-ui-types";
+import type { SnapshotId } from "@/lib/scenario";
 import {
   ActionRow,
   Attachment,
@@ -41,6 +45,91 @@ function barcodeSrc(): string {
     .join("");
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${x + 20}" height="110"><rect width="100%" height="100%" fill="#fff"/>${bars}<text x="50%" y="104" font-family="monospace" font-size="12" text-anchor="middle">ABC1234567</text></svg>`;
   return `data:image/svg+xml,${encodeURIComponent(svg)}`;
+}
+
+/** The screens by command or feature, as the docs pages are split; every key must land in one. */
+const FAMILIES: [string, RegExp][] = [
+  ["/fp", /fp_|^builder\/fp\//],
+  ["購買人資訊", /consumer_info/],
+  ["/payment create（訂單、失敗）", /payment_create|do_payment_create/],
+  ["付款完成・過期", /payment_complete|expired_order/],
+  ["/payment review", /payment_review/],
+  ["/payment history", /payment_history/],
+  ["/payment recheck", /payment_recheck|recheck_all/],
+  ["開單頻道自動化（給擁有者的私訊）", /rename_rate_limited|move_category|ticket_channel_forbidden|log_channel_forbidden/],
+  ["/balance", /balance_(show|transfer|history|add|set)/],
+  ["/top-up", /topup/],
+  ["/dashboard・/settings・歡迎訊息", /^guide\//],
+  ["共用檢查・速買配", /checks\/|payment_method_auto_disabled/],
+  ["/auto-publish", /auto_publish/],
+  ["動態語音頻道名稱", /direct_rename|dynamic_vc/],
+  ["自動回覆", /auto_reply/],
+];
+
+/** A DM to a member or the owner (drawn in a DM window); everything else is in a channel. */
+const isDm = (via: string) => /send_dm_to_user|notify_owner|send_to_dm_and_log/.test(via);
+
+function familyOf(id: string): string {
+  const family = FAMILIES.find(([, re]) => re.test(id));
+  if (!family) throw new Error(`${id} 不屬於任何一組，請加進 FAMILIES`);
+  return family[0];
+}
+
+function ScreenLabel({ id }: { id: SnapshotId }) {
+  const entry = BOT_UI[id] as MessageEntry;
+  return (
+    <div className="px-4 pt-3 font-mono text-[11px] text-[#949ba4]">
+      {id} · {SNAPSHOT_SCENARIOS[id]} · {entry.via}
+      {entry.ephemeral ? " · ephemeral" : ""}
+      {entry.method ? ` · ${entry.method}` : ""}
+    </div>
+  );
+}
+
+function Screen({ id }: { id: SnapshotId }) {
+  const entry = BOT_UI[id] as MessageEntry;
+  const scenario = SCENARIOS[SNAPSHOT_SCENARIOS[id]];
+  return (
+    <Fragment>
+      <ScreenLabel id={id} />
+      <Message author="FunI 付款系統" avatar={BOT} bot time={discordTime(DEMO_NOW)}>
+        <SnapshotMessage id={id} scenario={scenario} />
+      </Message>
+      {entry.followup && (
+        <Message author="FunI 付款系統" avatar={BOT} bot time={discordTime(DEMO_NOW)}>
+          <SnapshotMessage id={id} scenario={scenario} at="followup" />
+        </Message>
+      )}
+    </Fragment>
+  );
+}
+
+/** Every message key, grouped; channel messages and DMs in their own windows. */
+function AllScreens() {
+  const ids = Object.keys(SNAPSHOT_SCENARIOS) as SnapshotId[];
+  return FAMILIES.map(([title]) => {
+    const inFamily = ids.filter((id) => familyOf(id) === title);
+    const channel = inFamily.filter((id) => !isDm((BOT_UI[id] as MessageEntry).via));
+    const dm = inFamily.filter((id) => isDm((BOT_UI[id] as MessageEntry).via));
+    return (
+      <Section key={title} title={`bot 原文：${title}（${inFamily.length}）`}>
+        {channel.length > 0 && (
+          <DiscordWindow title="指令區" kind="channel">
+            {channel.map((id) => (
+              <Screen key={id} id={id} />
+            ))}
+          </DiscordWindow>
+        )}
+        {dm.length > 0 && (
+          <DmWindow peer="FunI 付款系統" avatar={BOT}>
+            {dm.map((id) => (
+              <Screen key={id} id={id} />
+            ))}
+          </DmWindow>
+        )}
+      </Section>
+    );
+  });
 }
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
@@ -161,6 +250,8 @@ export default function DiscordShowcase() {
           />
         </div>
       </Section>
+
+      <AllScreens />
 
       <Section title="私訊視窗與附件">
         <DmWindow peer="顧客" avatar={CUSTOMER}>
