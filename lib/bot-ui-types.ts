@@ -37,7 +37,16 @@ export type SnapshotEntry = {
 
 export type MessageEntry = SnapshotEntry & {
   kind: "message";
-  /** The ui.json call this came from, e.g. "response.send_message" (builders: "builder"). */
+  /**
+   * How the bot sends it, which tells a demo where the message appears:
+   * "response.send_message" / "followup.send" (a reply to the command; `ephemeral` says if only
+   * the user sees it), "response.edit_message" / "edit_original_response" / "message.edit" (the
+   * earlier message changes), "client.send_dm_to_user" / "Client.send_dm_to_user" (a DM to a
+   * member), "client.send_to_log_channel" / "Client.send_to_log_channel" (the server's log
+   * channel), "client.send_to_dm_and_log" (the buyer's DM and the log channel),
+   * "client.notify_owner" (a DM to the server owner), "reply" (a reply, call not recorded),
+   * "builder" (an embed builder: where it goes depends on the flow that uses it).
+   */
   via: string;
   /** Set when the screen exists for one payment method only (e.g. the store barcode order). */
   method?: Method;
