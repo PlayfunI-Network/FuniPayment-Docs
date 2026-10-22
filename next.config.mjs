@@ -8,6 +8,8 @@ const config = {
   images: { unoptimized: true },
   trailingSlash: false,
   reactStrictMode: true,
+  // Keep next dev from writing generated files into the repo root.
+  agentRules: false,
   // Dev-only pages (app/dev/**/page.dev.tsx) exist only under `next dev`; the build never sees
   // them, so they are never exported (check:export also fails if out/dev appears).
   ...(process.env.NODE_ENV === "development" && {

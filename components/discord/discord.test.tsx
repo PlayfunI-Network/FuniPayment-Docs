@@ -3,6 +3,7 @@ import { render, screen } from "@testing-library/react";
 import {
   Attachment,
   ChannelList,
+  DiscordMarkdown,
   DmWindow,
   Embed,
   Ephemeral,
@@ -98,6 +99,36 @@ describe("Message", () => {
     render(<Message author="bot" avatar="/a.png" interaction={interaction} />);
     expect(screen.getByText("使用了")).toBeTruthy();
     expect(screen.getByText("/fp")).toBeTruthy();
+  });
+
+  it("keeps formatted text on one line: the fragments share a single block", () => {
+    const { container } = render(
+      <Message author="bot" avatar="/a.png">
+        <DiscordMarkdown text="一般 **粗體** 文字" />
+      </Message>,
+    );
+    const bold = screen.getByText("粗體");
+    const block = bold.parentElement as HTMLElement;
+    expect(block.tagName).toBe("DIV");
+    // Not the flex-col content column itself, where each fragment would be its own flex item.
+    expect(block.classList.contains("flex-col")).toBe(false);
+    expect(block.textContent).toBe("一般 粗體 文字");
+    expect(container.querySelectorAll("strong")).toHaveLength(1);
+  });
+
+  it("wraps a run of text and inline elements into one block, leaving blocks alone", () => {
+    render(
+      <Message author="bot" avatar="/a.png">
+        前面 <strong>粗</strong> 後面
+        <article>embed</article>
+      </Message>,
+    );
+    const run = screen.getByText("粗").parentElement as HTMLElement;
+    expect(run.tagName).toBe("DIV");
+    expect(run.classList.contains("flex-col")).toBe(false);
+    expect(run.textContent).toBe("前面 粗 後面");
+    const embed = screen.getByText("embed");
+    expect(embed.parentElement).toBe(run.parentElement);
   });
 
   it("uses usedLabel when given", () => {
