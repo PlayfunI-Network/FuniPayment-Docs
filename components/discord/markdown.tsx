@@ -2,12 +2,38 @@ import type { ReactNode } from "react";
 
 /*
  * The subset of Discord markdown the bot's copy uses, rendered as Discord's dark theme does:
- * **bold**, __underline__, *italic*, `code`, [link](url), <@name> mentions, <t:label:R> timestamps
- * and numbered lists (lines starting 「1. 」). Newlines are kept (the container uses pre-wrap).
+ * **bold**, __underline__, *italic*, `code`, [link](url), <@name> mentions, <#name> channel
+ * mentions, </command name> command mentions, <t:label:R> timestamps, numbered lists (lines
+ * starting 「1. 」), bulleted lists (「- 」) and headings (「# 」, 「## 」, 「### 」). Newlines are
+ * kept (the container uses pre-wrap).
  */
-const TOKEN =
-  /(\*\*(.+?)\*\*)|(__(.+?)__)|(<@([^>]+)>)|(<t:([^>]+?):R>)|(\[([^\]]+)\]\(([^)\s]+)\))|(\*([^*\n]+?)\*)|(`([^`\n]+)`)/;
+// Strings, not regex literals: the tsconfig target (ES2017) rejects named groups in literals
+const TOKEN = new RegExp(
+  [
+    String.raw`\*\*(?<bold>.+?)\*\*`,
+    String.raw`__(?<underline>.+?)__`,
+    String.raw`<@(?<user>[^>]+)>`,
+    String.raw`<#(?<channel>[^>]+)>`,
+    String.raw`<\/(?<command>[^>]+)>`,
+    String.raw`<t:(?<time>[^>]+?):R>`,
+    String.raw`\[(?<linkText>[^\]]+)\]\((?<linkUrl>[^)\s]+)\)`,
+    String.raw`\*(?<italic>[^*\n]+?)\*`,
+    "`(?<code>[^`\\n]+)`",
+  ].join("|"),
+);
 const LIST_ITEM = /^(\d+)\. (.*)$/;
+const BULLET = /^- (.*)$/;
+const HEADING = /^(#{1,3}) (.*)$/;
+
+/** Discord's mention pill, shared by user, channel and command mentions. */
+const MENTION = "rounded-[3px] bg-[rgba(88,101,242,0.3)] px-0.5 font-medium text-[#c9cdfb]";
+
+/** Discord's heading sizes (h1 1.5rem, h2 1.25rem, h3 1rem), bold, with space above. */
+const HEADING_CLASS: Record<number, string> = {
+  1: "text-[1.5rem] leading-[1.375em]",
+  2: "text-[1.25rem] leading-[1.375em]",
+  3: "text-[1rem] leading-[1.375em]",
+};
 
 function parse(text: string, keyPrefix: string): ReactNode[] {
   const out: ReactNode[] = [];
@@ -21,52 +47,65 @@ function parse(text: string, keyPrefix: string): ReactNode[] {
     }
     if (m.index > 0) out.push(rest.slice(0, m.index));
     const key = `${keyPrefix}-${i++}`;
-    if (m[1]) {
+    const g = m.groups ?? {};
+    if (g.bold != null) {
       out.push(
         <strong key={key} className="font-bold">
-          {parse(m[2], key)}
+          {parse(g.bold, key)}
         </strong>,
       );
-    } else if (m[3]) {
+    } else if (g.underline != null) {
       out.push(
         <u key={key} className="underline underline-offset-[0.15em]">
-          {parse(m[4], key)}
+          {parse(g.underline, key)}
         </u>,
       );
-    } else if (m[5]) {
+    } else if (g.user != null) {
       out.push(
-        <span
-          key={key}
-          className="rounded-[3px] bg-[rgba(88,101,242,0.3)] px-0.5 font-medium text-[#c9cdfb]"
-        >
-          @{m[6]}
+        <span key={key} className={MENTION}>
+          @{g.user}
         </span>,
       );
-    } else if (m[7]) {
+    } else if (g.channel != null) {
+      out.push(
+        <span key={key} className={MENTION} data-discord-channel>
+          <span aria-hidden className="mr-[0.1em] font-semibold">
+            #
+          </span>
+          {g.channel}
+        </span>,
+      );
+    } else if (g.command != null) {
+      out.push(
+        <span key={key} className={MENTION} data-discord-command>
+          /{g.command}
+        </span>,
+      );
+    } else if (g.time != null) {
       out.push(
         <span key={key} className="rounded-[3px] bg-[rgba(78,80,88,0.48)] px-0.5">
-          {m[8]}
+          {g.time}
         </span>,
       );
-    } else if (m[9]) {
+    } else if (g.linkText != null) {
       out.push(
         <span key={key} className="text-[#00a8fc]">
-          {m[10]}
+          {g.linkText}
         </span>,
       );
-    } else if (m[14]) {
+    } else if (g.code != null) {
       out.push(
         <code
           key={key}
           className="rounded-[4px] bg-[#1e1f22] px-[0.2em] font-mono text-[0.85em] leading-[1.125rem]"
         >
-          {m[15]}
+          {g.code}
         </code>,
       );
     } else {
       out.push(
         <em key={key} className="italic">
-          {parse(m[13], key)}
+          {parse(g.italic ?? "", key)}
         </em>,
       );
     }
@@ -75,35 +114,61 @@ function parse(text: string, keyPrefix: string): ReactNode[] {
   return out;
 }
 
+type Block = { kind: "ol"; items: RegExpMatchArray[] } | { kind: "ul"; items: RegExpMatchArray[] };
+
 /**
- * Lines are text except runs of 「N. 」 lines, which Discord draws as a numbered list (a block, so
- * the newline before and after it is the list's own line break).
+ * Lines are text except runs of 「N. 」 or 「- 」 lines, which Discord draws as a numbered or
+ * bulleted list, and 「# 」 headings. Lists and headings are blocks, so the newline before and
+ * after them is their own line break.
  */
 export function DiscordMarkdown({ text }: { text: string }) {
   const out: ReactNode[] = [];
   let lines: string[] = [];
-  let items: RegExpMatchArray[] = [];
+  let list: Block | null = null;
   const flushText = () => {
     if (lines.length > 0) out.push(...parse(lines.join("\n"), `md${out.length}`));
     lines = [];
   };
   const flushList = () => {
-    if (items.length === 0) return;
+    if (!list) return;
     const key = `md${out.length}`;
+    const items = list.items.map((m, i) => <li key={i}>{parse(m[m.length - 1], `${key}-${i}`)}</li>);
     out.push(
-      <ol key={key} start={Number(items[0][1])} className="my-0 list-decimal pl-[1.4em] whitespace-normal">
-        {items.map((m, i) => (
-          <li key={i}>{parse(m[2], `${key}-${i}`)}</li>
-        ))}
-      </ol>,
+      list.kind === "ol" ? (
+        <ol key={key} start={Number(list.items[0][1])} className="my-0 list-decimal pl-[1.4em] whitespace-normal">
+          {items}
+        </ol>
+      ) : (
+        <ul key={key} className="my-0 list-disc pl-[1.4em] whitespace-normal">
+          {items}
+        </ul>
+      ),
     );
-    items = [];
+    list = null;
+  };
+  const addItem = (kind: Block["kind"], m: RegExpMatchArray) => {
+    flushText();
+    if (list && list.kind !== kind) flushList();
+    const current: Block = list ?? { kind, items: [] };
+    current.items.push(m);
+    list = current;
   };
   for (const line of text.split("\n")) {
-    const item = line.match(LIST_ITEM);
-    if (item) {
+    const numbered = line.match(LIST_ITEM);
+    const bullet = line.match(BULLET);
+    const heading = line.match(HEADING);
+    if (numbered) addItem("ol", numbered);
+    else if (bullet) addItem("ul", bullet);
+    else if (heading) {
+      flushList();
       flushText();
-      items.push(item);
+      const key = `md${out.length}`;
+      const level = heading[1].length;
+      out.push(
+        <div key={key} role="heading" aria-level={level} className={`mt-2 mb-1 font-bold first:mt-0 ${HEADING_CLASS[level]}`}>
+          {parse(heading[2], key)}
+        </div>,
+      );
     } else {
       flushList();
       lines.push(line);
