@@ -1,9 +1,11 @@
 // npm run capture [-- <shot id> ...]
 // Photographs the bot's web dashboard for the docs (scripts/capture.config.mjs SHOTS): starts the
 // bot's fake API, scripts/demo-api.mjs (星光遊戲社's invented data) and the bot's dashboard in dev
-// mode, takes every shot in dark and light (2x, WebP quality 82) into public/demo/dashboard/, and
-// writes the target elements' boxes to content/dashboard-shots.generated.json. The three
-// processes are always shut down, also on failure. The bot repo is only read.
+// mode, takes every shot in dark and light (2x, WebP quality 82), at desktop and at phone width,
+// into public/demo/dashboard/, and writes the target elements' boxes to
+// content/dashboard-shots.generated.json. Before each shot the fake API is reset and 星光遊戲社's
+// settings (demo-data.mjs DEMO_SETTINGS_CHANGES) are saved into it. The three processes are always
+// shut down, also on failure. The bot repo is only read.
 // Env: FUNIPAY_BOT_DIR (default ../../PycharmProjects/FuniPayment), CAPTURE_FAKE_PORT (8399),
 // CAPTURE_DEMO_PORT (8398), CAPTURE_WEB_PORT (3100). With shot ids, only those are taken again.
 import { spawn, spawnSync } from "node:child_process";
@@ -12,8 +14,8 @@ import net from "node:net";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
-import { SHOTS } from "./capture.config.mjs";
-import { findBanned } from "./demo-data.mjs";
+import { MOBILE_VIEWPORT, SHOTS } from "./capture.config.mjs";
+import { DEMO_SETTINGS_CHANGES, findBanned } from "./demo-data.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const botWeb = path.join(path.resolve(root, process.env.FUNIPAY_BOT_DIR ?? "../../PycharmProjects/FuniPayment"), "web");
@@ -24,7 +26,8 @@ const PORTS = {
 };
 const TOKEN = "e2e-internal-token"; // fake-api.mjs TOKEN
 const CSRF = "e2e-csrf-token"; // fixtures.mjs CSRF_TOKEN
-const SESSIONS = { owner: "valid", newbie: "newbie" };
+const SESSIONS = { owner: "valid", newbie: "newbie", none: null };
+const SERVER_ID = "111111111111111111"; // fixtures.mjs SERVER_ID (星光遊戲社)
 const THEMES = /** @type {const} */ (["dark", "light"]);
 const SCALE = 2;
 const QUALITY = 0.82;
@@ -119,7 +122,8 @@ async function runAction(page, action) {
     case "wait": return page.locator(target).waitFor({ state: "visible" });
     case "pick": {
       await page.getByRole("combobox", { name: target, exact: true }).click();
-      await page.getByRole("listbox", { name: target, exact: true }).getByRole("option", { name: new RegExp(`^${value}`) }).click();
+      const label = new RegExp(`^${value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`);
+      await page.getByRole("listbox", { name: target, exact: true }).getByRole("option", { name: label }).click();
       return page.keyboard.press("Escape");
     }
     default: throw new Error(`不認得的動作 ${action}`);
@@ -133,19 +137,48 @@ const HIDE_DEV_OVERLAY = `document.addEventListener("DOMContentLoaded", () => {
   document.head.append(style);
 });`;
 
-async function takeShot(browser, encoder, shot, theme) {
-  const reset = await fetch(`http://127.0.0.1:${PORTS.fake}/__reset`, { method: "POST" });
+/** Resets the fake API and saves 星光遊戲社's settings into it (so a save answers with them too). */
+async function resetFakeApi() {
+  const fake = `http://127.0.0.1:${PORTS.fake}`;
+  const reset = await fetch(`${fake}/__reset`, { method: "POST" });
   if (!reset.ok) throw new Error("fake-api /__reset 失敗");
+  const headers = { "x-funipay-internal-token": TOKEN, cookie: `funipay_session=${SESSIONS.owner}; funipay_csrf=${CSRF}`, "x-csrf-token": CSRF };
+  const url = `${fake}/api/servers/${SERVER_ID}/settings`;
+  const current = await fetch(url, { headers });
+  if (!current.ok) throw new Error(`fake-api 讀不到設定（${current.status}）`);
+  const { version } = await current.json();
+  const saved = await fetch(url, {
+    method: "PUT",
+    headers: { ...headers, "content-type": "application/json" },
+    body: JSON.stringify({ version, changes: DEMO_SETTINGS_CHANGES }),
+  });
+  if (!saved.ok) throw new Error(`fake-api 存不進示範設定（${saved.status}）：${await saved.text()}`);
+}
+
+/** The desktop picture and, unless `mobile: false`, the phone one, with the targets each has. */
+function variantsOf(shot) {
+  const desktop = { name: "desktop", suffix: "", viewport: shot.viewport, targets: { ...shot.targets, ...shot.desktopTargets }, mobile: false };
+  if (shot.mobile === false) return [desktop];
+  const targets = { ...shot.targets, ...shot.mobileTargets };
+  return [desktop, { name: "mobile", suffix: "-mobile", viewport: MOBILE_VIEWPORT, targets, mobile: true }];
+}
+
+async function takeShot(browser, encoder, shot, variant, theme) {
+  const label = `${shot.id}${variant.suffix}（${theme}）`;
+  await resetFakeApi();
   const context = await browser.newContext({
-    viewport: { width: shot.viewport.w, height: shot.viewport.h },
+    viewport: { width: variant.viewport.w, height: variant.viewport.h },
     deviceScaleFactor: SCALE,
+    isMobile: variant.mobile,
+    hasTouch: variant.mobile,
     reducedMotion: "reduce",
     colorScheme: theme,
     locale: "zh-TW",
   });
   try {
+    const session = SESSIONS[shot.identity];
     await context.addCookies([
-      { name: "funipay_session", value: SESSIONS[shot.identity], url: WEB },
+      ...(session ? [{ name: "funipay_session", value: session, url: WEB }] : []),
       { name: "funipay_csrf", value: CSRF, url: WEB },
       { name: "funipay_theme", value: theme, url: WEB },
     ]);
@@ -157,16 +190,19 @@ async function takeShot(browser, encoder, shot, theme) {
     await page.waitForLoadState("networkidle");
     await page.evaluate(() => document.fonts.ready);
     await page.mouse.move(0, 0);
+    // No focus ring left on the last field an action used (demos draw their own cursor)
+    await page.evaluate(() => (document.activeElement instanceof HTMLElement ? document.activeElement.blur() : undefined));
     await page.waitForTimeout(300);
 
-    const pathname = new URL(page.url()).pathname;
-    if (pathname !== shot.path) throw new Error(`${shot.id}：停在 ${pathname}，不是 ${shot.path}`);
+    const here = new URL(page.url());
+    if (`${here.pathname}${here.search}` !== shot.path) throw new Error(`${label}：停在 ${here.pathname}${here.search}，不是 ${shot.path}`);
     const isDark = await page.evaluate(() => document.documentElement.classList.contains("dark"));
-    if (isDark !== (theme === "dark")) throw new Error(`${shot.id}：主題不是 ${theme}`);
+    if (isDark !== (theme === "dark")) throw new Error(`${label}：主題不是 ${theme}`);
     const words = findBanned(await page.evaluate(() => `${document.title}\n${document.body.innerText}`));
-    if (words.length) throw new Error(`${shot.id}（${theme}）畫面上還有「${words.join("」「")}」`);
+    if (words.length) throw new Error(`${label} 畫面上還有「${words.join("」「")}」`);
 
     const size = await page.evaluate(() => ({ w: document.documentElement.scrollWidth, h: document.documentElement.scrollHeight }));
+    if (size.w > variant.viewport.w) throw new Error(`${label}：頁面比視窗寬（${size.w}px），有橫向捲軸`);
     let clip = { x: 0, y: 0, width: size.w, height: size.h };
     if (shot.crop) {
       const box = await boxOf(page, shot.crop.selector);
@@ -176,16 +212,21 @@ async function takeShot(browser, encoder, shot, theme) {
     }
     const round = (n) => Math.round(n * 10000) / 10000;
     const targets = {};
-    for (const [name, selector] of Object.entries(shot.targets)) {
-      const box = await boxOf(page, selector);
+    for (const [name, selector] of Object.entries(variant.targets)) {
+      let box;
+      try {
+        box = await boxOf(page, selector);
+      } catch (error) {
+        throw new Error(`${label}：目標 ${name}：${error instanceof Error ? error.message.split("\n")[0] : error}`);
+      }
       const rect = { x: round((box.x - clip.x) / clip.width), y: round((box.y - clip.y) / clip.height), w: round(box.w / clip.width), h: round(box.h / clip.height) };
-      if (rect.x < 0 || rect.y < 0 || rect.x + rect.w > 1.0001 || rect.y + rect.h > 1.0001) throw new Error(`${shot.id}：${name} 在裁切範圍外`);
+      if (rect.x < 0 || rect.y < 0 || rect.x + rect.w > 1.0001 || rect.y + rect.h > 1.0001) throw new Error(`${label}：${name} 在裁切範圍外`);
       targets[name] = rect;
     }
 
     const png = await page.screenshot({ type: "png", fullPage: true, clip, animations: "disabled", caret: "hide" });
     const webp = await toWebp(encoder, png);
-    const file = `${shot.id}-${theme}.webp`;
+    const file = `${shot.id}${variant.suffix}-${theme}.webp`;
     if (webp.data.length > MAX_BYTES) throw new Error(`${file} ${Math.round(webp.data.length / 1024)} KB，超過 200 KB`);
     fs.writeFileSync(path.join(OUT_DIR, file), webp.data);
     return { src: `/demo/dashboard/${file}`, width: webp.width, height: webp.height, targets, bytes: webp.data.length };
@@ -234,13 +275,18 @@ async function main() {
     const encoder = await browser.newPage();
     const taken = {};
     for (const shot of shots) {
-      const byTheme = {};
-      for (const theme of THEMES) byTheme[theme] = await takeShot(browser, encoder, shot, theme);
-      const { dark, light } = byTheme;
-      if (dark.width !== light.width || dark.height !== light.height) throw new Error(`${shot.id}：深色 ${dark.width}×${dark.height}，淺色 ${light.width}×${light.height}`);
-      sameTargets(shot.id, dark.targets, light.targets);
-      taken[shot.id] = { dark: dark.src, light: light.src, width: dark.width, height: dark.height, targets: dark.targets };
-      console.log(`${shot.id}: ${dark.width}×${dark.height}, ${Math.round(dark.bytes / 1024)} KB / ${Math.round(light.bytes / 1024)} KB`);
+      const pictures = {};
+      for (const variant of variantsOf(shot)) {
+        const byTheme = {};
+        for (const theme of THEMES) byTheme[theme] = await takeShot(browser, encoder, shot, variant, theme);
+        const { dark, light } = byTheme;
+        const id = `${shot.id}${variant.suffix}`;
+        if (dark.width !== light.width || dark.height !== light.height) throw new Error(`${id}：深色 ${dark.width}×${dark.height}，淺色 ${light.width}×${light.height}`);
+        sameTargets(id, dark.targets, light.targets);
+        pictures[variant.name] = { dark: dark.src, light: light.src, width: dark.width, height: dark.height, targets: dark.targets };
+        console.log(`${id}: ${dark.width}×${dark.height}, ${Math.round(dark.bytes / 1024)} KB / ${Math.round(light.bytes / 1024)} KB`);
+      }
+      taken[shot.id] = pictures.mobile ? { ...pictures.desktop, mobile: pictures.mobile } : pictures.desktop;
     }
     // Shots in the config's order; ones no longer in the config are dropped
     const all = Object.fromEntries(SHOTS.filter((s) => taken[s.id] || previous[s.id]).map((s) => [s.id, taken[s.id] ?? previous[s.id]]));

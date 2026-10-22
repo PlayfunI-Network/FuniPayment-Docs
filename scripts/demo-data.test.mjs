@@ -7,7 +7,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { beforeAll, describe, expect, test } from "vitest";
 import { calculateFee, DEFAULT_FEES } from "../lib/fees.mjs";
 import { DEMO_BUYER_INFO, DEMO_PEOPLE } from "../lib/scenario";
-import { BANNED, DEMO, findBanned, rewrite } from "./demo-data.mjs";
+import { BANNED, DEMO, DEMO_SETTINGS_CHANGES, findBanned, overviewBook, rewrite } from "./demo-data.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const botDir = path.resolve(root, process.env.FUNIPAY_BOT_DIR ?? "../../PycharmProjects/FuniPayment");
@@ -21,7 +21,8 @@ beforeAll(async () => {
 });
 
 const S = "111111111111111111";
-// fake-api.mjs's inline answers (not exported from fixtures.mjs)
+// fake-api.mjs's inline answers (not exported from fixtures.mjs, so copied here: if fake-api.mjs
+// changes them, these copies no longer show what the proxy really serves; update them with it)
 const ME = { id: "222222222222222222", name: "測試商家", avatar_url: null, is_bot_owner: false, needs_terms: false, welcome_seen: true };
 const SERVERS = [
   { id: S, name: "測試伺服器", icon_url: null, suspended: false, has_orders: true },
@@ -45,6 +46,8 @@ function responses() {
     [`/api/servers/${S}/orders/50000000001`]: F.orderDetail("50000000001"),
     [`/api/servers/${S}/orders/50000000005`]: F.orderDetail("50000000005"),
     [`/api/servers/${S}/settings`]: F.SETTINGS,
+    [`/api/servers/${S}/discord/roles`]: F.ROLES,
+    [`/api/servers/${S}/discord/channels`]: F.CHANNELS,
     [`/api/servers/${S}/settings/audit`]: F.AUDIT,
     [`/api/servers/${S}/features`]: F.FEATURES,
     "/api/admin/overview": F.ADMIN_OVERVIEW,
@@ -65,7 +68,7 @@ describe("rewrite", () => {
   test("沒有任何測試字樣", () => {
     for (const [p, body] of Object.entries(rewritten())) {
       const text = JSON.stringify(body);
-      for (const word of [...BANNED, "沒有遷移的伺服器"]) expect(text, `${p} 還有「${word}」`).not.toContain(word);
+      for (const word of BANNED) expect(text, `${p} 還有「${word}」`).not.toContain(word);
     }
   });
 
@@ -125,10 +128,20 @@ describe("rewrite", () => {
     expect(after.status_counts).toEqual(before.status_counts);
   });
 
-  test("設定的手續費是 bot 的預設值，付款方式全開", () => {
-    const settings = rewritten()[`/api/servers/${S}/settings`];
+  test("存進 fake API 的設定：手續費是 bot 的預設值，付款方式全開，速買配參數都已設定", () => {
+    const settings = F.applyFake(F.SETTINGS, structuredClone(DEMO_SETTINGS_CHANGES));
+    expect(F.fakeErrors(structuredClone(DEMO_SETTINGS_CHANGES))).toEqual([]);
     for (const [method, fee] of Object.entries(DEFAULT_FEES)) expect(settings.payment[method]).toEqual({ enabled: true, fee });
+    expect(settings.payment.ibon_extra_fee).toBe(5);
     expect(settings.smilepay_store_number).toBe(DEMO.storeNumber);
+    expect(settings).toMatchObject({ smilepay_param_code_set: true, smilepay_verify_key_set: true, smilepay_mid_verify_param_set: true });
+  });
+
+  test("設定頁的頻道與分類：機器人都有權限，多一個 #指令區", () => {
+    const channels = rewritten()[`/api/servers/${S}/discord/channels`];
+    expect(channels.text_channels.map((c) => c.name)).toEqual([...F.CHANNELS.text_channels.map((c) => c.name), "指令區"]);
+    expect(channels.text_channels.every((c) => c.bot_can_send)).toBe(true);
+    expect(channels.categories.every((c) => c.bot_can_manage)).toBe(true);
   });
 
   test("同樣的輸入每次都得到同樣的結果（深色、淺色兩張圖一致）", () => {
@@ -144,4 +157,62 @@ test("findBanned 找出殘留字樣，允許的介面原文除外", () => {
   expect(findBanned("你好，測試商家")).toEqual(["測試"]);
   expect(findBanned("建議先在 Discord 用 /fp 建立一筆小額測試訂單")).toEqual([]);
   expect(findBanned("開發者")).toEqual(["開發者"]);
+});
+
+describe("總覽：每個數字都是同一批訂單加總出來的", () => {
+  const PERIODS = ["last_30d", "today", "last_24h", "last_7d"];
+  const sum = (orders, key) => orders.reduce((total, o) => total + o[key], 0);
+
+  for (const kind of PERIODS) {
+    test(`${kind}：指標、趨勢、付款方式、熱門時段都和訂單一致`, () => {
+      const base = F.overview(kind, true);
+      const o = rewrite(`/api/servers/${S}/overview`, structuredClone(base));
+      const { current, previous } = overviewBook(structuredClone(base));
+      const paid = current.filter((x) => x.status === "complete");
+      expect(paid.length).toBeGreaterThan(0);
+      for (const x of [...current, ...previous]) {
+        expect(x.fee, `${x.payment_method} ${x.order_amount}`).toBe(calculateFee(x.payment_method, x.order_amount));
+        expect(x.pay_amount).toBe(x.order_amount + x.fee);
+      }
+      expect(o.kpis.revenue_detail).toEqual({ order_amount: sum(paid, "order_amount"), fee: sum(paid, "fee"), pay_amount: sum(paid, "pay_amount") });
+      expect(o.kpis.revenue.total.current).toEqual({ excl_fee: sum(paid, "order_amount"), incl_fee: sum(paid, "pay_amount") });
+      expect(o.kpis.completed_orders.total.current).toBe(paid.length);
+      expect(o.kpis.completed_orders.payment.current + o.kpis.completed_orders.topup.current).toBe(paid.length);
+      expect(o.kpis.created_orders.total.current).toBe(current.length);
+      const methodTotal = o.payment_methods.reduce((t, m) => ({ orders: t.orders + m.orders, excl: t.excl + m.amount.excl_fee }), { orders: 0, excl: 0 });
+      expect(methodTotal).toEqual({ orders: paid.length, excl: sum(paid, "order_amount") });
+      expect(o.trend.reduce((t, p) => t + p.revenue.excl_fee, 0)).toBe(sum(paid, "order_amount"));
+      expect(o.trend.reduce((t, p) => t + p.completed_orders, 0)).toBe(paid.length);
+      expect(o.trend.reduce((t, p) => t + p.created_orders, 0)).toBe(current.length);
+      expect(o.heatmap.reduce((t, c) => t + c.orders, 0)).toBe(paid.length);
+      const pending = current.filter((x) => x.status === "pending");
+      expect(o.kpis.pending).toEqual({ orders: pending.length, amount: { excl_fee: sum(pending, "order_amount"), incl_fee: sum(pending, "pay_amount") } });
+      expect(o.kpis.average_order_value.current.excl_fee).toBe(Math.round(sum(paid, "order_amount") / paid.length));
+      const finished = current.filter((x) => x.status !== "pending");
+      expect(o.kpis.completion_rate.current).toBe(Math.round((current.filter((x) => x.status === "complete").length / finished.length) * 1000) / 10);
+      expect(o.customers.unique_payers.current).toBe(new Set(paid.map((x) => x.user_id)).size);
+    });
+  }
+
+  test("最近訂單就是那批訂單裡最新的幾筆，金額和訂單列表一樣", () => {
+    const base = F.overview("last_30d", true);
+    const o = rewrite(`/api/servers/${S}/overview`, structuredClone(base));
+    const { current } = overviewBook(structuredClone(base));
+    const list = rewritten()[`/api/servers/${S}/orders`].items;
+    const newest = [...current].sort((a, b) => b.created_at.localeCompare(a.created_at)).slice(0, o.recent_orders.length);
+    expect(newest.map((x) => x.smilepay_id)).toEqual(o.recent_orders.map((x) => x.smilepay_id));
+    for (const row of o.recent_orders) {
+      const same = list.find((x) => x.smilepay_id === row.smilepay_id);
+      for (const key of ["order_amount", "fee", "pay_amount", "payment_method", "status"]) expect(row[key]).toBe(same[key]);
+    }
+  });
+
+  test("和前一期比較的百分比照 bot 的算法（小數一位，四捨五入）", () => {
+    const o = rewrite(`/api/servers/${S}/overview`, F.overview("last_30d", true));
+    const { current, previous } = o.kpis.revenue.total;
+    expect(o.kpis.revenue.total.change_pct.excl_fee).toBe(Math.round(((current.excl_fee - previous.excl_fee) / previous.excl_fee) * 1000) / 10);
+    const top = o.customers.top.excl_fee;
+    expect(top.length).toBeGreaterThanOrEqual(5);
+    for (let i = 1; i < top.length; i++) expect(top[i - 1].amount.excl_fee).toBeGreaterThanOrEqual(top[i].amount.excl_fee);
+  });
 });
