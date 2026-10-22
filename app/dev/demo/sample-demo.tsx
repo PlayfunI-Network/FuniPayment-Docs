@@ -13,6 +13,12 @@ const BUTTON_CENTER = { x: (BUTTON.x + BUTTON.w * 0.55) / W, y: (BUTTON.y + BUTT
 /** What the camera frames around the button: the button plus some of the page around it. */
 const BUTTON_AREA = px(BUTTON.x - 260, BUTTON.y - 90, BUTTON.w + 330, BUTTON.h + 230);
 
+const SEARCH = { x: 560, y: 170, w: 540, h: 72 };
+/** Where the I-beam rests while typing: just right of the typed text. */
+const SEARCH_POINT = { x: (SEARCH.x + 150) / W, y: (SEARCH.y + SEARCH.h / 2) / H };
+const SEARCH_AREA = px(SEARCH.x - 120, SEARCH.y - 110, SEARCH.w + 240, SEARCH.h + 250);
+const QUERY = "A1042";
+
 const STEPS: DemoStep[] = [
   { at: 0, caption: "找到「建立訂單」", cursor: { x: 0.34, y: 0.72 } },
   { at: 700, cursor: { x: BUTTON_CENTER.x, y: BUTTON_CENTER.y } },
@@ -20,20 +26,35 @@ const STEPS: DemoStep[] = [
   { at: 2700, caption: "點一下按鈕", cursor: { ...BUTTON_CENTER, click: true } },
   { at: 3100 },
   { at: 4000, caption: "訂單建立好了", shot: { zoom: 1 } },
-  { at: 6500 },
+  { at: 5300, caption: "在搜尋欄輸入訂單編號", cursor: SEARCH_POINT },
+  { at: 6200, shot: { zoom: 2.2, focus: SEARCH_AREA } },
+  { at: 7200, cursor: { ...SEARCH_POINT, click: true, typing: true } },
+  // One step per typed character (TYPED_FROM onward).
+  ...Array.from(QUERY, (_, i) => ({ at: 7600 + i * 180, cursor: { ...SEARCH_POINT, typing: true } })),
+  { at: 8900, shot: { zoom: 1 } },
+  { at: 10500 },
 ];
 /** From this step on the screen shows the result of the click. */
 const CLICKED = 4;
+/** The search field has focus from this step; the next steps type one character each. */
+const FOCUSED = 8;
+const TYPED_FROM = 9;
 
 export function SampleDemo() {
   return (
-    <DemoStage label="示範：把游標移到「建立訂單」，放大後點擊，再拉回全景" steps={STEPS} caption>
-      {(_, index) => <Screen clicked={index >= CLICKED} />}
+    <DemoStage label="示範：點擊「建立訂單」後，在搜尋欄輸入訂單編號" steps={STEPS} caption>
+      {(_, index) => (
+        <Screen
+          clicked={index >= CLICKED}
+          focused={index >= FOCUSED}
+          query={QUERY.slice(0, Math.max(0, index - TYPED_FROM + 1))}
+        />
+      )}
     </DemoStage>
   );
 }
 
-function Screen({ clicked }: { clicked: boolean }) {
+function Screen({ clicked, focused, query }: { clicked: boolean; focused: boolean; query: string }) {
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className="absolute inset-0 size-full" preserveAspectRatio="none">
       <rect width={W} height={H} fill="#0f1115" />
@@ -53,6 +74,30 @@ function Screen({ clicked }: { clicked: boolean }) {
         訂單
       </text>
       <rect
+        x={SEARCH.x}
+        y={SEARCH.y}
+        width={SEARCH.w}
+        height={SEARCH.h}
+        rx="14"
+        fill="#16181d"
+        stroke={focused ? "#5aa9d6" : "#2c2f36"}
+        strokeWidth="3"
+        style={{ transition: "stroke 200ms" }}
+      />
+      <text x={SEARCH.x + 28} y={SEARCH.y + 47} fill={query ? "#ececec" : "#5d6068"} fontSize="28">
+        {query || "搜尋訂單編號"}
+      </text>
+      {focused && (
+        <rect
+          className="demo-caret"
+          x={SEARCH.x + 30 + query.length * 17}
+          y={SEARCH.y + 18}
+          width="3"
+          height="36"
+          fill="#ececec"
+        />
+      )}
+      <rect
         x={BUTTON.x}
         y={BUTTON.y}
         width={BUTTON.w}
@@ -67,8 +112,12 @@ function Screen({ clicked }: { clicked: boolean }) {
       {[0, 1, 2, 3, 4].map((i) => {
         const fresh = clicked && i === 0;
         const y = 300 + i * 120;
+        const hiddenByQuery = query.length === QUERY.length && i !== 0;
         return (
-          <g key={i} style={{ opacity: !clicked && i === 0 ? 0 : 1, transition: "opacity 400ms" }}>
+          <g
+            key={i}
+            style={{ opacity: (!clicked && i === 0) || hiddenByQuery ? 0 : 1, transition: "opacity 400ms" }}
+          >
             <rect x="360" y={y} width="1100" height="96" rx="16" fill={fresh ? "#16301f" : "#16181d"} stroke="#232323" />
             <text x="400" y={y + 58} fill="#ececec" fontSize="28">
               {`訂單 #A10${42 - i}`}
