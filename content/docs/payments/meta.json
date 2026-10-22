@@ -1,0 +1,13 @@
+{
+  "title": "收款",
+  "pages": [
+    "fp",
+    "payment-create",
+    "buyer-info",
+    "payment-review",
+    "payment-history",
+    "payment-recheck",
+    "channel-automation",
+    "expiry"
+  ]
+}

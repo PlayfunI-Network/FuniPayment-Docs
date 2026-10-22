@@ -1,0 +1,28 @@
+# Old GitBook URLs -> new pages. Format: <old> <new> <status>.
+# Each old path appears without and with a trailing slash.
+/apply/free-trail /getting-started/before-you-start 301
+/apply/free-trail/ /getting-started/before-you-start 301
+/settings/setup /getting-started/setup-wizard 301
+/settings/setup/ /getting-started/setup-wizard 301
+/settings/security /getting-started/before-you-start 301
+/settings/security/ /getting-started/before-you-start 301
+/commands/payment /payments/fp 301
+/commands/payment/ /payments/fp 301
+/commands/payment/payment-create /payments/payment-create 301
+/commands/payment/payment-create/ /payments/payment-create 301
+/commands/payment/payment-review /payments/payment-review 301
+/commands/payment/payment-review/ /payments/payment-review 301
+/commands/payment/payment-history /payments/payment-history 301
+/commands/payment/payment-history/ /payments/payment-history 301
+/commands/payment/payment-recheck /payments/payment-recheck 301
+/commands/payment/payment-recheck/ /payments/payment-recheck 301
+/commands/payment/fp /payments/fp 301
+/commands/payment/fp/ /payments/fp 301
+/commands/auto-publish /features/auto-publish 301
+/commands/auto-publish/ /features/auto-publish 301
+/dynamic-vc-rename /features/dynamic-vc-rename 301
+/dynamic-vc-rename/ /features/dynamic-vc-rename 301
+/privacy-policy https://funipay.net/privacy 301
+/privacy-policy/ https://funipay.net/privacy 301
+/terms-of-service https://funipay.net/terms 301
+/terms-of-service/ https://funipay.net/terms 301

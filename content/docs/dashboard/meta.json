@@ -1,0 +1,14 @@
+{
+  "title": "網頁後台",
+  "pages": [
+    "overview",
+    "orders",
+    "settings-basic",
+    "settings-smilepay",
+    "settings-payment",
+    "settings-channels",
+    "settings-balance",
+    "settings-history",
+    "features"
+  ]
+}
