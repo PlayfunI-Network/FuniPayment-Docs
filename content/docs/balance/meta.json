@@ -1,0 +1,12 @@
+{
+  "title": "點數",
+  "pages": [
+    "overview",
+    "balance-show",
+    "balance-transfer",
+    "balance-history",
+    "balance-add-set",
+    "top-up",
+    "pay-with-balance"
+  ]
+}
