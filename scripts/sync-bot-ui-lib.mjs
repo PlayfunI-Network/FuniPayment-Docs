@@ -160,10 +160,23 @@ function mapStrings(value, fn) {
   return value;
 }
 
+/** Set an existing string field by its dotted path (e.g. "embeds.0.author.icon_url"); a missing one throws. */
+function setPath(key, entry, fieldPath, value) {
+  const parts = fieldPath.split(".");
+  let node = entry;
+  for (const part of parts.slice(0, -1)) {
+    node = node?.[part];
+    if (node == null || typeof node !== "object") fail(key, `override 的欄位 ${fieldPath} 不存在`);
+  }
+  const last = parts[parts.length - 1];
+  if (typeof node[last] !== "string") fail(key, `override 的欄位 ${fieldPath} 不存在或不是文字`);
+  node[last] = value;
+}
+
 /**
  * Convert the configured ui.json keys to demo entries.
  * @param {Record<string, any>} ui the parsed ui.json
- * @param {Record<string, {replace: [string, string][], optionFees?: boolean, method?: string}>} keys
+ * @param {Record<string, {replace: [string, string][], optionFees?: boolean, method?: string, override?: Record<string, string>}>} keys
  * @param {{urlRules: [string|RegExp, string][], textRules: [string, string][], mentions: Record<string, string>}} global
  */
 export function convertKeys(ui, keys, global) {
@@ -179,6 +192,8 @@ export function convertKeys(ui, keys, global) {
 
     let entry = key.startsWith("flow/") ? convertFlow(key, raw, cfg) : convertBuilder(key, raw, cfg);
     if (cfg.method) entry = { ...entry, method: cfg.method };
+    // Per-field overrides are set before the global rules run, so they win over them.
+    for (const [fieldPath, value] of Object.entries(cfg.override ?? {})) setPath(key, entry, fieldPath, value);
 
     const rules = (cfg.replace ?? []).map(([from, to]) => ({ from, re: ruleRegExp(from), to, used: 0 }));
     const globalRules = [...global.urlRules, ...global.textRules].map(([from, to]) => ({ re: ruleRegExp(from), to }));
@@ -244,6 +259,13 @@ export function extractModal(viewSrc, constants) {
   };
   const inputs = {};
   for (const m of body.matchAll(/self\.(?:buyer_)?(\w+) = TextInput\(([\s\S]*?)\n\s*\)/g)) {
+    // `default` is the buyer's saved value; `style` must be short, the one-line input Modal draws.
+    const kwargs = [...m[2].matchAll(/(\w+)=/g)].map((k) => k[1]);
+    const unknown = kwargs.filter((k) => !["label", "style", "required", "default", "max_length"].includes(k));
+    if (unknown.length > 0) throw new Error(`Modal 欄位 ${m[1]} 有還不支援的參數 ${unknown.join(", ")}`);
+    if (/style=/.test(m[2]) && !/style=discord\.TextStyle\.short\b/.test(m[2])) {
+      throw new Error(`Modal 欄位 ${m[1]} 不是單行輸入`);
+    }
     const label = m[2].match(/label=\w+\.(\w+)/);
     const maxLength = m[2].match(/max_length=(\d+)/);
     if (!label || !maxLength) throw new Error(`Modal 欄位 ${m[1]} 缺 label 或 max_length`);
@@ -306,22 +328,110 @@ export function extractBalanceNickname(schemaSrc) {
   return m[1];
 }
 
+// ---- Slash commands (tests/snapshots/commands.json) ----
+
+const COMMAND_KEYS = new Set([
+  "contexts", "default_member_permissions", "description", "description_localizations", "dm_permission",
+  "integration_types", "name", "name_localizations", "nsfw", "options", "type",
+]);
+const OPTION_KEYS = new Set([
+  "choices", "description", "description_localizations", "name", "name_localizations", "options", "required", "type",
+  "channel_types", "min_value", "max_value", "min_length", "max_length", "autocomplete",
+]);
+const CHOICE_KEYS = new Set(["name", "value", "name_localizations"]);
+const OPTION_TYPES = {
+  3: "string", 4: "integer", 5: "boolean", 6: "user", 7: "channel", 8: "role", 9: "mentionable", 10: "number", 11: "attachment",
+};
+
+function unknownKeys(where, obj, known) {
+  const unknown = Object.keys(obj).filter((k) => !known.has(k));
+  if (unknown.length > 0) throw new Error(`${where}：還不支援的欄位 ${unknown.join(", ")}`);
+}
+
+/** What a zh-TW Discord client shows: the zh-TW localization, else the default text. */
+const zhTW = (text, localizations) => localizations?.["zh-TW"] ?? text;
+
+function convertCommandOption(where, o) {
+  unknownKeys(where, o, OPTION_KEYS);
+  const type = OPTION_TYPES[o.type];
+  if (!type) throw new Error(`${where}：不認得的參數型別 ${o.type}`);
+  if (o.options) throw new Error(`${where}：一般參數不應該有 options`);
+  const out = {
+    name: o.name,
+    nameZh: zhTW(o.name, o.name_localizations),
+    description: zhTW(o.description, o.description_localizations),
+    required: !!o.required,
+    type,
+  };
+  if (o.choices) {
+    out.choices = o.choices.map((c, i) => {
+      unknownKeys(`${where} 選項 ${i + 1}`, c, CHOICE_KEYS);
+      return { label: zhTW(c.name, c.name_localizations), value: c.value };
+    });
+  }
+  if (o.channel_types) out.channelTypes = o.channel_types;
+  if (o.min_value != null) out.minValue = o.min_value;
+  if (o.max_value != null) out.maxValue = o.max_value;
+  if (o.min_length != null) out.minLength = o.min_length;
+  if (o.max_length != null) out.maxLength = o.max_length;
+  if (o.autocomplete) out.autocomplete = true;
+  return out;
+}
+
+/** commands.json ("command/<name>" entries) as COMMANDS, keyed by command name. */
+export function convertCommands(commands) {
+  const out = {};
+  for (const [key, c] of Object.entries(commands)) {
+    if (!key.startsWith("command/")) throw new Error(`commands.json：不認得的 key ${key}`);
+    unknownKeys(key, c, COMMAND_KEYS);
+    if (c.type !== 1) throw new Error(`${key}：只支援斜線指令（type 1），這裡是 ${c.type}`);
+    if (c.nsfw) throw new Error(`${key}：nsfw 指令還不支援`);
+    const options = c.options ?? [];
+    if (options.some((o) => o.type === 2)) throw new Error(`${key}：還不支援子指令群組`);
+    const subs = options.filter((o) => o.type === 1);
+    if (subs.length > 0 && subs.length !== options.length) throw new Error(`${key}：子指令和一般參數混在一起`);
+    out[c.name] = {
+      name: c.name,
+      nameZh: zhTW(c.name, c.name_localizations),
+      description: zhTW(c.description, c.description_localizations),
+      defaultMemberPermissions: c.default_member_permissions == null ? null : Number(c.default_member_permissions),
+      dmPermission: c.dm_permission !== false,
+      contexts: c.contexts ?? null,
+      options: subs.length > 0 ? [] : options.map((o) => convertCommandOption(`${key} ${o.name}`, o)),
+      subcommands: subs.map((sc) => {
+        unknownKeys(`${key} ${sc.name}`, sc, OPTION_KEYS);
+        return {
+          name: sc.name,
+          nameZh: zhTW(sc.name, sc.name_localizations),
+          description: zhTW(sc.description, sc.description_localizations),
+          options: (sc.options ?? []).map((o) => convertCommandOption(`${key} ${sc.name} ${o.name}`, o)),
+        };
+      }),
+    };
+  }
+  return out;
+}
+
 /**
- * The generated TypeScript file.
- * @param {{entries: Record<string, unknown>, extra: Record<string, unknown>, commit: string}} data
+ * The generated TypeScript file. `extra` exports are `as const`; `typed` exports are checked with
+ * `satisfies` against a type from lib/bot-ui-types.ts.
+ * @param {{entries: Record<string, unknown>, extra: Record<string, unknown>, typed?: Record<string, {type: string, value: unknown}>, commit: string}} data
  */
-export function renderGenerated({ entries, extra, commit }) {
+export function renderGenerated({ entries, extra, typed = {}, commit }) {
   const json = (v) => JSON.stringify(v, null, 2);
   const lines = [
     "// 產生檔，勿手改。執行 `npm run sync:bot` 重新產生（scripts/sync-bot-ui.mjs）。",
-    `// 來源：bot 專案 FuniPayment ${commit} 的 tests/snapshots/ui.json 與 app/ 原始碼。`,
+    `// 來源：bot 專案 FuniPayment ${commit} 的 tests/snapshots/ui.json、commands.json 與 app/ 原始碼。`,
     "// 字串裡的 {token} 由 lib/scenario.ts 依示範情境填入。",
-    'import type { BotUiEntry } from "@/lib/bot-ui-types";',
+    'import type { BotUiEntry, CommandData } from "@/lib/bot-ui-types";',
     "",
     `export const BOT_SOURCE_COMMIT = ${json(commit)};`,
     "",
     `export const BOT_UI = ${json(entries)} satisfies Record<string, BotUiEntry>;`,
   ];
+  for (const [name, { type, value }] of Object.entries(typed)) {
+    lines.push("", `export const ${name} = ${json(value)} satisfies ${type};`);
+  }
   for (const [name, value] of Object.entries(extra)) lines.push("", `export const ${name} = ${json(value)} as const;`);
   return lines.join("\n") + "\n";
 }

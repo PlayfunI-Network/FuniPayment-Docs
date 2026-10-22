@@ -39,6 +39,12 @@ export const DEMO_SCENARIO: Scenario = {
 /** A fixed "now" so server and client render the same HTML. */
 export const DEMO_NOW = new Date(2026, 9, 21, 15, 24, 8);
 
+/**
+ * The store barcode images in public/demo, by the order total their third barcode encodes
+ * (drawn like app/bot/barcode.py). A store-barcode scenario with another total needs its own image.
+ */
+export const BARCODE_IMAGES: Readonly<Record<string, string>> = { "525": "/demo/barcodes.png" };
+
 /** How zh-TW Discord shows /fp's `<t:now+1 day:R>` (views/fp.py: expiry = now + 1 day). */
 const SELECT_EXPIRES_IN = "1 天內";
 /** The demo order's payment deadline, in days after it is created (SmilePay sets the real one). */
@@ -83,6 +89,8 @@ export function scenarioTokens(s: Scenario, now: Date): Record<string, string> {
     buyerEmail: DEMO_BUYER_INFO.email,
     balanceName: s.balanceName ?? BOT_DEFAULTS.balanceNickname,
   };
+  const barcode = BARCODE_IMAGES[tokens.total];
+  if (barcode) tokens.barcodeImage = barcode;
   // Every method's fee for the same amount (the /fp menu lists them all).
   for (const m of METHODS) tokens[`fee:${m}`] = String(calculateFee(m, s.amount));
   // The method's name as each screen writes it; a screen without the method has no token.
@@ -123,5 +131,12 @@ export function fillSnapshot(id: SnapshotId, scenario: Scenario, now: Date = DEM
   if (entry.method && entry.method !== scenario.method) {
     throw new Error(`${id} 只適用付款方式 ${entry.method}，情境是 ${scenario.method}`);
   }
-  return fillDeep(entry, scenarioTokens(scenario, now));
+  const tokens = scenarioTokens(scenario, now);
+  if (!tokens.barcodeImage && JSON.stringify(entry).includes("{barcodeImage}")) {
+    throw new Error(
+      `${id} 的條碼圖只有總額 ${Object.keys(BARCODE_IMAGES).join("、")} 元的版本，情境總額是 ${tokens.total} 元；` +
+        "請另外產生這個總額的條碼圖並加進 BARCODE_IMAGES",
+    );
+  }
+  return fillDeep(entry, tokens);
 }

@@ -24,6 +24,7 @@ export function DiscordButton({
   const c = STYLES[style];
   return (
     <span
+      data-discord-button=""
       data-active={active || undefined}
       data-disabled={disabled || undefined}
       aria-disabled={disabled || undefined}

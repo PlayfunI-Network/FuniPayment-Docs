@@ -22,7 +22,7 @@ describe("SnapshotMessage", () => {
     const { container } = render(
       <SnapshotMessage id="builder/consumer_info/filled=False/cancel_first=False" scenario={DEMO_SCENARIO} />,
     );
-    const buttons = [...container.querySelectorAll("[data-active], span.inline-flex.h-8")].map((b) => ({
+    const buttons = [...container.querySelectorAll("[data-discord-button]")].map((b) => ({
       label: b.textContent,
       disabled: b.getAttribute("aria-disabled") === "true",
     }));

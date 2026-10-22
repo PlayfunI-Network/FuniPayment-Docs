@@ -7,6 +7,7 @@ import { fileURLToPath } from "node:url";
 import { KEYS, MENTIONS, TEXT_RULES, URL_RULES } from "./sync-bot-ui.config.mjs";
 import {
   checkFees,
+  convertCommands,
   convertKeys,
   extractBalanceNickname,
   extractChannelDefaults,
@@ -55,6 +56,8 @@ const methodLabels = {
   review: pick(payment, "REVIEW_METHOD_NAMES", "app/i18n/payment.py"),
 };
 
+const commands = convertCommands(JSON.parse(read("tests/snapshots/commands.json")));
+
 const out = path.join(root, "content", "bot-ui.generated.ts");
 fs.writeFileSync(
   out,
@@ -65,7 +68,8 @@ fs.writeFileSync(
       BOT_METHOD_LABELS: methodLabels,
       BOT_DEFAULTS: { balanceNickname: extractBalanceNickname(schema) },
     },
+    typed: { COMMANDS: { type: "Record<string, CommandData>", value: commands } },
     commit: botCommit(),
   }),
 );
-console.log(`已產生 ${path.relative(root, out)}（${Object.keys(entries).length} 個 key）`);
+console.log(`已產生 ${path.relative(root, out)}（${Object.keys(entries).length} 個 key、${Object.keys(commands).length} 個指令）`);
