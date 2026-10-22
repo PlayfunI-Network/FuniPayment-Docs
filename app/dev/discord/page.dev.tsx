@@ -56,9 +56,7 @@ export default function DiscordShowcase() {
       <Section title="頻道視窗：訊息、embed、按鈕、選單、斜線指令">
         <DiscordWindow title="付款通知" kind="channel">
           <Message author="商家" avatar={MERCHANT} time="今天 下午 2:14" nameColor="#f0b232">
-            <div>
-              <DiscordMarkdown text="一般文字訊息，含 **粗體**、__底線__、*斜體*、[連結](https://example.com) 和 <@顧客> 提及。" />
-            </div>
+            <DiscordMarkdown text="一般文字訊息，含 **粗體**、__底線__、*斜體*、[連結](https://example.com) 和 <@顧客> 提及。" />
           </Message>
           <Message
             author="FunI 付款系統"

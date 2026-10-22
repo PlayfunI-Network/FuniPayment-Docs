@@ -8,6 +8,8 @@ const config = {
   images: { unoptimized: true },
   trailingSlash: false,
   reactStrictMode: true,
+  // next dev would otherwise write an AGENTS.md into the repo root on every start.
+  agentRules: false,
   // Dev-only pages (app/dev/**/page.dev.tsx) exist only under `next dev`; the build never sees
   // them, so they are never exported (check:export also fails if out/dev appears).
   ...(process.env.NODE_ENV === "development" && {

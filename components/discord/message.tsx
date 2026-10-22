@@ -1,5 +1,41 @@
-import type { ReactNode } from "react";
+import { Children, Fragment, isValidElement, type ReactNode } from "react";
 import { Avatar, type AvatarSource } from "./avatar";
+import { DiscordMarkdown } from "./markdown";
+
+const INLINE_TAGS = new Set(["a", "b", "br", "code", "em", "i", "s", "span", "strong", "u"]);
+
+/** Text, inline tags and DiscordMarkdown flow together; anything else (embeds, rows) is a block. */
+function isInline(node: ReactNode): boolean {
+  if (typeof node === "string" || typeof node === "number") return true;
+  if (!isValidElement(node)) return false;
+  return node.type === DiscordMarkdown || (typeof node.type === "string" && INLINE_TAGS.has(node.type));
+}
+
+/**
+ * The content column stacks its children, so each run of inline children goes into one block
+ * first: formatted text stays one paragraph instead of one line per fragment.
+ */
+function groupInline(children: ReactNode, keyPrefix = "inline"): ReactNode[] {
+  const out: ReactNode[] = [];
+  let run: ReactNode[] = [];
+  const flush = () => {
+    if (run.length > 0) out.push(<div key={`${keyPrefix}-${out.length}`}>{run}</div>);
+    run = [];
+  };
+  for (const child of Children.toArray(children)) {
+    if (isValidElement(child) && child.type === Fragment) {
+      flush();
+      out.push(...groupInline((child.props as { children?: ReactNode }).children, `${keyPrefix}-${out.length}`));
+    } else if (isInline(child)) {
+      run.push(child);
+    } else {
+      flush();
+      out.push(child);
+    }
+  }
+  flush();
+  return out;
+}
 
 /**
  * One Discord message group: 40px avatar, 16px name, optional 「APP」 badge and timestamp,
@@ -53,7 +89,7 @@ export function Message({
         {time && <span className="ml-1 text-xs leading-[1.375rem] text-[#949ba4]">{time}</span>}
       </div>
       <div className="flex min-w-0 flex-col gap-1 text-base leading-[1.375rem] break-words whitespace-pre-wrap text-[#dbdee1]">
-        {children}
+        {groupInline(children)}
       </div>
     </div>
   );
