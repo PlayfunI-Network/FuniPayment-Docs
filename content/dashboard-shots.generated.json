@@ -97,6 +97,66 @@
         "w": 0.4641,
         "h": 0.1044
       },
+      "stateAvailable": {
+        "x": 0.0297,
+        "y": 0.3273,
+        "w": 0.4641,
+        "h": 0.1044
+      },
+      "stateSetUpByYou": {
+        "x": 0.5062,
+        "y": 0.4472,
+        "w": 0.4641,
+        "h": 0.1576
+      },
+      "openDashboard": {
+        "x": 0.5248,
+        "y": 0.5656,
+        "w": 0.0569,
+        "h": 0.0233
+      },
+      "stateSetUpByOther": {
+        "x": 0.5062,
+        "y": 0.3273,
+        "w": 0.4641,
+        "h": 0.1044
+      },
+      "stateNoPermission": {
+        "x": 0.0297,
+        "y": 0.4472,
+        "w": 0.4641,
+        "h": 0.1576
+      },
+      "noPermissionNote": {
+        "x": 0.0309,
+        "y": 0.5501,
+        "w": 0.4616,
+        "h": 0.0532
+      },
+      "invite": {
+        "x": 0.0804,
+        "y": 0.657,
+        "w": 0.746,
+        "h": 0.0291
+      },
+      "refresh": {
+        "x": 0.8389,
+        "y": 0.6498,
+        "w": 0.1129,
+        "h": 0.0435
+      },
+      "help": {
+        "x": 0.0297,
+        "y": 0.7384,
+        "w": 0.9406,
+        "h": 0.0633
+      },
+      "helpSummary": {
+        "x": 0.0483,
+        "y": 0.7554,
+        "w": 0.9035,
+        "h": 0.0291
+      },
       "next": {
         "x": 0.8911,
         "y": 0.9119,
@@ -108,19 +168,391 @@
       "dark": "/demo/dashboard/setup-1-mobile-dark.webp",
       "light": "/demo/dashboard/setup-1-mobile-light.webp",
       "width": 750,
-      "height": 1432,
+      "height": 1654,
       "targets": {
         "server": {
           "x": 0.0427,
-          "y": 0.287,
+          "y": 0.2485,
           "w": 0.9147,
-          "h": 0.0939
+          "h": 0.0813
+        },
+        "stateAvailable": {
+          "x": 0.0427,
+          "y": 0.2485,
+          "w": 0.9147,
+          "h": 0.0813
+        },
+        "stateSetUpByYou": {
+          "x": 0.0427,
+          "y": 0.5701,
+          "w": 0.9147,
+          "h": 0.1227
+        },
+        "openDashboard": {
+          "x": 0.0827,
+          "y": 0.6623,
+          "w": 0.1227,
+          "h": 0.0181
+        },
+        "stateSetUpByOther": {
+          "x": 0.0427,
+          "y": 0.3419,
+          "w": 0.9147,
+          "h": 0.0813
+        },
+        "stateNoPermission": {
+          "x": 0.0427,
+          "y": 0.4353,
+          "w": 0.9147,
+          "h": 0.1227
+        },
+        "noPermissionNote": {
+          "x": 0.0453,
+          "y": 0.5154,
+          "w": 0.9093,
+          "h": 0.0414
+        },
+        "invite": {
+          "x": 0.152,
+          "y": 0.7335,
+          "w": 0.4955,
+          "h": 0.0227
+        },
+        "refresh": {
+          "x": 0.6741,
+          "y": 0.7279,
+          "w": 0.2432,
+          "h": 0.0339
+        },
+        "help": {
+          "x": 0.0427,
+          "y": 0.7969,
+          "w": 0.9147,
+          "h": 0.0493
+        },
+        "helpSummary": {
+          "x": 0.0827,
+          "y": 0.8102,
+          "w": 0.8347,
+          "h": 0.0227
         },
         "next": {
           "x": 0.7867,
-          "y": 0.9207,
+          "y": 0.932,
           "w": 0.1707,
-          "h": 0.0447
+          "h": 0.0387
+        }
+      }
+    }
+  },
+  "setup-1-help": {
+    "dark": "/demo/dashboard/setup-1-help-dark.webp",
+    "light": "/demo/dashboard/setup-1-help-light.webp",
+    "width": 1616,
+    "height": 1432,
+    "targets": {
+      "server": {
+        "x": 0.0297,
+        "y": 0.2943,
+        "w": 0.4641,
+        "h": 0.0939
+      },
+      "stateAvailable": {
+        "x": 0.0297,
+        "y": 0.2943,
+        "w": 0.4641,
+        "h": 0.0939
+      },
+      "stateSetUpByYou": {
+        "x": 0.5062,
+        "y": 0.4022,
+        "w": 0.4641,
+        "h": 0.1418
+      },
+      "openDashboard": {
+        "x": 0.5248,
+        "y": 0.5087,
+        "w": 0.0569,
+        "h": 0.0209
+      },
+      "stateSetUpByOther": {
+        "x": 0.5062,
+        "y": 0.2943,
+        "w": 0.4641,
+        "h": 0.0939
+      },
+      "stateNoPermission": {
+        "x": 0.0297,
+        "y": 0.4022,
+        "w": 0.4641,
+        "h": 0.1418
+      },
+      "noPermissionNote": {
+        "x": 0.0309,
+        "y": 0.4948,
+        "w": 0.4616,
+        "h": 0.0478
+      },
+      "invite": {
+        "x": 0.0804,
+        "y": 0.591,
+        "w": 0.746,
+        "h": 0.0262
+      },
+      "refresh": {
+        "x": 0.8389,
+        "y": 0.5845,
+        "w": 0.1129,
+        "h": 0.0391
+      },
+      "help": {
+        "x": 0.0297,
+        "y": 0.6641,
+        "w": 0.9406,
+        "h": 0.1578
+      },
+      "helpSummary": {
+        "x": 0.0483,
+        "y": 0.6795,
+        "w": 0.9035,
+        "h": 0.0262
+      },
+      "next": {
+        "x": 0.8911,
+        "y": 0.9211,
+        "w": 0.0792,
+        "h": 0.0447
+      },
+      "helpList": {
+        "x": 0.0483,
+        "y": 0.7168,
+        "w": 0.9035,
+        "h": 0.0897
+      }
+    },
+    "mobile": {
+      "dark": "/demo/dashboard/setup-1-help-mobile-dark.webp",
+      "light": "/demo/dashboard/setup-1-help-mobile-light.webp",
+      "width": 750,
+      "height": 1836,
+      "targets": {
+        "server": {
+          "x": 0.0427,
+          "y": 0.2239,
+          "w": 0.9147,
+          "h": 0.0733
+        },
+        "stateAvailable": {
+          "x": 0.0427,
+          "y": 0.2239,
+          "w": 0.9147,
+          "h": 0.0733
+        },
+        "stateSetUpByYou": {
+          "x": 0.0427,
+          "y": 0.5136,
+          "w": 0.9147,
+          "h": 0.1106
+        },
+        "openDashboard": {
+          "x": 0.0827,
+          "y": 0.5967,
+          "w": 0.1227,
+          "h": 0.0163
+        },
+        "stateSetUpByOther": {
+          "x": 0.0427,
+          "y": 0.308,
+          "w": 0.9147,
+          "h": 0.0733
+        },
+        "stateNoPermission": {
+          "x": 0.0427,
+          "y": 0.3922,
+          "w": 0.9147,
+          "h": 0.1106
+        },
+        "noPermissionNote": {
+          "x": 0.0453,
+          "y": 0.4643,
+          "w": 0.9093,
+          "h": 0.0373
+        },
+        "invite": {
+          "x": 0.152,
+          "y": 0.6608,
+          "w": 0.4955,
+          "h": 0.0204
+        },
+        "refresh": {
+          "x": 0.6741,
+          "y": 0.6558,
+          "w": 0.2432,
+          "h": 0.0305
+        },
+        "help": {
+          "x": 0.0427,
+          "y": 0.7179,
+          "w": 0.9147,
+          "h": 0.1435
+        },
+        "helpSummary": {
+          "x": 0.0827,
+          "y": 0.7298,
+          "w": 0.8347,
+          "h": 0.0204
+        },
+        "next": {
+          "x": 0.7867,
+          "y": 0.9387,
+          "w": 0.1707,
+          "h": 0.0349
+        },
+        "helpList": {
+          "x": 0.0827,
+          "y": 0.759,
+          "w": 0.8347,
+          "h": 0.0904
+        }
+      }
+    }
+  },
+  "setup-daily-limit": {
+    "dark": "/demo/dashboard/setup-daily-limit-dark.webp",
+    "light": "/demo/dashboard/setup-daily-limit-light.webp",
+    "width": 1040,
+    "height": 696,
+    "targets": {
+      "card": {
+        "x": 0.0769,
+        "y": 0.1158,
+        "w": 0.8462,
+        "h": 0.7685
+      },
+      "title": {
+        "x": 0.1404,
+        "y": 0.3083,
+        "w": 0.7192,
+        "h": 0.0819
+      },
+      "home": {
+        "x": 0.1404,
+        "y": 0.5452,
+        "w": 0.15,
+        "h": 0.092
+      },
+      "logout": {
+        "x": 0.1404,
+        "y": 0.709,
+        "w": 0.7192,
+        "h": 0.0805
+      }
+    },
+    "mobile": {
+      "dark": "/demo/dashboard/setup-daily-limit-mobile-dark.webp",
+      "light": "/demo/dashboard/setup-daily-limit-mobile-light.webp",
+      "width": 750,
+      "height": 664,
+      "targets": {
+        "card": {
+          "x": 0.0427,
+          "y": 0.1213,
+          "w": 0.9147,
+          "h": 0.7573
+        },
+        "title": {
+          "x": 0.1093,
+          "y": 0.299,
+          "w": 0.7813,
+          "h": 0.0858
+        },
+        "home": {
+          "x": 0.1093,
+          "y": 0.5473,
+          "w": 0.208,
+          "h": 0.0964
+        },
+        "logout": {
+          "x": 0.1093,
+          "y": 0.719,
+          "w": 0.7813,
+          "h": 0.0843
+        }
+      }
+    }
+  },
+  "setup-owner-suspended": {
+    "dark": "/demo/dashboard/setup-owner-suspended-dark.webp",
+    "light": "/demo/dashboard/setup-owner-suspended-light.webp",
+    "width": 1040,
+    "height": 756,
+    "targets": {
+      "card": {
+        "x": 0.0769,
+        "y": 0.1066,
+        "w": 0.8462,
+        "h": 0.7867
+      },
+      "title": {
+        "x": 0.1404,
+        "y": 0.2839,
+        "w": 0.7192,
+        "h": 0.0754
+      },
+      "home": {
+        "x": 0.1404,
+        "y": 0.5812,
+        "w": 0.15,
+        "h": 0.0847
+      },
+      "logout": {
+        "x": 0.1404,
+        "y": 0.732,
+        "w": 0.7192,
+        "h": 0.0741
+      },
+      "contact": {
+        "x": 0.4,
+        "y": 0.4835,
+        "w": 0.2433,
+        "h": 0.0476
+      }
+    },
+    "mobile": {
+      "dark": "/demo/dashboard/setup-owner-suspended-mobile-dark.webp",
+      "light": "/demo/dashboard/setup-owner-suspended-mobile-light.webp",
+      "width": 750,
+      "height": 768,
+      "targets": {
+        "card": {
+          "x": 0.0427,
+          "y": 0.1051,
+          "w": 0.9147,
+          "h": 0.7899
+        },
+        "title": {
+          "x": 0.1093,
+          "y": 0.2587,
+          "w": 0.7813,
+          "h": 0.0742
+        },
+        "home": {
+          "x": 0.1093,
+          "y": 0.6085,
+          "w": 0.208,
+          "h": 0.0833
+        },
+        "logout": {
+          "x": 0.1093,
+          "y": 0.7569,
+          "w": 0.7813,
+          "h": 0.0729
+        },
+        "contact": {
+          "x": 0.4693,
+          "y": 0.5123,
+          "w": 0.3374,
+          "h": 0.0469
         }
       }
     }
@@ -5559,6 +5991,118 @@
           "y": 0.6327,
           "w": 0.824,
           "h": 0.0231
+        }
+      }
+    }
+  },
+  "features-variables-open": {
+    "dark": "/demo/dashboard/features-variables-open-dark.webp",
+    "light": "/demo/dashboard/features-variables-open-light.webp",
+    "width": 2112,
+    "height": 1666,
+    "targets": {
+      "dynamicVc": {
+        "x": 0.5057,
+        "y": 0.0654,
+        "w": 0.4792,
+        "h": 0.9145
+      },
+      "variables": {
+        "x": 0.5218,
+        "y": 0.2545,
+        "w": 0.447,
+        "h": 0.6516
+      },
+      "variablesSummary": {
+        "x": 0.5218,
+        "y": 0.2545,
+        "w": 0.447,
+        "h": 0.0225
+      },
+      "variablesList": {
+        "x": 0.5218,
+        "y": 0.2866,
+        "w": 0.447,
+        "h": 0.6194
+      },
+      "varServerMembers": {
+        "x": 0.5218,
+        "y": 0.2866,
+        "w": 0.2216,
+        "h": 0.0237
+      },
+      "varCompletedAmount": {
+        "x": 0.7472,
+        "y": 0.4007,
+        "w": 0.2216,
+        "h": 0.0462
+      },
+      "varPendingOrders": {
+        "x": 0.5218,
+        "y": 0.5027,
+        "w": 0.2216,
+        "h": 0.0462
+      },
+      "varMonthlyOrders": {
+        "x": 0.5218,
+        "y": 0.7068,
+        "w": 0.2216,
+        "h": 0.0462
+      }
+    },
+    "mobile": {
+      "dark": "/demo/dashboard/features-variables-open-mobile-dark.webp",
+      "light": "/demo/dashboard/features-variables-open-mobile-light.webp",
+      "width": 750,
+      "height": 2682,
+      "targets": {
+        "dynamicVc": {
+          "x": 0.0427,
+          "y": 0.2291,
+          "w": 0.9147,
+          "h": 0.7589
+        },
+        "variables": {
+          "x": 0.088,
+          "y": 0.3466,
+          "w": 0.824,
+          "h": 0.5828
+        },
+        "variablesSummary": {
+          "x": 0.088,
+          "y": 0.3466,
+          "w": 0.824,
+          "h": 0.014
+        },
+        "variablesList": {
+          "x": 0.088,
+          "y": 0.3665,
+          "w": 0.824,
+          "h": 0.5628
+        },
+        "varServerMembers": {
+          "x": 0.088,
+          "y": 0.3665,
+          "w": 0.824,
+          "h": 0.0147
+        },
+        "varCompletedAmount": {
+          "x": 0.088,
+          "y": 0.5259,
+          "w": 0.824,
+          "h": 0.0147
+        },
+        "varPendingOrders": {
+          "x": 0.088,
+          "y": 0.579,
+          "w": 0.824,
+          "h": 0.0147
+        },
+        "varMonthlyOrders": {
+          "x": 0.088,
+          "y": 0.7207,
+          "w": 0.824,
+          "h": 0.0147
         }
       }
     }

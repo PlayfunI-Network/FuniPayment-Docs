@@ -6,6 +6,8 @@
 // path:     the page opened first (with its query, if any); actions then run in order.
 // actions:  "click:<selector>", "check:<selector>", "fill:<selector>|<text>",
 //           "pick:<combobox label>|<option>" (the dashboard's MultiSelect), "wait:<selector>".
+// fake:     [{ path, body }] POSTed to the fake API after its reset and before the page opens (test
+//           switches: /__onboarding { daily_remaining }, /__suspend { id, suspended }).
 // targets:  the elements a demo's cursor and camera aim at; each selector must match exactly one
 //           visible element, on the desktop and on the phone picture. Their boxes are saved as
 //           Rects (0–1 of the image).
@@ -21,6 +23,9 @@
 
 const NEW_SERVER = "222222222222222001"; // fixtures.mjs NEW_SERVER_ID (星光遊戲社 after demo-data)
 const SERVER = "111111111111111111"; // fixtures.mjs SERVER_ID (星光遊戲社)
+const OTHER_SERVER = "222222222222222002"; // NEWBIE_SERVERS: set up by someone else
+const NO_PERMISSION_SERVER = "222222222222222003"; // NEWBIE_SERVERS: member only
+const OWN_SERVER = "222222222222222004"; // added by demo-data.mjs (DEMO_EXTRA_SERVER): already set up by you
 const BASE = `/servers/${SERVER}`;
 const ORDER = "50000000001"; // the first fixture order (shown as 050000000001)
 
@@ -33,6 +38,33 @@ export const MOBILE_VIEWPORT = { w: 375, h: 812 };
 const role = (kind, name) => `role=${kind}[name="${name}"s]`;
 const NEXT = role("button", "下一步");
 const WIZARD = { selector: "main > div", pad: 24 };
+/** The pages that replace the wizard when it is closed to you (a card on its own). */
+const BLOCKED = { selector: 'section[aria-labelledby="setup-blocked"]', pad: 40 };
+const BLOCKED_TARGETS = {
+  card: 'section[aria-labelledby="setup-blocked"]',
+  title: role("heading", "暫時無法設定新的伺服器"),
+  home: role("link", "回到首頁"),
+  logout: role("button", "登出"),
+};
+const serverCard = (id) => `div:has(> label input[value="${id}"])`;
+const HELP = 'details:has(> summary:text-is("找不到我的伺服器？"))';
+const HELP_SUMMARY = `${HELP} >> summary`;
+/** Step 1: one card per server state, the invite link, the refresh button and the help. */
+const STEP1_TARGETS = {
+  server: serverCard(NEW_SERVER),
+  stateAvailable: serverCard(NEW_SERVER),
+  stateSetUpByYou: serverCard(OWN_SERVER),
+  openDashboard: role("link", "前往後台"),
+  stateSetUpByOther: serverCard(OTHER_SERVER),
+  stateNoPermission: serverCard(NO_PERMISSION_SERVER),
+  noPermissionNote: 'p:text-is("需要這個伺服器的「管理伺服器」權限才能設定。")',
+  invite: role("link", "邀請機器人到其他伺服器"),
+  refresh: role("button", "重新整理"),
+  help: HELP,
+  helpSummary: HELP_SUMMARY,
+  next: NEXT,
+};
+
 /** A SectionCard by its title (the cards without an aria-label). */
 const card = (title) => `section:has(> div > h2:text-is("${title}"))`;
 
@@ -235,10 +267,36 @@ export const SHOTS = [
     path: "/setup",
     viewport: WIZARD_VIEWPORT,
     crop: WIZARD,
-    targets: {
-      server: `div:has(> label input[value="${NEW_SERVER}"])`,
-      next: NEXT,
-    },
+    targets: STEP1_TARGETS,
+  },
+  {
+    id: "setup-1-help",
+    identity: "newbie",
+    path: "/setup",
+    viewport: WIZARD_VIEWPORT,
+    actions: [`click:${HELP_SUMMARY}`, `wait:${HELP} >> ul`],
+    crop: WIZARD,
+    targets: { ...STEP1_TARGETS, helpList: `${HELP} >> ul` },
+  },
+  // The wizard's two refusals (the page of its own); the fake API has no way to show a
+  // set-up-by-you server for a new user, so only these are produced with its switches.
+  {
+    id: "setup-daily-limit",
+    identity: "owner",
+    path: "/setup",
+    viewport: { w: 900, h: 700 },
+    fake: [{ path: "/__onboarding", body: { daily_remaining: 0 } }],
+    crop: BLOCKED,
+    targets: { ...BLOCKED_TARGETS, title: role("heading", "今天無法再建立伺服器") },
+  },
+  {
+    id: "setup-owner-suspended",
+    identity: "owner",
+    path: "/setup",
+    viewport: { w: 900, h: 700 },
+    fake: [{ path: "/__suspend", body: { id: SERVER, suspended: true } }],
+    crop: BLOCKED,
+    targets: { ...BLOCKED_TARGETS, contact: role("link", "contact@funipay.net") },
   },
   {
     id: "setup-2",
@@ -412,5 +470,24 @@ export const SHOTS = [
       variables: "main details",
     },
     desktopTargets: SIDEBAR,
+  },
+  {
+    id: "features-variables-open",
+    identity: "owner",
+    path: `${BASE}/features`,
+    viewport: DESKTOP,
+    // Cut to the page's content: with the sidebar the picture is over 200 KB
+    crop: { selector: "main", pad: 16 },
+    actions: [`click:summary:text-is("可用的範本變數")`, "wait:main details >> ul"],
+    targets: {
+      dynamicVc: role("region", "動態語音頻道改名"),
+      variables: "main details",
+      variablesSummary: 'main details > summary',
+      variablesList: "main details >> ul",
+      varServerMembers: 'main details li:has(code:text-is("%server_members%"))',
+      varCompletedAmount: 'main details li:has(code:text-is("%completed_amount%"))',
+      varPendingOrders: 'main details li:has(code:text-is("%pending_orders%"))',
+      varMonthlyOrders: 'main details li:has(code:text-is("%monthly_orders%"))',
+    },
   },
 ];

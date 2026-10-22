@@ -138,7 +138,7 @@ const HIDE_DEV_OVERLAY = `document.addEventListener("DOMContentLoaded", () => {
 });`;
 
 /** Resets the fake API and saves 星光遊戲社's settings into it (so a save answers with them too). */
-async function resetFakeApi() {
+async function resetFakeApi(extra = []) {
   const fake = `http://127.0.0.1:${PORTS.fake}`;
   const reset = await fetch(`${fake}/__reset`, { method: "POST" });
   if (!reset.ok) throw new Error("fake-api /__reset 失敗");
@@ -153,6 +153,10 @@ async function resetFakeApi() {
     body: JSON.stringify({ version, changes: DEMO_SETTINGS_CHANGES }),
   });
   if (!saved.ok) throw new Error(`fake-api 存不進示範設定（${saved.status}）：${await saved.text()}`);
+  for (const { path: switchPath, body } of extra) {
+    const response = await fetch(`${fake}${switchPath}`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+    if (!response.ok) throw new Error(`fake-api ${switchPath} 失敗（${response.status}）`);
+  }
 }
 
 /** The desktop picture and, unless `mobile: false`, the phone one, with the targets each has. */
@@ -165,7 +169,7 @@ function variantsOf(shot) {
 
 async function takeShot(browser, encoder, shot, variant, theme) {
   const label = `${shot.id}${variant.suffix}（${theme}）`;
-  await resetFakeApi();
+  await resetFakeApi(shot.fake);
   const context = await browser.newContext({
     viewport: { width: variant.viewport.w, height: variant.viewport.h },
     deviceScaleFactor: SCALE,
