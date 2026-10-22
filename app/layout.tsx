@@ -4,6 +4,7 @@ import { RootProvider } from "fumadocs-ui/provider/next";
 import type { ReactNode } from "react";
 import ZhSearchDialog from "@/components/search-dialog";
 import { SITE_NAME, SITE_URL } from "@/lib/layout.shared";
+import { UI_TRANSLATIONS } from "@/lib/ui-translations";
 import "./globals.css";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
@@ -22,6 +23,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <RootProvider
           theme={{ defaultTheme: "dark", enableSystem: false }}
           search={{ SearchDialog: ZhSearchDialog }}
+          i18n={{ locale: "zh-TW", translations: UI_TRANSLATIONS }}
         >
           {children}
         </RootProvider>

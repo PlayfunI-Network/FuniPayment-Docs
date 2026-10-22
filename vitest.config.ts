@@ -15,7 +15,7 @@ export default defineConfig({
         test: {
           name: "node",
           environment: "node",
-          include: ["lib/**/*.test.ts", "components/**/*.test.tsx", "scripts/**/*.test.ts", "scripts/**/*.test.mjs"],
+          include: ["lib/**/*.test.ts", "components/**/*.test.ts", "components/**/*.test.tsx", "scripts/**/*.test.ts", "scripts/**/*.test.mjs"],
           exclude: COPIED_DOM_TESTS,
         },
       },

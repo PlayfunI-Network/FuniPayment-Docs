@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { render, screen } from "@testing-library/react";
 import { BOT_UI } from "@/content/bot-ui.generated";
-import { FpScreen, NARROW_STEPS, WIDE_STEPS } from "./fp-demo";
+import { FpScreen, LAYOUTS, NARROW_STEPS, WIDE_STEPS } from "./fp-demo";
 
 describe("fp demo", () => {
   it("composes the filled buyer step from the same embed the /fp step shows", () => {
@@ -37,11 +37,13 @@ describe("fp demo", () => {
   it("draws every screen of the story from the snapshots", () => {
     const bots = [...new Set(WIDE_STEPS.map((s) => s.screen.bot))];
     expect(bots).toEqual(["none", "select", "menu", "menuPick", "confirm", "buyer", "order"]);
-    for (const step of WIDE_STEPS) {
-      const { unmount } = render(<FpScreen screen={step.screen} wide />);
-      unmount();
+    for (const layout of Object.values(LAYOUTS)) {
+      for (const step of WIDE_STEPS) {
+        const { unmount } = render(<FpScreen screen={step.screen} layout={layout} />);
+        unmount();
+      }
     }
-    render(<FpScreen screen={WIDE_STEPS[WIDE_STEPS.length - 1].screen} wide />);
+    render(<FpScreen screen={WIDE_STEPS[WIDE_STEPS.length - 1].screen} layout={LAYOUTS.wide} />);
     expect(screen.getByText("付款編號：241021387465")).toBeTruthy();
     expect(screen.getAllByText("待付款｜0042").length).toBeGreaterThan(0);
   });
