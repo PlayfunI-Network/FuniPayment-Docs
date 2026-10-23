@@ -343,7 +343,7 @@ export const DEMO_SETTINGS_CHANGES = Object.freeze({
   smilepay_store_number: String(DEMO.storeNumber),
   smilepay_param_code: "A1B2C3",
   smilepay_verify_key: "D4E5F6",
-  smilepay_mid_verify_param: "G7H8",
+  smilepay_mid_verify_param: "2468",
   payment: Object.freeze({
     ...Object.fromEntries(Object.entries(DEFAULT_FEES).map(([method, fee]) => [method, { enabled: true, fee: String(fee) }])),
     ibon_extra_fee: String(IBON_EXTRA_FEE),

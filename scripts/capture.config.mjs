@@ -77,7 +77,7 @@ const toStep4 = [
   `fill:${role("textbox", "商家代號")}|24680`,
   `fill:${role("textbox", "參數碼")}|A1B2C3`,
   `fill:${role("textbox", "檢查碼")}|D4E5F6`,
-  `fill:${role("textbox", "商家驗證參數（推薦）")}|G7H8`,
+  `fill:${role("textbox", "商家驗證參數（推薦）")}|2468`,
   `click:${NEXT}`,
   `wait:${role("switch", "銀行轉帳")}`,
 ];
