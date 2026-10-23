@@ -8,7 +8,7 @@ import {
   ChannelAutomationScreen,
   LAYOUTS,
   type Screen,
-} from "@/components/demos/payments/channel-automation-demo";
+} from "../shared/channel-automation-screen";
 
 type Layout = (typeof LAYOUTS)["wide"];
 

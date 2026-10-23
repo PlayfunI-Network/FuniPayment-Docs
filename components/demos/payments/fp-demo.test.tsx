@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 import { render, screen } from "@testing-library/react";
 import { BOT_UI } from "@/content/bot-ui.generated";
-import { FpScreen, LAYOUTS, NARROW_STEPS, WIDE_STEPS } from "./fp-demo";
+import { FpScreen, LAYOUTS } from "../shared/fp-screen";
+import { NARROW_STEPS, WIDE_STEPS } from "./fp-demo";
 
 describe("fp demo", () => {
   it("composes the filled buyer step from the same embed the /fp step shows", () => {

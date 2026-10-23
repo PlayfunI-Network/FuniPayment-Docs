@@ -1,7 +1,7 @@
 "use client";
 // The screens for page.dev.tsx (a client module: LAYOUTS lives in a client file, so a server
 // component would only see a reference to it).
-import { FpScreen, LAYOUTS, type Screen } from "@/components/demos/payments/fp-demo";
+import { FpScreen, LAYOUTS, type Screen } from "@/components/demos/shared/fp-screen";
 
 const SCREENS: Screen[] = [
   { input: { kind: "typing", typed: "/fp" }, bot: "none", channel: "open" },
