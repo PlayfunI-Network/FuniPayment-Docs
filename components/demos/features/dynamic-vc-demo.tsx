@@ -19,7 +19,7 @@ import {
   type Pane,
   type SceneLayout,
 } from "@/components/demo";
-import { ChannelRow, DISCORD_FONT } from "@/components/discord";
+import { ChannelList } from "@/components/discord";
 import { optionPill, slashCommand } from "@/lib/commands";
 import { DEMO_CHANNELS } from "@/lib/scenario";
 import { SCENARIOS } from "../scenarios";
@@ -34,7 +34,7 @@ export const VOICE = { before: "訂單統計", after: DEMO_CHANNELS.voice.name, 
 const VOICE_PILL = optionPill(CMD, "channel", VOICE.before);
 const TEMPLATE_PILL = (typed: string) => optionPill(CMD, "rename_name", typed);
 /** Height of the voice category strip above the channel in the narrow layout. */
-const STRIP_H = 104;
+const STRIP_H = 116;
 
 type Targets = { typing: CanvasPoint; input: CanvasArea; reply: CanvasArea; voice: CanvasArea };
 type Layout = SceneLayout<Targets>;
@@ -66,32 +66,24 @@ const NARROW: Layout = {
   },
 };
 
-/** The sidebar: the commands channel, then the category with the voice channel. */
+/** The sidebar: the commands channel, then the category with the voice channel (only that in the strip). */
 function Sidebar({ voice, strip }: { voice: string; strip?: boolean }) {
-  const category = (name: string) => (
-    <h3 className="flex h-6 min-w-0 items-center gap-0.5 pr-2 pl-2.5 text-xs leading-4 font-semibold tracking-[0.02em] text-[#949ba4]">
-      <span className="min-w-0 truncate">{name}</span>
-    </h3>
-  );
   return (
-    <nav
-      aria-label="頻道"
-      className="h-full w-full overflow-hidden bg-[#2b2d31] pt-3 text-left [color-scheme:dark]"
-      style={{ fontFamily: DISCORD_FONT, lineHeight: 1.375 }}
-    >
-      {!strip && (
-        <section className="pb-3">
-          {category("文字頻道")}
-          <ChannelRow name="公告" kind="text" />
-          <ChannelRow name={CHANNEL} kind="text" highlight />
-        </section>
-      )}
-      <section>
-        {category("統計")}
-        <ChannelRow name={voice} kind="voice" highlight={voice !== VOICE.before} />
-        <ChannelRow name="閒聊" kind="voice" />
-      </section>
-    </nav>
+    <ChannelList
+      className="h-full w-full! rounded-none!"
+      categories={[
+        ...(strip
+          ? []
+          : [{ name: "文字頻道", channels: [{ name: "公告" }, { name: CHANNEL, highlight: true }] }]),
+        {
+          name: "統計",
+          channels: [
+            { name: voice, kind: "voice" as const, highlight: voice !== VOICE.before },
+            { name: "閒聊", kind: "voice" as const },
+          ],
+        },
+      ]}
+    />
   );
 }
 

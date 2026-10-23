@@ -3,6 +3,7 @@ import { render, screen } from "@testing-library/react";
 import {
   Attachment,
   ChannelList,
+  ChatInput,
   DiscordMarkdown,
   DmWindow,
   Embed,
@@ -62,6 +63,35 @@ describe("ChannelList", () => {
     for (const text of ["分類甲", "分類乙", "頻道一", "頻道二", "頻道三"]) {
       expect(screen.getByText(text)).toBeTruthy();
     }
+  });
+});
+
+describe("ChannelList kinds", () => {
+  it("draws text channels by default and voice channels when asked", () => {
+    const { container } = render(
+      <ChannelList
+        categories={[{ name: "分類", channels: [{ name: "文字" }, { name: "語音", kind: "voice", highlight: true }] }]}
+      />,
+    );
+    const kinds = [...container.querySelectorAll("[data-kind]")].map((el) => [el.textContent, el.getAttribute("data-kind")]);
+    expect(kinds).toEqual([
+      ["文字", "text"],
+      ["語音", "voice"],
+    ]);
+  });
+});
+
+describe("ChatInput", () => {
+  it("shows the channel placeholder, the DM placeholder, or the text being typed", () => {
+    const { unmount } = render(<ChatInput channel="指令區" />);
+    expect(screen.getByText("傳送訊息到 #指令區")).toBeTruthy();
+    unmount();
+    const dm = render(<ChatInput dm="FunI 付款系統" />);
+    expect(screen.getByText("傳送訊息給 @FunI 付款系統")).toBeTruthy();
+    dm.unmount();
+    render(<ChatInput dm="FunI 付款系統" typed="在嗎？" />);
+    expect(screen.getByText("在嗎？")).toBeTruthy();
+    expect(screen.queryByText(/傳送訊息/)).toBeNull();
   });
 });
 
