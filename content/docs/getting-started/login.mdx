@@ -3,4 +3,74 @@ title: "登入後台"
 description: "用 Discord 帳號登入網頁後台，以及第一次登入的導覽頁。"
 ---
 
-{/* TODO */}
+import { LoginDemo } from "@/components/demos/getting-started/dashboard-demos";
+
+後台是一個網頁，所有設定都在這裡做，也可以看訂單和收款統計。不用另外註冊帳號，用你的 Discord 帳號登入就好。
+
+<LoginDemo />
+
+## 誰可以登入
+
+任何 Discord 帳號都可以登入。登入之後能設定哪些伺服器，要看你在那些伺服器有沒有「管理伺服器」權限，見[設定精靈](/getting-started/setup-wizard)。
+
+## 登入步驟
+
+<Steps>
+<Step>
+
+### 打開後台
+
+打開 [dashboard.funipay.net](https://dashboard.funipay.net)，或按歡迎訊息裡的「開始設定」。還沒登入的話會先看到登入頁。
+
+</Step>
+<Step>
+
+### 按「使用 Discord 登入」
+
+畫面會跳到 Discord 的授權頁。後台只要求讀取你的 Discord 名稱和頭像，登入頁上也寫著「只會讀取你的 Discord 名稱與頭像，不會讀取訊息，也不會用你的帳號做任何事。」在 Discord 按授權後，會回到後台。
+
+</Step>
+<Step>
+
+### 看導覽
+
+第一次登入、還沒有設定任何伺服器時，會先看到導覽，一共四張：「FunI 付款系統能做什麼」「你需要準備」「設定只要五步」「準備好了嗎？」。按「下一張」往下翻，最後一張按「開始設定」。不想看可以按右上角的「跳過」。
+
+</Step>
+<Step>
+
+### 進入設定精靈
+
+看完或跳過導覽，就會到設定精靈。接著看[設定精靈](/getting-started/setup-wizard)。
+
+</Step>
+</Steps>
+
+## 之後再登入
+
+導覽只會自動出現一次。之後登入：
+
+- 已經設定好伺服器：直接打開上次看的那個伺服器的總覽，見[總覽與統計](/dashboard/overview)。
+- 還沒有伺服器：直接到設定精靈。想再看一次導覽，設定精靈第一步最下面有「重新看導覽」。
+
+登入後可以維持 30 天，但 7 天都沒打開後台的話，就要重新登入。
+
+## 常見狀況
+
+<Callout title="登入頁出現「你取消了 Discord 授權。」">
+你在 Discord 的授權頁按了取消。重新按「使用 Discord 登入」，這次按授權就好。
+</Callout>
+
+<Callout title="登入頁出現「登入逾時或連結已失效，請重新登入。」">
+授權頁開太久，或用了舊的連結。回到登入頁重新按一次「使用 Discord 登入」。
+</Callout>
+
+<Callout title="伺服器的管理員也想看後台">
+一個伺服器的後台，只有在設定精靈設定它的那個 Discord 帳號看得到。有管理員身分組的人不能進後台，他們在 Discord 用指令操作，見[誰可以用什麼](/reference/permissions)。
+</Callout>
+
+## 相關頁面
+
+- [設定精靈](/getting-started/setup-wizard)：下一步
+- [總覽與統計](/dashboard/overview)：設定好之後登入看到的第一頁
+- [/dashboard 與 /settings](/features/dashboard-command)：在 Discord 拿後台連結

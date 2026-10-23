@@ -3,4 +3,87 @@ title: "邀請機器人"
 description: "把 FunI 付款系統邀請進你的 Discord 伺服器。"
 ---
 
-{/* TODO */}
+import { WelcomeDemo } from "@/components/demos/getting-started/welcome-demo";
+
+先把機器人加進你的伺服器。加入之後，機器人會在伺服器和你的私訊各送一則歡迎訊息，按裡面的「開始設定」就能接著設定。
+
+<WelcomeDemo />
+
+## 誰可以邀請
+
+伺服器擁有者，或在伺服器有「管理伺服器」權限的人。這是 Discord 的規定，沒有這個權限的話，授權頁面的伺服器清單裡不會出現這個伺服器。
+
+## 邀請步驟
+
+<Steps>
+<Step>
+
+### 打開邀請連結
+
+打開[邀請連結](https://discord.com/oauth2/authorize?client_id=993780236871290910&scope=bot+applications.commands&permissions=125968)。官網 [funipay.net](https://funipay.net) 上的邀請按鈕也是連到這裡。
+
+</Step>
+<Step>
+
+### 選伺服器
+
+在 Discord 的授權頁面選要加入的伺服器，按繼續。
+
+</Step>
+<Step>
+
+### 保留所有權限
+
+下一頁會列出機器人要的權限，全部保持勾選，按授權。少勾一項，某些功能就會失敗（見下面的權限表）。
+
+</Step>
+<Step>
+
+### 看歡迎訊息
+
+機器人加入後，會送出「感謝邀請 FunI 付款系統！」。按「開始設定」打開後台，接著看[登入後台](/getting-started/login)。
+
+</Step>
+</Steps>
+
+## 機器人要的權限
+
+機器人只要求下面這七項權限，沒有管理員權限。
+
+| 權限 | 用在哪裡 |
+|---|---|
+| 檢視頻道 | 看得到訂單頻道和日誌頻道 |
+| 傳送訊息 | 貼出付款方式選單、訂單和通知 |
+| 嵌入連結 | 訂單和通知都是 embed 訊息 |
+| 附加檔案 | 四大超商條碼的條碼圖片 |
+| 讀取訊息歷史 | 找回之前送出的訂單訊息 |
+| 管理頻道 | 訂單頻道自動改名、換分類 |
+| 管理訊息 | 自動發佈公告頻道的訊息 |
+
+## 會看到什麼
+
+歡迎訊息會送到兩個地方：
+
+- 伺服器的系統訊息頻道，也就是 Discord 伺服器設定裡指定的那個頻道。伺服器沒有設系統訊息頻道，或機器人在那裡不能發訊息時，就不會送。
+- 伺服器擁有者的私訊。私訊多一句「你會收到這則訊息，是因為有人把機器人加入了你的伺服器」，後面接伺服器名稱。擁有者關掉私訊的話就收不到。
+
+兩則訊息都有兩個按鈕：「開始設定」打開後台的設定精靈，「社群與說明」打開 FunI 付款系統的 Discord 社群。
+
+機器人被移出後再邀請回來，如果這個伺服器之前已經設定過，就不會再送歡迎訊息，原本的設定也都還在。
+
+## 常見狀況
+
+<Callout title="沒收到歡迎訊息">
+不影響設定。直接到[後台](https://dashboard.funipay.net)登入，在設定精靈選這個伺服器就好。在伺服器裡輸入 `/dashboard` 也會拿到「開始設定」按鈕，見[/dashboard 與 /settings](/features/dashboard-command)。
+</Callout>
+
+<Callout title="還沒設定就有人用 /fp">
+伺服器設定好之前，`/fp`、`/payment`、`/balance` 這類指令都不能用，機器人會回「此伺服器尚未設定 FunI 付款系統。」並附上設定頁的連結。
+</Callout>
+
+## 相關頁面
+
+- [登入後台](/getting-started/login)：下一步
+- [設定精靈](/getting-started/setup-wizard)
+- [訂單頻道自動改名與移動](/payments/channel-automation)：管理頻道權限的用途
+- [/auto-publish 自動發佈](/features/auto-publish)：管理訊息權限的用途
