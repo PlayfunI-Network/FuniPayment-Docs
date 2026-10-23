@@ -205,12 +205,12 @@ Discord 畫面（`components/discord`，永遠深色）：
 | `SnapshotMessage` / `SnapshotEmbed` | 從 ui.json 畫出 bot 的訊息或單一 embed |
 | `Canvas`、`useWidth`、`canvasRect`、`canvasPoint`、`zoomTo` | 固定畫布與座標工具 |
 | `DiscordDemo` | Discord 示範的外框：寬窄兩種版面，各有自己的 steps，換版從頭播 |
-| `DiscordScene`、`Pane` | 一格 Discord 畫面：頻道列表加一或多個視窗；`tag` 在視窗右上角標「顧客的私訊」這類說明 |
+| `DiscordScene` | 一格 Discord 畫面：頻道列表加一或多個視窗；視窗的型別是 `Pane`，`tag` 在視窗右上角標「顧客的私訊」這類說明 |
 | `ChatMessage` | 示範裡的一則訊息：`from`（`bot`、`buyer`、`admin`、`member`）、`command`（「… 使用了 /指令」那行）、`ago`（幾分鐘前）、`enter`（滑進來） |
 | `CommandInput`、`InputState` | 頻道的輸入框：空的、打字中（`typing`）、填好參數（`options`） |
 | `stepper`、`SceneStep`、`SceneLayout` | 帶畫面狀態的步驟產生器和它的型別，見「再寫 steps」 |
 | `MessageWindow`、`DiscordStill` | 一個視窗裡只有一則訊息、不播動畫：頻道（給 `channel`）或和機器人的私訊；`DiscordStill` 再包成頁面上的一張圖（要給 `label`） |
-| `SnapshotTabs` | 幾張靜態畫面用分頁切換，讀者自己點（例如各付款方式的訂單） |
+| `SnapshotTabs`、`SnapshotTab` | 幾張靜態畫面用分頁切換，讀者自己點（例如各付款方式的訂單）；`SnapshotTab` 是每個分頁的型別 |
 | `DashboardDemo` | 後台示範：用目標名字指揮游標和鏡頭，見「後台示範」 |
 | `DashboardShot`、`shotTarget` | 後台截圖（單獨放在頁面上時要給 `alt`）與截圖上元素的位置 |
 
@@ -219,8 +219,10 @@ Discord 畫面（`components/discord`，永遠深色）：
 | 名稱 | 用途 |
 |---|---|
 | `lib/commands.ts` 的 `slashCommand("payment create")` | 指令或子指令的名稱、說明、參數，來自 `COMMANDS` |
+| `lib/commands.ts` 的 `commandOption(指令, 參數)` | 指令的某個參數（名稱、說明、選項），來自 `COMMANDS`；`optionPill` 內部也用它 |
 | `lib/commands.ts` 的 `optionPill(指令, 參數, 值)` | 輸入框裡填好的參數：參數的中文名稱和值；有選項的參數給選項的值，顯示選項的中文（例如 `"公開顯示"`、`"bank_transfer"`） |
 | `lib/scenario.ts` 的 `DEMO_BOT` | 機器人的名稱和頭像，和 `DEMO_PEOPLE` 放在一起 |
+| `lib/scenario.ts` 的 `demoSender(who)` | `bot`、`buyer`、`admin`、`member` 對應的名字和頭像，`ChatMessage` 的 `from` 用它 |
 | `lib/scenario.ts` 的 `demoTime(幾分鐘前)` | 訊息上的時間（「今天 下午3:24」） |
 | `components/demos/payments/kit.tsx` 的 `TicketCategories` | 示範用的開單分類和頻道列表，訂單頻道依階段出現在不同分類 |
 
