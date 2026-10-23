@@ -1,5 +1,5 @@
-// The ticket categories the payments demos show beside the channel (components/demo's
-// DiscordScene draws the screen itself).
+// The ticket categories the Discord demos show beside the channel (components/demo's
+// DiscordScene draws the screen itself). Used by the payments and getting-started chapters.
 import { ChannelList } from "@/components/discord";
 
 /**

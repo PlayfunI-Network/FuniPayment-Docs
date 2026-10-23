@@ -1,7 +1,7 @@
 /** A region of the demo screen, as fractions (0–1) of its width and height. */
 export type Rect = { x: number; y: number; w: number; h: number };
 
-/** What the camera shows: `zoom` times closer, centred on `focus` (the whole screen when absent). */
+/** What the camera shows: `zoom` times closer (below 1 counts as 1), centred on `focus` (the whole screen when absent). */
 export type Shot = { zoom: number; focus?: Rect };
 
 export type CameraTransform = { scale: number; tx: number; ty: number };

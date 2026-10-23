@@ -6,6 +6,7 @@ import { BOT_UI } from "@/content/bot-ui.generated";
 import type { MessageEntry } from "@/lib/bot-ui-types";
 import * as after from "../buyers/after-paying-demo";
 import * as buyer from "./buyer-info-demo";
+import * as automationScreen from "../shared/channel-automation-screen";
 import * as automation from "./channel-automation-demo";
 import * as expiry from "./expiry-demo";
 import { OrderGallery } from "./order-gallery";
@@ -23,7 +24,7 @@ const DEMOS: [string, Any, Record<string, unknown>, Steps, Steps][] = [
   ["payment history", history.PaymentHistoryScreen as Any, history.LAYOUTS, history.WIDE_STEPS, history.NARROW_STEPS],
   ["payment recheck", recheck.PaymentRecheckScreen as Any, recheck.LAYOUTS, recheck.WIDE_STEPS, recheck.NARROW_STEPS],
   ["recheck all", recheck.RecheckAllScreen as Any, recheck.ALL_LAYOUTS, recheck.ALL_WIDE_STEPS, recheck.ALL_NARROW_STEPS],
-  ["channel automation", automation.ChannelAutomationScreen as Any, automation.LAYOUTS, automation.WIDE_STEPS, automation.NARROW_STEPS],
+  ["channel automation", automationScreen.ChannelAutomationScreen as Any, automationScreen.LAYOUTS, automation.WIDE_STEPS, automation.NARROW_STEPS],
   ["expiry", expiry.ExpiryScreen as Any, expiry.LAYOUTS, expiry.WIDE_STEPS, expiry.NARROW_STEPS],
   ["after paying", after.AfterPayingScreen as Any, after.LAYOUTS, after.WIDE_STEPS, after.NARROW_STEPS],
 ];

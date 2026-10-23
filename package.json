@@ -2,10 +2,13 @@
   "name": "funipay-docs",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=22.12"
+  },
   "type": "module",
   "scripts": {
     "dev": "next dev --webpack",
-    "build": "next build",
+    "build": "next build && node scripts/flatten-segments.mjs",
     "test": "vitest run",
     "check:export": "node scripts/check-export.mjs",
     "sync:bot": "node scripts/sync-bot-ui.mjs",
