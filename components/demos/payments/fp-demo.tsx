@@ -6,39 +6,31 @@
 //
 // The screen is drawn on a fixed canvas (components/demo/canvas.tsx), one per stage size: WIDE
 // with the channel list, NARROW (a phone-width window, so the text stays readable) without it.
-// Every bot text comes from content/bot-ui.generated.ts; only the two chat lines before /fp, the
+// components/demo/discord-scene.tsx draws the Discord screen and plays the right layout. Every
+// bot text comes from content/bot-ui.generated.ts; only the two chat lines before /fp, the
 // channel names and Discord's own chrome are written here.
-import { useRef } from "react";
 import {
-  Canvas,
-  DemoStage,
+  ChatMessage,
+  CommandInput,
+  DiscordDemo,
+  DiscordScene,
+  LIST_W,
   SnapshotEmbed,
   SnapshotMessage,
-  canvasPoint,
-  useWidth,
-  zoomTo,
+  stepper,
   type CanvasArea,
-  type CanvasLayout,
   type CanvasPoint,
-  type DemoStep,
+  type InputState,
+  type SceneLayout,
 } from "@/components/demo";
-import {
-  ActionRow,
-  ChannelList,
-  ChatInput,
-  DiscordButton,
-  DiscordWindow,
-  Message,
-  SlashPicker,
-} from "@/components/discord";
-import { COMMANDS } from "@/content/bot-ui.generated";
-import { DEMO_NOW, DEMO_PEOPLE, discordTime, fillSnapshot } from "@/lib/scenario";
+import { ActionRow, DiscordButton } from "@/components/discord";
+import { optionPill, slashCommand } from "@/lib/commands";
+import { fillSnapshot } from "@/lib/scenario";
 import { SCENARIOS } from "../scenarios";
+import { TicketCategories } from "./kit";
 
 const SCENARIO = SCENARIOS.fpStoreBarcode;
-const BOT = { name: "FunI 付款系統", avatar: "/brand/funi-icon.png" };
-const FP = COMMANDS.fp;
-const AMOUNT = FP.options.find((o) => o.name === "amount")!;
+const FP = slashCommand("fp");
 
 /**
  * The ticket channel's name and category at each stage. Illustrative: a merchant who set
@@ -51,12 +43,15 @@ const CHANNEL = {
   pending: { name: "待付款｜0042", category: "待付款" },
 } as const;
 type ChannelStage = keyof typeof CHANNEL;
+const CATEGORIES = [
+  { name: CHANNEL.open.category, others: ["ticket-0041"] },
+  { name: CHANNEL.selecting.category, others: [] },
+  { name: CHANNEL.pending.category, others: ["待付款｜0039"] },
+];
 
-type InputState = { kind: "empty" } | { kind: "command"; typed: string } | { kind: "option"; value: string };
 /** Which bot message is on screen: the /fp reply as it is edited step by step, then the order. */
 type Bot = "none" | "select" | "menu" | "menuPick" | "confirm" | "buyer" | "order";
 export type Screen = { input: InputState; bot: Bot; channel: ChannelStage };
-type FpStep = DemoStep & { screen: Screen };
 
 // ---- Layouts and where things are on them ----
 
@@ -75,9 +70,7 @@ type Targets = {
   confirm: CanvasPoint;
   order: CanvasArea;
 };
-type Layout = CanvasLayout & { left: number; list: boolean; at: Targets };
-
-const LIST_W = 240;
+type Layout = SceneLayout<Targets>;
 
 /**
  * Points and areas inside the Discord window (x from the window's left edge, CSS px), measured
@@ -112,8 +105,6 @@ const WIDE: Layout = {
 const NARROW: Layout = {
   w: 400,
   h: 760,
-  left: 0,
-  list: false,
   at: {
     typing: { x: 300, y: 721 },
     input: { x: 0, y: 560, w: 400, h: 200 },
@@ -130,33 +121,27 @@ const NARROW: Layout = {
     order: { x: 20, y: 160, w: 380, h: 560 },
   },
 };
-/** Below this stage width the narrow layout is used (the header still shows the renames). */
-const NARROW_BELOW = 600;
 
 // ---- Timeline ----
 
 const START: Screen = { input: { kind: "empty" }, bot: "none", channel: "open" };
+/** The amount option as it is typed in. */
+const amount = (typed: string): InputState => ({ kind: "options", options: [optionPill(FP, "amount", typed)] });
 
-function timeline(l: Layout): FpStep[] {
-  const out: FpStep[] = [];
-  let screen = START;
-  const step = (at: number, change: Partial<Screen>, rest: Omit<DemoStep, "at"> = {}) => {
-    screen = { ...screen, ...change };
-    out.push({ at, screen, ...rest });
-  };
+function timeline(l: Layout) {
+  const { steps, step, point, zoom } = stepper<Screen>(l, START);
   const at = l.at;
-  const point = (p: CanvasPoint, extra?: Parameters<typeof canvasPoint>[2]) => canvasPoint(l, p, extra);
   const typing = point(at.typing, { typing: true });
 
   step(0, {}, { caption: "商家在訂單頻道輸入 /fp", shot: { zoom: 1 }, cursor: { ...typing, hidden: true } });
-  step(600, {}, { shot: zoomTo(l, 1.9, at.input), cursor: typing });
-  step(1000, { input: { kind: "command", typed: "/" } }, { cursor: { ...typing, click: true } });
-  step(1250, { input: { kind: "command", typed: "/f" } });
-  step(1500, { input: { kind: "command", typed: "/fp" } });
-  step(2200, { input: { kind: "option", value: "" } }, { caption: "填上金額 500 後送出" });
-  step(2500, { input: { kind: "option", value: "5" } });
-  step(2650, { input: { kind: "option", value: "50" } });
-  step(2800, { input: { kind: "option", value: String(SCENARIO.amount) } });
+  step(600, {}, { shot: zoom(1.9, at.input), cursor: typing });
+  step(1000, { input: { kind: "typing", typed: "/" } }, { cursor: { ...typing, click: true } });
+  step(1250, { input: { kind: "typing", typed: "/f" } });
+  step(1500, { input: { kind: "typing", typed: "/fp" } });
+  step(2200, { input: amount("") }, { caption: `填上金額 ${SCENARIO.amount} 後送出` });
+  step(2500, { input: amount("5") });
+  step(2650, { input: amount("50") });
+  step(2800, { input: amount(String(SCENARIO.amount)) });
   step(3500, { input: { kind: "empty" }, bot: "select", channel: "selecting" }, {
     caption: "機器人回覆付款方式選單，頻道也跟著改名、換分類",
     // The whole screen, so the renamed channel in its new category is in view.
@@ -165,30 +150,30 @@ function timeline(l: Layout): FpStep[] {
   });
   step(4900, {}, {
     caption: "顧客打開選單，選「四大超商條碼」",
-    shot: zoomTo(l, 1.35, at.reply),
+    shot: zoom(1.35, at.reply),
     cursor: point(at.select),
   });
   step(5800, {}, { cursor: point(at.select, { click: true }) });
-  step(6000, { bot: "menu" }, { shot: zoomTo(l, 1.6, at.menu) });
+  step(6000, { bot: "menu" }, { shot: zoom(1.6, at.menu) });
   step(6800, {}, { cursor: point(at.option) });
   step(7500, { bot: "menuPick" }, { cursor: point(at.option, { click: true }) });
   step(7800, { bot: "confirm" }, {
     caption: "確認金額和手續費，按「下一步」",
-    shot: zoomTo(l, 1.35, at.confirmScreen),
+    shot: zoom(1.35, at.confirmScreen),
     cursor: point(at.aside),
   });
   step(8500, {}, { cursor: point(at.next) });
   step(9300, {}, { cursor: point(at.next, { click: true }) });
-  step(9600, { bot: "buyer" }, { caption: "確認購買人資訊，取得付款碼", shot: zoomTo(l, 1.4, at.buyer) });
+  step(9600, { bot: "buyer" }, { caption: "確認購買人資訊，取得付款碼", shot: zoom(1.4, at.buyer) });
   step(10300, {}, { cursor: point(at.confirm) });
   step(11100, {}, { cursor: point(at.confirm, { click: true }) });
   step(11500, { bot: "order", channel: "pending" }, {
     caption: "訂單成立，條碼貼在頻道裡，頻道再換到待付款的分類",
-    shot: zoomTo(l, 1.1, at.order),
+    shot: zoom(1.1, at.order),
     cursor: { ...point(at.confirm), hidden: true },
   });
   step(13300, {}, { shot: { zoom: 1 } });
-  return out;
+  return steps;
 }
 
 export const LAYOUTS = { wide: WIDE, narrow: NARROW };
@@ -196,27 +181,6 @@ export const WIDE_STEPS = timeline(WIDE);
 export const NARROW_STEPS = timeline(NARROW);
 
 // ---- Screen ----
-
-const time = (minutesAgo: number) => discordTime(new Date(DEMO_NOW.getTime() - minutesAgo * 60_000));
-
-function Categories({ stage }: { stage: ChannelStage }) {
-  const here = CHANNEL[stage];
-  const inCategory = (category: string, others: string[]) => [
-    ...others.map((name) => ({ name })),
-    ...(here.category === category ? [{ name: here.name, highlight: true }] : []),
-  ];
-  return (
-    <ChannelList
-      className="h-full rounded-none!"
-      categories={[
-        { name: "資訊", channels: [{ name: "公告" }, { name: "商品介紹" }] },
-        { name: CHANNEL.open.category, channels: inCategory(CHANNEL.open.category, ["ticket-0041"]) },
-        { name: CHANNEL.selecting.category, channels: inCategory(CHANNEL.selecting.category, []) },
-        { name: CHANNEL.pending.category, channels: inCategory(CHANNEL.pending.category, ["待付款｜0039"]) },
-      ]}
-    />
-  );
-}
 
 /** The buyer step once the buyer's information is filled in (the customer saved it before). */
 function BuyerInfoFilled() {
@@ -255,89 +219,53 @@ function FpReply({ bot }: { bot: Exclude<Bot, "none" | "order"> }) {
 
 export function FpScreen({ screen, layout }: { screen: Screen; layout: Layout }) {
   const channel = CHANNEL[screen.channel];
-  const now = discordTime(DEMO_NOW);
   return (
-    <div className="flex h-full w-full bg-[#313338]">
-      {layout.list && (
-        <div className="h-full shrink-0" style={{ width: LIST_W }}>
-          <Categories stage={screen.channel} />
-        </div>
-      )}
-      <DiscordWindow title={channel.name} kind="channel" className="h-full rounded-none! border-0! shadow-none!">
-        {/* The window's header (48px) and its top and bottom padding (4px, 16px) take the rest. */}
-        <div className="flex flex-col" style={{ height: layout.h - 48 - 4 - 16 }}>
-          <div className="flex min-h-0 flex-1 flex-col justify-end overflow-hidden [mask-image:linear-gradient(to_bottom,transparent,black_24px)]">
-            <Message author={DEMO_PEOPLE.buyer.name} avatar={DEMO_PEOPLE.buyer.avatar} time={time(3)}>
-              {`你好，我想買 ${SCENARIO.amount} 元的方案`}
-            </Message>
-            <Message author={DEMO_PEOPLE.admin.name} avatar={DEMO_PEOPLE.admin.avatar} time={time(2)}>
-              好的，馬上幫你開單
-            </Message>
-            {screen.bot !== "none" && screen.bot !== "order" && (
-              <Message
-                author={BOT.name}
-                avatar={BOT.avatar}
-                bot
-                time={now}
-                interaction={{ user: DEMO_PEOPLE.admin.name, avatar: DEMO_PEOPLE.admin.avatar, command: FP.name }}
-              >
-                <div key={screen.bot === "menuPick" ? "menu" : screen.bot} className={screen.bot.startsWith("menu") ? "" : "demo-in"}>
-                  <FpReply bot={screen.bot} />
-                </div>
-              </Message>
-            )}
-            {screen.bot === "order" && (
-              <Message author={BOT.name} avatar={BOT.avatar} bot time={now}>
-                <div className="demo-in">
+    <DiscordScene
+      layout={layout}
+      list={<TicketCategories here={channel} categories={CATEGORIES} />}
+      panes={[
+        {
+          id: "channel",
+          kind: "channel",
+          title: channel.name,
+          input: <CommandInput input={screen.input} channel={channel.name} command={FP} />,
+          messages: (
+            <>
+              <ChatMessage from="buyer" ago={3}>{`你好，我想買 ${SCENARIO.amount} 元的方案`}</ChatMessage>
+              <ChatMessage from="admin" ago={2}>
+                好的，馬上幫你開單
+              </ChatMessage>
+              {screen.bot !== "none" && screen.bot !== "order" && (
+                <ChatMessage from="bot" command={{ by: "admin", name: FP.name }}>
+                  <div
+                    key={screen.bot === "menuPick" ? "menu" : screen.bot}
+                    className={screen.bot.startsWith("menu") ? "" : "demo-in"}
+                  >
+                    <FpReply bot={screen.bot} />
+                  </div>
+                </ChatMessage>
+              )}
+              {screen.bot === "order" && (
+                <ChatMessage from="bot" enter>
                   <SnapshotMessage id="builder/payment_create/store_barcode/invoice=False" scenario={SCENARIO} />
-                </div>
-              </Message>
-            )}
-          </div>
-          <Input input={screen.input} channel={channel.name} />
-        </div>
-      </DiscordWindow>
-    </div>
-  );
-}
-
-function Input({ input, channel }: { input: InputState; channel: string }) {
-  if (input.kind === "empty") return <ChatInput channel={channel} />;
-  if (input.kind === "command") {
-    return <SlashPicker command={FP.name} description={FP.description} appName={BOT.name} placeholder={input.typed} />;
-  }
-  return (
-    <SlashPicker
-      command={FP.name}
-      description={FP.description}
-      appName={BOT.name}
-      option={{ name: AMOUNT.nameZh, value: input.value }}
+                </ChatMessage>
+              )}
+            </>
+          ),
+        },
+      ]}
     />
   );
 }
 
 export function FpDemo() {
-  const ref = useRef<HTMLDivElement>(null);
-  const width = useWidth(ref);
-  const wide = width === 0 || width >= NARROW_BELOW;
-  const layout = wide ? WIDE : NARROW;
-  const steps = wide ? WIDE_STEPS : NARROW_STEPS;
   return (
-    <div ref={ref}>
-      <DemoStage
-        // A new layout is a new timeline: start it from the top.
-        key={wide ? "wide" : "narrow"}
-        label={`示範：商家在訂單頻道輸入 /fp 金額 ${SCENARIO.amount}，顧客從選單選四大超商條碼，確認付款方式和購買人資訊後，機器人在頻道貼出含條碼的訂單，頻道也跟著改名、換分類`}
-        aspect={`${layout.w} / ${layout.h}`}
-        steps={steps}
-        caption
-      >
-        {(_, index) => (
-          <Canvas w={layout.w} h={layout.h}>
-            <FpScreen screen={steps[index].screen} layout={layout} />
-          </Canvas>
-        )}
-      </DemoStage>
-    </div>
+    <DiscordDemo
+      label={`示範：商家在訂單頻道輸入 /fp 金額 ${SCENARIO.amount}，顧客從選單選四大超商條碼，確認付款方式和購買人資訊後，機器人在頻道貼出含條碼的訂單，頻道也跟著改名、換分類`}
+      wide={{ layout: WIDE, steps: WIDE_STEPS }}
+      narrow={{ layout: NARROW, steps: NARROW_STEPS }}
+    >
+      {(step, layout) => <FpScreen screen={step.screen} layout={layout} />}
+    </DiscordDemo>
   );
 }

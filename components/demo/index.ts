@@ -25,3 +25,19 @@ export {
   type CanvasLayout,
   type CanvasPoint,
 } from "./canvas";
+export {
+  ChatMessage,
+  CommandInput,
+  DiscordDemo,
+  DiscordScene,
+  DiscordStill,
+  LIST_W,
+  MessageWindow,
+  NARROW_BELOW,
+  stepper,
+  type InputState,
+  type Pane,
+  type SceneLayout,
+  type SceneStep,
+} from "./discord-scene";
+export { SnapshotTabs, type SnapshotTab } from "./snapshot-tabs";
