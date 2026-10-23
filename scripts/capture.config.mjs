@@ -161,6 +161,33 @@ const SAVE_BAR = {
 const SAVED = { saved: 'role=status >> text="已儲存"' };
 const save = [`click:${role("button", "儲存變更")}`, `wait:${SAVED.saved}`];
 
+/**
+ * More edits of a tab already taken by settingsTab: `settings-<tab>-<name>` after the steps up to
+ * and including that one (each shot keeps the edits before it), and `settings-<tab>-<last>-saved`
+ * after saving them all. With one step that is `-<name>-edited` and `-<name>-saved`. `before` are
+ * edits every one of these shots starts with (e.g. settingsTab's edit, to go on from its shot).
+ */
+function settingsEdits(tab, targets, steps, { before = [], wideTargets = {} } = {}) {
+  const path = `${BASE}/settings?tab=${tab}`;
+  const all = { ...SETTINGS_TABS, ...targets };
+  const wide = { ...SETTINGS_TABS_WIDE, ...wideTargets };
+  const actions = [...before, ...steps.map(([, action]) => action)];
+  const last = steps[steps.length - 1][0];
+  const id = (name) => (steps.length === 1 ? `settings-${tab}-${name}-edited` : `settings-${tab}-${name}`);
+  return [
+    ...steps.map(([name], i) => ({
+      id: id(name),
+      identity: "owner",
+      path,
+      viewport: DESKTOP,
+      actions: actions.slice(0, before.length + i + 1),
+      targets: { ...all, ...SAVE_BAR },
+      desktopTargets: wide,
+    })),
+    { id: `settings-${tab}-${last}-saved`, identity: "owner", path, viewport: DESKTOP, actions: [...actions, ...save], targets: { ...all, ...SAVED }, desktopTargets: wide },
+  ];
+}
+
 /** One settings tab: as it opens, after `edit` (the save bar is up) and after saving that edit. */
 function settingsTab(tab, targets, edit, wideTargets = {}) {
   const path = `${BASE}/settings?tab=${tab}`;
@@ -358,6 +385,15 @@ export const SHOTS = [
 
   // ---- 總覽 ----
   { id: "overview", identity: "owner", path: BASE, viewport: DESKTOP, targets: OVERVIEW_TARGETS, desktopTargets: OVERVIEW_DESKTOP },
+  // After 近 7 天 is picked (the overview page after the period7d link)
+  {
+    id: "overview-7d",
+    identity: "owner",
+    path: `${BASE}?period=last_7d`,
+    viewport: DESKTOP,
+    targets: OVERVIEW_TARGETS,
+    desktopTargets: { periodCustom: role("button", "自訂…") },
+  },
   {
     id: "overview-incl-fee",
     identity: "owner",
@@ -422,8 +458,12 @@ export const SHOTS = [
 
   // ---- 設定 ----
   ...settingsTab("basic", BASIC, ["pick:指令頻道|#指令區"]),
-  ...settingsTab("smilepay", SMILEPAY, [`fill:${SMILEPAY.midParam}|K9M2P7`]),
+  // The bot takes 1 to 4 digits (settings_schema), so the new value is 4 digits
+  ...settingsTab("smilepay", SMILEPAY, [`fill:${SMILEPAY.midParam}|2468`]),
   ...settingsTab("payment", PAYMENT, [`click:${PAYMENT.hilife}`]),
+  // Then 銀行轉帳's fee from the default 13 to 15, 萊爾富 still off (two changes):
+  // settings-payment-fee-edited / -fee-saved
+  ...settingsEdits("payment", PAYMENT, [["fee", `fill:${PAYMENT.bankTransferFee}|15`]], { before: [`click:${PAYMENT.hilife}`] }),
   ...settingsTab(
     "channels",
     CHANNELS,
@@ -431,6 +471,15 @@ export const SHOTS = [
     CHANNELS_WIDE,
   ),
   ...settingsTab("balance", BALANCE, [`click:${BALANCE.topup}`]),
+  // Each switch in turn (the fixture has 點數轉帳 off, 用點數付款 and 點數排行榜 on), a new
+  // name and a balance admin role: settings-balance-transfer … -roles, then -roles-saved
+  ...settingsEdits("balance", BALANCE, [
+    ["transfer", `click:${BALANCE.transfer}`],
+    ["pay", `click:${BALANCE.payWithBalance}`],
+    ["leaderboard", `click:${BALANCE.leaderboard}`],
+    ["name", `fill:${BALANCE.name}|星光幣`],
+    ["roles", "pick:點數管理員身分組|管理員"],
+  ]),
 
   // ---- 設定變更紀錄、功能說明 ----
   {
