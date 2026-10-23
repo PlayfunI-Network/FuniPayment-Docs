@@ -1,6 +1,7 @@
 "use client";
-// /balance history: the customer's first page of records, then 統計表 (page 0), then
-// 伺服器排行榜 (page -1, the server allows the leaderboard). The same message is edited each time.
+// /balance history over two pages: the customer's page 1 of 5 records, ▶️ to page 2, then
+// 統計表 (page 0) and 伺服器排行榜 (page -1, the server allows the leaderboard). The same message
+// is edited each time; the screens are one fixture's seven records (91 points in all).
 import {
   ChatMessage,
   CommandInput,
@@ -18,15 +19,16 @@ import { optionPill, slashCommand } from "@/lib/commands";
 import { DEMO_CHANNELS, type SnapshotId } from "@/lib/scenario";
 import { SCENARIOS } from "../scenarios";
 
-const SCENARIO = SCENARIOS.balanceHistory;
+const SCENARIO = SCENARIOS.balanceHistoryPages;
 const CMD = slashCommand("balance history");
 const MODE = optionPill(CMD, "mode", "公開顯示");
 const CHANNEL = DEMO_CHANNELS.command.name;
 
-const PAGES = {
-  1: "flow/balance_history_command/1",
-  0: "flow/balance_history_command/0",
-  [-1]: "flow/balance_history_command/-1",
+export const PAGES = {
+  1: "builder/balance_history/page=1/admin=False",
+  2: "builder/balance_history/page=2/admin=False",
+  0: "builder/balance_history/page=0/admin=False",
+  [-1]: "builder/balance_history/page=-1/admin=False",
 } as const satisfies Record<number, SnapshotId>;
 type Page = keyof typeof PAGES;
 
@@ -34,21 +36,25 @@ type Layout = SceneLayout<{
   typing: CanvasPoint;
   input: CanvasArea;
   reply: CanvasArea;
+  /** ▶️ on page 1, 統計表 on page 2, 伺服器排行榜 on page 0 (each the button the step presses). */
+  next: CanvasPoint;
   stats: CanvasPoint;
   leaderboard: CanvasPoint;
   aside: CanvasPoint;
 }>;
 export type Screen = { panes: Pane[] };
 
+/** Measured on a temporary dev page under next dev in Chrome at 1280px and 375px viewports. */
 const WIDE: Layout = {
   w: 640,
-  h: 720,
+  h: 760,
   at: {
-    typing: { x: 200, y: 682 },
-    input: { x: 0, y: 520, w: 520, h: 200 },
-    reply: { x: 0, y: 200, w: 640, h: 460 },
-    stats: { x: 323, y: 626 },
-    leaderboard: { x: 340, y: 626 },
+    typing: { x: 200, y: 722 },
+    input: { x: 0, y: 560, w: 520, h: 200 },
+    reply: { x: 0, y: 160, w: 640, h: 540 },
+    next: { x: 250, y: 666 },
+    stats: { x: 323, y: 666 },
+    leaderboard: { x: 340, y: 666 },
     aside: { x: 600, y: 400 },
   },
 };
@@ -56,13 +62,14 @@ const NARROW: Layout = {
   // 460 wide so the four buttons stay on one row at every viewport (at 400 they wrap
   // differently with and without the kit's sm: paddings).
   w: 460,
-  h: 760,
+  h: 800,
   at: {
-    typing: { x: 200, y: 722 },
-    input: { x: 0, y: 560, w: 460, h: 200 },
-    reply: { x: 0, y: 250, w: 460, h: 440 },
-    stats: { x: 323, y: 666 },
-    leaderboard: { x: 340, y: 666 },
+    typing: { x: 200, y: 762 },
+    input: { x: 0, y: 600, w: 460, h: 200 },
+    reply: { x: 0, y: 190, w: 460, h: 550 },
+    next: { x: 250, y: 706 },
+    stats: { x: 323, y: 706 },
+    leaderboard: { x: 340, y: 706 },
     aside: { x: 444, y: 400 },
   },
 };
@@ -88,6 +95,10 @@ function timeline(l: Layout) {
   const typing = point(l.at.typing, { typing: true });
   const typed = (t: string): InputState => ({ kind: "typing", typed: t });
   const empty: InputState = { kind: "empty" };
+  const press = (at: number, where: CanvasPoint, page: Page) => {
+    step(at + 800, {}, { cursor: point(where, { click: true }) });
+    step(at + 1100, { panes: channel(empty, page) }, { cursor: point(l.at.aside) });
+  };
 
   step(0, { panes: channel(empty, null) }, {
     caption: `顧客輸入 /balance history，${MODE.name}選「${MODE.value}」`,
@@ -97,19 +108,19 @@ function timeline(l: Layout) {
   step(300, { panes: channel(typed("/bal"), null) }, { cursor: { ...typing, click: true } });
   step(600, { panes: channel(typed("/balance hi"), null) });
   step(900, { panes: channel(typed("/balance history"), null) });
-  step(1600, { panes: channel({ kind: "options", options: [MODE] }, null) });
-  step(2800, { panes: channel(empty, 1) }, {
+  step(1500, { panes: channel({ kind: "options", options: [MODE] }, null) });
+  step(2400, { panes: channel(empty, 1) }, {
     caption: "第 1 頁列出最近的點數異動，一頁 5 筆",
-    shot: zoom(1.3, l.at.reply),
+    shot: zoom(1.25, l.at.reply),
     cursor: { ...point(l.at.aside), hidden: true },
   });
-  step(4600, {}, { caption: "按「統計表」看總轉入、總轉出和交易日期", cursor: point(l.at.stats) });
-  step(5400, {}, { cursor: point(l.at.stats, { click: true }) });
-  step(5700, { panes: channel(empty, 0) }, { cursor: point(l.at.aside) });
-  step(7600, {}, { caption: "再按「伺服器排行榜」看前 10 名和自己的排名", cursor: point(l.at.leaderboard) });
-  step(8400, {}, { cursor: point(l.at.leaderboard, { click: true }) });
-  step(8700, { panes: channel(empty, -1) }, { cursor: point(l.at.aside) });
-  step(11000, {}, { shot: { zoom: 1 }, cursor: { ...point(l.at.aside), hidden: true } });
+  step(4000, {}, { caption: "按「▶️」翻到第 2 頁，看比較早的紀錄", cursor: point(l.at.next) });
+  press(4000, l.at.next, 2);
+  step(6500, {}, { caption: "按「統計表」看總轉入、總轉出和交易日期", cursor: point(l.at.stats) });
+  press(6500, l.at.stats, 0);
+  step(9000, {}, { caption: "再按「伺服器排行榜」看前 10 名和自己的排名", cursor: point(l.at.leaderboard) });
+  press(9000, l.at.leaderboard, -1);
+  step(12500, {}, { shot: { zoom: 1 }, cursor: { ...point(l.at.aside), hidden: true } });
   return steps;
 }
 
@@ -120,7 +131,7 @@ export const NARROW_STEPS = timeline(NARROW);
 export function BalanceHistoryDemo() {
   return (
     <DiscordDemo
-      label="示範：顧客輸入 /balance history，看到第 1 頁的點數紀錄，按統計表看統計數據，再按伺服器排行榜看前 10 名和自己的排名"
+      label="示範：顧客輸入 /balance history，看到第 1 頁的點數紀錄，按向右箭頭翻到第 2 頁，按統計表看統計數據，再按伺服器排行榜看前 10 名和自己的排名"
       wide={{ layout: WIDE, steps: WIDE_STEPS }}
       narrow={{ layout: NARROW, steps: NARROW_STEPS }}
     >
