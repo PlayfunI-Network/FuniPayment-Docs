@@ -27,6 +27,15 @@ test("每張後台截圖和它的每個目標都在清單裡", () => {
   }
 });
 
+test("其他產生的資料只列各自的 key（COMMANDS 不會列到速買配錯誤代碼）", async () => {
+  const { COMMANDS, SMILEPAY_ERRORS } = await import("../content/bot-ui.generated.ts");
+  const md = materialsMarkdown(root);
+  const line = (name) => md.split("\n").find((l) => l.startsWith(`- \`${name}\``));
+  const keys = (name) => [...line(name).matchAll(/`([^`]+)`/g)].slice(1).map((m) => m[1]);
+  expect(keys("COMMANDS")).toEqual(Object.keys(COMMANDS));
+  expect(keys("SMILEPAY_ERRORS")).toEqual(Object.keys(SMILEPAY_ERRORS));
+});
+
 test("CRLF 的檔案（Windows 的 worktree）也讀得到每個畫面和目標", () => {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "funipay-materials-"));
   try {
