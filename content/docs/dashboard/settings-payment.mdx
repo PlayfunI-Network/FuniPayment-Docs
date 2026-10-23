@@ -60,7 +60,7 @@ import { AutoDisabledDm } from "@/components/demos/dashboard/auto-disabled-dm";
 
 ### 儲存
 
-下方出現未儲存的變更，例如「1 項未儲存的變更：萊爾富超商代碼」。按「儲存變更」，看到「已儲存」就完成了。
+下方出現未儲存的變更，例如「2 項未儲存的變更：銀行轉帳、萊爾富超商代碼」。按「儲存變更」，看到「已儲存」就完成了。
 
 </Step>
 </Steps>
@@ -69,7 +69,7 @@ import { AutoDisabledDm } from "@/components/demos/dashboard/auto-disabled-dm";
 
 ## 速買配沒開通時，系統會自動關掉
 
-開單時速買配回傳 -3003（這個付款方式在速買配還沒開通），機器人會自動把這個付款方式關掉，並私訊伺服器擁有者：
+開單時速買配回傳 -3003「商家未開啟此付款方式」，機器人會自動把這個付款方式關掉，並私訊伺服器擁有者，說這個付款方式在速買配「尚未啟用此服務」：
 
 <AutoDisabledDm />
 

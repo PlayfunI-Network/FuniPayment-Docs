@@ -4,11 +4,13 @@
 // names targets the phone pictures have too, so each demo also uses the phone shots under 600 px.
 import { DashboardDemo, type DashboardStep } from "@/components/demo";
 
-/** Overview: where the period is, the four main numbers, then the busy hours. */
+/** Overview: switch the period to 近 7 天, then the four main numbers, the busy hours. */
 export const OVERVIEW_STEPS: DashboardStep[] = [
-  { at: 0, caption: "期間在右上角，現在選的是「近 30 天」", target: "period30d", zoom: 1.8 },
-  { at: 2600, caption: "四張卡是這段期間的主要指標，下面寫著比前一期多或少", target: "kpis", zoom: 1.3 },
-  { at: 5600, caption: "「熱門時段」看顧客通常在星期幾、幾點付款", target: "heatmap", zoom: 1.6 },
+  { at: 0, caption: "期間在右上角，點「近 7 天」", target: "period7d", zoom: 1.8 },
+  { at: 1400, target: "period7d", click: true },
+  { at: 1700, swapTo: "overview-7d", target: "period7d" },
+  { at: 2800, caption: "四張卡是這段期間的主要指標，下面寫著比前一期多或少", target: "kpis", zoom: 1.3 },
+  { at: 5800, caption: "「熱門時段」看顧客通常在星期幾、幾點付款", target: "heatmap", zoom: 1.6 },
   { at: 8800, caption: "「最近訂單」裡顧客的名字只露出第一個字", target: "recentOrders", zoom: 1.4 },
   { at: 11600, zoom: 1, hideCursor: true },
 ];
@@ -37,7 +39,7 @@ export const BASIC_STEPS: DashboardStep[] = [
 
 /** SmilePay: type the merchant verification parameter, save. */
 export const SMILEPAY_STEPS: DashboardStep[] = [
-  { at: 0, caption: "在「商家驗證參數（推薦）」填入速買配後台的值", target: "midParam", zoom: 1.8, typing: true },
+  { at: 0, caption: "在「商家驗證參數（推薦）」填入速買配後台的值，1 到 4 位數字", target: "midParam", zoom: 1.8, typing: true },
   { at: 1800, swapTo: "settings-smilepay-edited", target: "midParam", typing: true },
   { at: 3200, caption: "按「儲存變更」", target: "save", zoom: 1.6 },
   { at: 4200, target: "save", click: true },
@@ -45,16 +47,18 @@ export const SMILEPAY_STEPS: DashboardStep[] = [
   { at: 7400, zoom: 1, hideCursor: true },
 ];
 
-/** 付款方式與手續費: turn one method off, save. */
+/** 付款方式與手續費: turn one method off, change a fee, save. */
 export const PAYMENT_STEPS: DashboardStep[] = [
   { at: 0, caption: "每種付款方式一列：開關和手續費", target: "table", zoom: 1.3 },
-  { at: 2200, caption: "關掉「萊爾富超商代碼」", target: "hilife", zoom: 1.4 },
-  { at: 3200, target: "hilife", click: true },
-  { at: 3500, swapTo: "settings-payment-edited" },
-  { at: 4800, caption: "按「儲存變更」", target: "save", zoom: 1.6 },
-  { at: 5800, target: "save", click: true },
-  { at: 6100, caption: "看到「已儲存」就完成了", swapTo: "settings-payment-saved", target: "saved" },
-  { at: 8800, zoom: 1, hideCursor: true },
+  { at: 2000, caption: "關掉「萊爾富超商代碼」", target: "hilife", zoom: 1.4 },
+  { at: 2900, target: "hilife", click: true },
+  { at: 3200, swapTo: "settings-payment-edited" },
+  { at: 4200, caption: "「銀行轉帳」的手續費從 13 改成 15", target: "bankTransferFee", zoom: 1.4, typing: true },
+  { at: 5300, swapTo: "settings-payment-fee-edited", target: "bankTransferFee", typing: true },
+  { at: 6400, caption: "按「儲存變更」", target: "save", zoom: 1.6 },
+  { at: 7400, target: "save", click: true },
+  { at: 7700, caption: "看到「已儲存」就完成了", swapTo: "settings-payment-fee-saved", target: "saved" },
+  { at: 10400, zoom: 1, hideCursor: true },
 ];
 
 /** 訂單頻道流程: turn on the rename for expired orders with a name, save. */
@@ -99,7 +103,7 @@ export const FEATURES_STEPS: DashboardStep[] = [
 ];
 
 export function OverviewDemo() {
-  return <DashboardDemo shot="overview" steps={OVERVIEW_STEPS} label="示範：在後台總覽看期間、主要指標和熱門時段" />;
+  return <DashboardDemo shot="overview" steps={OVERVIEW_STEPS} label="示範：在後台總覽把期間切到近 7 天，再看主要指標、熱門時段和最近訂單" />;
 }
 
 export function OrdersDemo() {
@@ -115,7 +119,7 @@ export function SmilePaySettingsDemo() {
 }
 
 export function PaymentSettingsDemo() {
-  return <DashboardDemo shot="settings-payment" steps={PAYMENT_STEPS} label="示範：關掉一種付款方式並儲存" />;
+  return <DashboardDemo shot="settings-payment" steps={PAYMENT_STEPS} label="示範：關掉萊爾富超商代碼，把銀行轉帳的手續費改成 15 元後儲存" />;
 }
 
 export function ChannelsSettingsDemo() {
