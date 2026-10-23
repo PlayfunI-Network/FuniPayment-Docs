@@ -1,6 +1,81 @@
 ---
 title: "功能頁"
-description: "後台功能頁顯示的各項功能狀態。"
+description: "後台的功能說明頁：自動發佈公告與動態語音頻道改名的目前狀態，以及範本變數。"
 ---
 
-{/* TODO */}
+import { FeaturesDemo } from "@/components/demos/dashboard/dashboard-demos";
+
+「功能說明」頁列出兩個在 Discord 裡設定的功能：自動發佈公告和動態語音頻道改名。這一頁只能看，告訴你目前哪些頻道在用、範本是什麼。要改，回 Discord 用指令。
+
+<FeaturesDemo />
+
+## 誰可以看
+
+伺服器的擁有者。在左邊選「功能說明」。
+
+## 自動發佈公告
+
+卡片寫著「在公告頻道發送的訊息會自動「發佈」到追蹤這個頻道的其他伺服器，不用每次手動按發佈。」
+
+「目前啟用的頻道」列出開了自動發佈的公告頻道，標題旁的標籤寫「啟用中 · 2 個頻道」這樣的數量。一個都沒有時，標籤是「未使用」，下面寫「尚未啟用。」
+
+要開或關，在 Discord 的公告頻道裡用 /auto-publish，需要「管理頻道」權限。同一個頻道再用一次就是停用。詳見 [/auto-publish 自動發佈](/features/auto-publish)。
+
+## 動態語音頻道改名
+
+卡片寫著「把語音頻道當作看板：bot 會定期依範本更新頻道名稱，例如顯示成員數或完成訂單數。」
+
+「目前的頻道與範本」列出每個語音頻道現在的名稱，右邊是它的範本，例如範本 `成員：%server_members%` 會讓頻道顯示成 成員：12 這樣的名稱（數字是舉例）。沒有設定時寫「尚未設定。」
+
+要設定，在 Discord 用 /dynamic-vc-rename，選語音頻道再輸入範本；範本輸入 `delete` 就停用。一樣需要「管理頻道」權限。詳見 [/dynamic-vc-rename 動態語音頻道名稱](/features/dynamic-vc-rename)。
+
+### 範本變數
+
+點「可用的範本變數」會展開所有能放進範本的變數：
+
+| 變數 | 代表 |
+|---|---|
+| `%server_members%` | 伺服器成員數 |
+| `%real_members%` | 真人成員數 |
+| `%bots%` | 機器人數 |
+| `%online_members%` | 在線成員數 |
+| `%total_channels%` | 頻道總數 |
+| `%voice_channels%` | 語音頻道數 |
+| `%text_channels%` | 文字頻道數 |
+| `%all_orders%` | 全部訂單數 |
+| `%completed_orders%` | 完成訂單數 |
+| `%completed_amount%` | 完成訂單金額（不含手續費） |
+| `%completed_fee%` | 完成訂單手續費 |
+| `%completed_pay_amount%` | 完成訂單買家支付總額 |
+| `%pending_orders%` | 待付款訂單數 |
+| `%pending_amount%` | 待付款金額（不含手續費） |
+| `%pending_fee%` | 待付款手續費 |
+| `%pending_pay_amount%` | 待付款買家應付總額 |
+| `%expired_orders%` | 已過期訂單數 |
+| `%expired_amount%` | 已過期金額（不含手續費） |
+| `%expired_fee%` | 已過期手續費 |
+| `%expired_pay_amount%` | 已過期買家應付總額 |
+| `%monthly_orders%` | 本月建立的訂單數 |
+| `%monthly_amount%` | 本月建立的訂單金額 |
+| `%monthly_fee%` | 本月建立的訂單手續費 |
+| `%monthly_pay_amount%` | 本月建立的訂單買家應付總額 |
+| `%monthly_completed_orders%` | 本月建立且已完成的訂單數 |
+| `%monthly_completed_amount%` | 本月建立且已完成的訂單金額 |
+| `%monthly_completed_fee%` | 本月建立且已完成的訂單手續費 |
+| `%monthly_completed_pay_amount%` | 本月建立且已完成的買家支付總額 |
+
+## 常見狀況
+
+<Callout title="在後台找不到修改的按鈕">
+這兩個功能在後台只能看。頁面右上角寫著「這些功能目前在 Discord 裡設定」，請在 Discord 用 /auto-publish 或 /dynamic-vc-rename。
+</Callout>
+
+<Callout title="用了指令，這一頁還是「未使用」">
+重新整理頁面。還是沒有的話，回 Discord 看指令有沒有回覆成功的訊息，例如 /auto-publish 會說「✅成功將此頻道設定為：自動發佈」。
+</Callout>
+
+## 相關頁面
+
+- [/auto-publish 自動發佈](/features/auto-publish)
+- [/dynamic-vc-rename 動態語音頻道名稱](/features/dynamic-vc-rename)
+- [設定：頻道](/dashboard/settings-channels)：訂單頻道的改名，和這裡的語音頻道改名是不同功能
