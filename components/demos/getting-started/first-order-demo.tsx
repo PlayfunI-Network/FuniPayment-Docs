@@ -1,10 +1,10 @@
 "use client";
-// The first half of the /fp demo (components/demos/payments/fp-demo.tsx): the merchant types
+// The first half of the /fp demo (components/demos/payments/fp-demo.tsx, screens in components/demos/shared/fp-screen.tsx): the merchant types
 // /fp 500 and the customer picks 四大超商條碼 in the menu. The rest of the story (confirming and
 // the order itself) is on the /fp page; this page links there. Same screens and measured points
 // as the fp demo, a shorter timeline.
 import { DiscordDemo, stepper, type InputState } from "@/components/demo";
-import { FpScreen, LAYOUTS, type Screen } from "@/components/demos/payments/fp-demo";
+import { FpScreen, LAYOUTS, type Screen } from "../shared/fp-screen";
 import { optionPill, slashCommand } from "@/lib/commands";
 import { SCENARIOS } from "../scenarios";
 

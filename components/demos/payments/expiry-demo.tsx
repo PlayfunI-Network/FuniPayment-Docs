@@ -15,7 +15,7 @@ import {
 } from "@/components/demo";
 import { demoTime } from "@/lib/scenario";
 import { SCENARIOS } from "../scenarios";
-import { TicketCategories } from "./kit";
+import { TicketCategories } from "../shared/ticket-categories";
 
 const SCENARIO = SCENARIOS.fpStoreBarcode;
 /** The /fp message was sent a day before the demo's "now", at the same time of day. */

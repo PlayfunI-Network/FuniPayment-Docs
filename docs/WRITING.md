@@ -227,7 +227,8 @@ Discord 畫面（`components/discord`，永遠深色）：
 | `lib/scenario.ts` 的 `DEMO_BOT` | 機器人的名稱和頭像，和 `DEMO_PEOPLE` 放在一起 |
 | `lib/scenario.ts` 的 `demoSender(who)` | `bot`、`buyer`、`admin`、`member` 對應的名字和頭像，`ChatMessage` 的 `from` 用它 |
 | `lib/scenario.ts` 的 `demoTime(幾分鐘前)` | 訊息上的時間（「今天 下午3:24」） |
-| `components/demos/payments/kit.tsx` 的 `TicketCategories` | 示範用的開單分類和頻道列表，訂單頻道依階段出現在不同分類 |
+| `components/demos/shared/ticket-categories.tsx` 的 `TicketCategories` | 示範用的開單分類和頻道列表，訂單頻道依階段出現在不同分類 |
+| `components/demos/shared/fp-screen.tsx`、`channel-automation-screen.tsx` | /fp 和訂單頻道自動改名的畫面與量好的版面，收款和開始使用兩章的示範各自寫時間軸 |
 
 ## 要新的 ui.json key 或截圖
 

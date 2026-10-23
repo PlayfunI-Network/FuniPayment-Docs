@@ -21,7 +21,7 @@ import {
 import { optionPill, slashCommand } from "@/lib/commands";
 import { DEMO_CHANNELS, type SnapshotId } from "@/lib/scenario";
 import { SCENARIOS } from "../scenarios";
-import { TicketCategories } from "./kit";
+import { TicketCategories } from "../shared/ticket-categories";
 
 const SCENARIO = SCENARIOS.fpStoreBarcode;
 const CMD = slashCommand("payment recheck");
