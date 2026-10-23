@@ -39,7 +39,8 @@ export function botScreens(root) {
 /** The keys of one `export const NAME = { ... }` object of the generated file. */
 function topKeys(generated, name) {
   const start = generated.indexOf(`export const ${name} = {`);
-  const end = generated.indexOf("\n};", start);
+  // The object ends at the first unindented 「}」 (「};」, 「} as const;」, 「} satisfies …;」).
+  const end = generated.indexOf("\n}", start);
   return [...generated.slice(start, end).matchAll(/^ {2}"([^"]+)":/gm)].map((m) => m[1]);
 }
 
