@@ -2,6 +2,7 @@ import { createRelativeLink } from "fumadocs-ui/mdx";
 import { DocsBody, DocsDescription, DocsPage, DocsTitle } from "fumadocs-ui/layouts/docs/page";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { SiteFooter } from "@/components/site-footer";
 import { getMDXComponents } from "@/mdx-components";
 import { source } from "@/lib/source";
 
@@ -14,7 +15,7 @@ export default async function Page(props: Props) {
 
   const MDX = page.data.body;
   return (
-    <DocsPage toc={page.data.toc} full={page.data.full}>
+    <DocsPage toc={page.data.toc} full={page.data.full} footer={{ children: <SiteFooter /> }}>
       <DocsTitle>{page.data.title}</DocsTitle>
       <DocsDescription>{page.data.description}</DocsDescription>
       <DocsBody>

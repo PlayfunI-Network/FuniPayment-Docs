@@ -44,7 +44,7 @@
 
 每頁寫完都要用 `humanizer:humanizer` skill 跑一遍，改完再回頭把每個「」裡的字跟來源對一次。humanizer 可能會改到 bot 的字，原文優先。
 
-`content/docs/` 底下 features、troubleshooting、reference 三個資料夾的「」由 `components/demos/reference/quotes.test.ts` 自動比對：每個「」都要是 generated 檔、bot 的 `app/i18n` 或後台 `web/src` 裡的字（`{token}` 可以換成實際的值）。Discord 自己的字（例如「管理頻道」）列在測試的 `DISCORD`。
+`content/docs/` 底下每一頁的「」都由 `components/demos/reference/quotes.test.ts` 自動比對：每個「」都要是 generated 檔、bot 的 `app/i18n` 或後台 `web/src` 裡的字（`{token}` 可以換成實際的值，粗體、底線和 `<#頻道>` 照 Discord 顯示的樣子寫）。可以只引一段，但至少要有 3 個固定的字。Discord 自己的字（例如「管理頻道」）列在測試的 `DISCORD`；由很短的片段組成的字（例如「顧客的商城點數」）列在 `COMPOSED`，附上組出它的程式碼。示範用的名稱不加「」，測試會抓到。
 
 ## 文字從哪裡來
 
