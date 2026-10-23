@@ -3,4 +3,18 @@ title: "指令總表"
 description: "所有指令的一覽表。"
 ---
 
-{/* TODO */}
+import { CommandTable } from "@/components/demos/reference/command-table";
+
+FunI 付款系統的所有斜線指令。表上的說明和參數名稱，跟你在 Discord 輸入 `/` 時看到的一樣。點指令可以看那個指令的詳細說明。
+
+<CommandTable />
+
+參數名稱後面標了選填的可以不填。指令的英文名稱在 Discord 上沒有中文翻譯，輸入時打英文就好，例如 `/fp`、`/payment create`。
+
+誰可以用那一欄寫的是最基本的條件。除了這些，收款、點數和儲值的指令還要伺服器已經在後台設定好，而且在指令頻道或訂單頻道裡輸入；點數相關的指令要開啟點數系統。完整的對照見[誰可以用什麼](/reference/permissions)，被拒絕時看[指令不能用](/troubleshooting/command-errors)。
+
+## 相關頁面
+
+- [誰可以用什麼](/reference/permissions)：身分組和 Discord 權限對照
+- [指令不能用](/troubleshooting/command-errors)
+- [/fp 快速開單](/payments/fp)：最常用的開單指令

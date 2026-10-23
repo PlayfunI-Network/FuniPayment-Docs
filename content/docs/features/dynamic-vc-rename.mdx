@@ -3,4 +3,135 @@ title: "/dynamic-vc-rename 動態語音頻道名稱"
 description: "用變數範本自動更新語音頻道名稱。"
 ---
 
-{/* TODO */}
+import { DynamicVcDemo } from "@/components/demos/features/dynamic-vc-demo";
+import { VcRemovedDm } from "@/components/demos/features/vc-removed-dm";
+
+把一個語音頻道當成看板：你給一個名稱範本，例如 `訂單 %all_orders%`，機器人把變數換成數字當作頻道名稱，之後每 10 分鐘更新一次。常見的用法是顯示成員數或完成的訂單數。
+
+<DynamicVcDemo />
+
+## 誰可以用
+
+在你輸入指令的頻道有 Discord「管理頻道」權限的人。這個指令跟後台的身分組設定無關。
+
+機器人自己也要能改那個語音頻道的名稱，也就是在那個語音頻道有「管理頻道」權限。
+
+## 使用步驟
+
+<Steps>
+<Step>
+
+### 輸入指令
+
+輸入 `/dynamic-vc-rename`。這個指令不限頻道，在哪裡輸入都可以。
+
+</Step>
+<Step>
+
+### 選語音頻道、填範本
+
+「channel」選要改名的語音頻道，「rename_name」填名稱範本。範本裡可以放一個或多個變數，變數以外的字會照原樣保留，例如 `成員 %real_members% 人`。
+
+</Step>
+<Step>
+
+### 送出
+
+機器人馬上改好頻道名稱，並在頻道回「✅成功將此頻道設為動態頻道名稱：」加上你填的範本。這則回覆頻道裡的人都看得到。
+
+</Step>
+</Steps>
+
+## 參數
+
+| 參數 | 必填 | 說明 |
+|---|---|---|
+| channel | 是 | 要改名的語音頻道，只能選語音頻道。Discord 上的說明是「選擇語音頻道」。 |
+| rename_name | 是 | 名稱範本，填 `delete` 是停用。Discord 上的說明是「動態頻道名稱（輸入 delete 停用服務）」。 |
+
+這兩個參數在 Discord 上沒有中文名稱，看到的就是 channel 和 rename_name。
+
+## 更新的時間
+
+機器人每 10 分鐘檢查一次所有動態頻道。數字跟上次一樣就不動，有變才改名。
+
+Discord 限制頻道改名的次數，機器人在同一個頻道 10 分鐘內最多改 2 次，跟[訂單頻道自動改名](/payments/channel-automation)的限制一樣。用指令設定的那一次改名也算在內。
+
+## 換範本或停用
+
+- 換範本：對同一個語音頻道再用一次指令，填新的範本。一個語音頻道只會有一個範本，新的會取代舊的。
+- 停用：「rename_name」填 `delete`，機器人回「✅成功將此頻道**__移除__**自動動態命名」。頻道名稱會停在最後一次改的樣子，要改回來請自己改。
+
+哪些語音頻道設了範本、範本是什麼，可以在後台的功能頁看到，見[功能頁](/dashboard/features)。後台只能看，要改還是用這個指令。
+
+## 全部變數
+
+說明照後台功能頁「可用的範本變數」寫。「本月」是台灣時間的這個月，用訂單的建立時間算。金額的單位都是元。
+
+| 變數 | 說明 |
+|---|---|
+| `%server_members%` | 伺服器成員數 |
+| `%real_members%` | 真人成員數 |
+| `%bots%` | 機器人數 |
+| `%online_members%` | 在線成員數 |
+| `%total_channels%` | 頻道總數 |
+| `%voice_channels%` | 語音頻道數 |
+| `%text_channels%` | 文字頻道數 |
+| `%all_orders%` | 全部訂單數 |
+| `%completed_orders%` | 完成訂單數 |
+| `%completed_amount%` | 完成訂單金額（不含手續費） |
+| `%completed_fee%` | 完成訂單手續費 |
+| `%completed_pay_amount%` | 完成訂單買家支付總額 |
+| `%pending_orders%` | 待付款訂單數 |
+| `%pending_amount%` | 待付款金額（不含手續費） |
+| `%pending_fee%` | 待付款手續費 |
+| `%pending_pay_amount%` | 待付款買家應付總額 |
+| `%expired_orders%` | 已過期訂單數 |
+| `%expired_amount%` | 已過期金額（不含手續費） |
+| `%expired_fee%` | 已過期手續費 |
+| `%expired_pay_amount%` | 已過期買家應付總額 |
+| `%monthly_orders%` | 本月建立的訂單數 |
+| `%monthly_amount%` | 本月建立的訂單金額 |
+| `%monthly_fee%` | 本月建立的訂單手續費 |
+| `%monthly_pay_amount%` | 本月建立的訂單買家應付總額 |
+| `%monthly_completed_orders%` | 本月建立且已完成的訂單數 |
+| `%monthly_completed_amount%` | 本月建立且已完成的訂單金額 |
+| `%monthly_completed_fee%` | 本月建立且已完成的訂單手續費 |
+| `%monthly_completed_pay_amount%` | 本月建立且已完成的買家支付總額 |
+
+訂單相關的變數只算這個伺服器自己的訂單。變數要整個照抄，前後的 `%` 都不能少，拼錯的字會原樣出現在頻道名稱裡。
+
+## 常見狀況
+
+<Callout title="「機器人無法短期間內重複命名」開頭的回覆">
+這個語音頻道 10 分鐘內已經改過 2 次名稱，這次沒有改。訊息說已儲存新範本，但在 v1.0.0 新範本其實沒有存起來，頻道會繼續用原本的範本。等 10 分鐘後再輸入一次指令。
+</Callout>
+
+<Callout title="「機器人權限不足，無法動態命名語音頻道」開頭的回覆">
+範本已經存起來了，但機器人沒有權限改這個語音頻道的名稱。到 Discord 給機器人在這個語音頻道「管理頻道」權限。下一次更新時如果還是沒有權限，機器人會移除這個設定，並私訊商家擁有者（見下一則）。
+</Callout>
+
+<Callout type="warn" title="語音頻道刪掉或機器人看不到時，設定會被移除">
+每 10 分鐘更新時，找不到頻道或沒有權限改名，機器人會移除這個頻道的設定，並私訊在後台設定這個伺服器的商家擁有者（見下圖）。伺服器還沒在後台設定的話，沒有人會收到這則私訊。調整好權限後，要重新用指令設定一次。
+</Callout>
+
+<VcRemovedDm />
+
+<Callout title="「機器人找不到此頻道，請調整相關權限設定！」">
+機器人看不到你選的語音頻道。到 Discord 讓機器人可以看到這個頻道，再輸入一次。
+</Callout>
+
+<Callout title="「❌該頻道尚未設定動態頻道名稱！」">
+你填了 `delete`，但這個語音頻道本來就沒有設範本，所以沒有東西可以停用。
+</Callout>
+
+<Callout title="「抱歉，只有擁有「管理此頻道」權限的人才能使用此指令！」">
+你在輸入指令的頻道沒有「管理頻道」權限。請有權限的人來用，或請伺服器擁有者調整你的權限。
+</Callout>
+
+## 相關頁面
+
+- [功能頁](/dashboard/features)：在後台看目前的語音頻道和範本
+- [訂單頻道自動改名與移動](/payments/channel-automation)：同一個改名次數限制
+- [/auto-publish 自動發佈](/features/auto-publish)
+- [指令總表](/reference/commands)
