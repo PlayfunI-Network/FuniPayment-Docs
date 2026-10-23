@@ -13,19 +13,21 @@ import { Refusal } from "@/components/demo";
 
 <Refusal id="server/checks/dm" command="payment review" dm label="畫面：在私訊裡輸入 /payment review，機器人回覆不能在私人訊息使用" />
 
-收款、點數和儲值的指令只能在伺服器裡用。回到伺服器，在指令頻道或訂單頻道輸入。
+在私訊裡輸入收款或儲值的指令（`/fp`、`/payment` 開頭的指令、`/top-up`），機器人會回「您無法在私人訊息使用此指令，請前往伺服器內的指令頻道使用」。這些指令只能在伺服器裡用，回到伺服器，在指令頻道或訂單頻道輸入。
+
+`/balance` 開頭的指令在私訊裡會回「此伺服器尚未設定 FunI 付款系統。」，下一行是設定精靈的網址。這些指令先查伺服器的點數設定，私訊不屬於任何伺服器，機器人就當成伺服器還沒設定。你的伺服器不用重新設定，回到伺服器再輸入一次就好。
 
 ## 伺服器還沒設定
 
 <Refusal id="server/checks/not_in_service_web" command="fp" by="admin" label="畫面：在還沒設定的伺服器輸入 /fp，機器人回覆此伺服器尚未設定 FunI 付款系統，並附上設定網址" />
 
-這個伺服器還沒在網頁後台完成設定，收款、點數和儲值的指令都不能用。伺服器擁有者打開回覆裡的網址，用 Discord 登入，照設定精靈做完就好，見[設定精靈](/getting-started/setup-wizard)。
+機器人回「此伺服器尚未設定 FunI 付款系統。」，下一行是「伺服器管理員可以到這裡完成設定：」和設定網址。這個伺服器還沒在網頁後台完成設定，收款、點數和儲值的指令都不能用。伺服器擁有者打開回覆裡的網址，用 Discord 登入，照設定精靈做完就好，見[設定精靈](/getting-started/setup-wizard)。
 
 ## 不在指令頻道
 
 <Refusal id="server/checks/wrong_channel" command="balance show" channel="閒聊" label="畫面：在閒聊頻道輸入 /balance show，機器人回覆無法在此頻道使用此指令，請前往指令區頻道" />
 
-商家在後台設了「指令頻道」，收款、點數和儲值的指令只能在這些頻道，或「開單分類」底下的頻道使用。回覆會指出第一個指令頻道，到那裡再輸入一次。
+看到「您無法在此頻道使用此指令，請前往」加上一個頻道連結，是因為商家在後台設了「指令頻道」：收款、點數和儲值的指令只能在這些頻道，或「開單分類」底下的頻道使用。連結指向第一個指令頻道，到那裡再輸入一次。
 
 商家想讓更多頻道能用，到後台的「基本」分頁加進「指令頻道」，或把「指令頻道」清空讓每個頻道都能用，見[設定：基本](/dashboard/settings-basic)。示範裡的頻道名稱只是舉例。
 
@@ -33,7 +35,7 @@ import { Refusal } from "@/components/demo";
 
 <Refusal id="server/checks/no_permission" command="fp" by="member" channel="ticket-0042" label="畫面：沒有管理員身分組的成員輸入 /fp，機器人回覆抱歉，您沒有權限使用此指令" />
 
-這個指令限定身分組，你沒有：
+「抱歉，您沒有權限使用此指令。」表示這個指令限定身分組，而你沒有：
 
 - `/fp`、`/payment recheck` 要有「管理員身分組」。
 - `/balance add`、`/balance set` 要有「點數管理員身分組」。只有管理員身分組不夠，兩組是分開的。
@@ -44,19 +46,19 @@ import { Refusal } from "@/components/demo";
 
 <Refusal id="flow/payment_create_command/role_not_allowed" command="payment create" scenario="payBankTransfer" label="畫面：顧客輸入 /payment create，機器人回覆抱歉，您沒有權限建立付款訂單" />
 
-商家在後台設了「可建立訂單的身分組」，只有這些身分組和管理員身分組能用 `/payment create`。請商家用 `/fp` 幫你開單，或請商家把你的身分組加進「可建立訂單的身分組」，見[設定：基本](/dashboard/settings-basic)。
+機器人回「抱歉，您沒有權限建立付款訂單。」，因為商家在後台設了「可建立訂單的身分組」，只有這些身分組和管理員身分組能用 `/payment create`。請商家用 `/fp` 幫你開單，或請商家把你的身分組加進「可建立訂單的身分組」，見[設定：基本](/dashboard/settings-basic)。
 
 ## 只能幫自己開單
 
 <Refusal id="flow/payment_create_command/designated_not_admin" command="payment create" scenario="payBankTransfer" label="畫面：顧客用 /payment create 指定付款者，機器人回覆您只能為自己建立付款訂單" />
 
-`/payment create` 的「指定付款者」只有管理員身分組能用。不填「指定付款者」，訂單就是開給你自己的。
+`/payment create` 的「指定付款者」只有管理員身分組能用，其他人填了會看到「您只能為自己建立付款訂單喔！」，第二行是「此功能目前僅管理員可以使用」。不填「指定付款者」，訂單就是開給你自己的。
 
 ## 付款方式沒有開放
 
 <Refusal id="flow/payment_create_command/method_disabled" command="payment create" scenario="payFamiport" label="畫面：顧客用 /payment create 選全家代碼繳費，機器人回覆此商家目前沒有開放這個付款方式" />
 
-商家在後台把這個付款方式關掉了。換一個付款方式再開單。
+機器人回「此商家目前沒有開放」、付款方式的名稱和「做為付款方式」，第二行是「請選擇其他付款方式或聯絡管理員」。商家在後台把這個付款方式關掉了，換一個付款方式再開單。
 
 商家要確認是自己關的，還是系統自動關的：速買配回傳 -3003（商家沒有開通這個付款方式）時，系統會自動關掉它。看[設定：付款方式與手續費](/dashboard/settings-payment)和[速買配錯誤代碼](/troubleshooting/smilepay-errors)。
 
@@ -64,7 +66,7 @@ import { Refusal } from "@/components/demo";
 
 <Refusal id="flow/fp_command/suspended" command="fp" by="admin" channel="ticket-0042" label="畫面：商家輸入 /fp，機器人回覆此伺服器的收款功能目前已暫停，暫時無法建立新訂單" />
 
-這個伺服器的收款功能被 FunI 付款系統暫停了。暫停期間 `/fp`、`/payment create`、`/top-up` 都不能開新的單，已經開好的訂單上的按鈕也一樣。已經付款的訂單照常完成、通知照常送出，後台的設定只能看不能改。
+「此伺服器的收款功能目前已暫停，暫時無法建立新訂單。」表示這個伺服器的收款功能被 FunI 付款系統暫停了。暫停期間 `/fp`、`/payment create`、`/top-up` 都不能開新的單，已經開好的訂單上的按鈕也一樣。已經付款的訂單照常完成、通知照常送出，後台的設定只能看不能改。
 
 想知道原因或恢復收款，寫信到 contact@funipay.net。
 
@@ -72,25 +74,25 @@ import { Refusal } from "@/components/demo";
 
 <Refusal id="server/checks/balance_not_enabled" command="balance show" label="畫面：顧客輸入 /balance show，機器人回覆此伺服器尚未啟用商城點數系統" />
 
-`/balance` 開頭的指令和 `/top-up` 要先開啟點數系統。商家到後台的「點數系統」分頁打開，見[設定：點數](/dashboard/settings-balance)。
+`/balance` 開頭的指令和 `/top-up` 要先開啟點數系統，沒開的時候機器人回「此伺服器**尚未啟用**商城點數系統！」。商家到後台的「點數系統」分頁打開，見[設定：點數](/dashboard/settings-balance)。
 
 ## 不開放自助儲值
 
 <Refusal id="flow/topup_command/topup_disabled" command="top-up" scenario="topUp" label="畫面：顧客輸入 /top-up，機器人回覆此伺服器目前未開放自助儲值功能" />
 
-點數系統開著，但商家沒有開放顧客自己儲值。要買點數請找商家，或請商家在後台開啟儲值，見[設定：點數](/dashboard/settings-balance)。
+機器人回「此伺服器目前**未開放**自助儲值功能！」：點數系統開著，但商家沒有開放顧客自己儲值。要買點數請找商家，或請商家在後台開啟儲值，見[設定：點數](/dashboard/settings-balance)。
 
 ## 不允許互相轉帳
 
 <Refusal id="flow/balance_transfer_command/disabled" command="balance transfer" scenario="transfer" label="畫面：顧客輸入 /balance transfer，機器人回覆伺服器目前不允許使用者互相轉帳" />
 
-商家沒有開放點數轉帳。要開放的話到後台的「點數系統」分頁打開，見[設定：點數](/dashboard/settings-balance)。
+「伺服器目前**不允許**使用者互相轉帳！」表示商家沒有開放點數轉帳。要開放的話到後台的「點數系統」分頁打開，見[設定：點數](/dashboard/settings-balance)。
 
 ## 沒有「管理頻道」權限
 
 <Refusal id="server/auto_publish/missing_permissions" command="auto-publish" by="member" channel="公告" label="畫面：成員輸入 /auto-publish，機器人回覆只有擁有管理此頻道權限的人才能使用此指令" />
 
-`/auto-publish` 和 `/dynamic-vc-rename` 看的是 Discord 的「管理頻道」權限，不是後台的身分組。請有這個權限的人來用，或請伺服器擁有者給你權限。詳見 [/auto-publish 自動發佈](/features/auto-publish)和 [/dynamic-vc-rename 動態語音頻道名稱](/features/dynamic-vc-rename)。
+機器人回「抱歉，只有擁有「管理此頻道」權限的人才能使用此指令！」。`/auto-publish` 和 `/dynamic-vc-rename` 看的是 Discord 的「管理頻道」權限，不是後台的身分組。請有這個權限的人來用，或請伺服器擁有者給你權限。詳見 [/auto-publish 自動發佈](/features/auto-publish)和 [/dynamic-vc-rename 動態語音頻道名稱](/features/dynamic-vc-rename)。
 
 ## 其他回覆
 
@@ -99,10 +101,11 @@ import { Refusal } from "@/components/demo";
 | 回覆 | 原因 |
 |---|---|
 | 「付款金額必須大於 0！」、「建立付款訂單時，金額必須大於 0 元！」 | `/payment create` 或 `/fp` 的金額填了 0 或負數 |
-| 「您只能查詢自己的餘額喔！」 | `/balance show` 的「指定使用者」只有點數管理員身分組能用 |
-| 「您只能查詢自己的餘額紀錄喔！」 | `/balance history` 的「指定使用者」只有點數管理員身分組能用 |
+| 「商城點數的儲值金額必須大於 0！」（「商城點數」會換成商家設定的點數名稱） | `/top-up` 的金額填了 0 或負數 |
+| 「您只能查詢自己的餘額喔！」，第二行「此功能目前僅管理員可以使用」 | `/balance show` 的「指定使用者」只有點數管理員身分組能用 |
+| 「您只能查詢自己的餘額紀錄喔！」，第二行「此功能目前僅管理員可以使用」 | `/balance history` 的「指定使用者」只有點數管理員身分組能用 |
 | 「伺服器目前**不允許**使用者查詢排行榜！」 | 商家沒有開放點數排行榜，見 [/balance history 與排行榜](/balance/balance-history) |
-| 「您只能查詢自己的付款紀錄喔！」 | `/payment history` 的「查詢使用者」只有管理員身分組能用 |
+| 「您只能查詢自己的付款紀錄喔！」，第二行「此功能目前僅管理員可以使用」 | `/payment history` 的「查詢使用者」只有管理員身分組能用 |
 | 「抱歉，您只能查詢自己的付款訂單喔！」 | 用 `/payment review` 查別人的訂單，只有管理員身分組能查 |
 | 「你沒有權限操作此訂單。」 | 按了別人訂單上的按鈕，見 [/fp 快速開單](/payments/fp) |
 | 「您沒有權限操作此訊息。」 | 按了別人紀錄訊息上的翻頁按鈕 |
