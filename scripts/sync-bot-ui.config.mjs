@@ -234,14 +234,14 @@ export const KEYS = {
     method: "famiport",
     replace: [...CREATE, ["FM0123456789", "{payCode}"], ...INVOICE],
   },
-  // 萊爾富's tutorial link is an image on imgur (never linked from the site; links are not drawn)
+  // 萊爾富's tutorial link is an image on imgur: public/demo/tutorials/hilife.png is a copy (same size, 256 colours)
   "builder/payment_create/hilife/invoice=False": {
     method: "hilife",
-    replace: [...CREATE, ["IB0123456789", "{payCode}"], ["https://i.imgur.com/JK2TExl.png", "#"]],
+    replace: [...CREATE, ["IB0123456789", "{payCode}"], ["https://i.imgur.com/JK2TExl.png", "/demo/tutorials/hilife.png"]],
   },
   "builder/payment_create/hilife/invoice=True": {
     method: "hilife",
-    replace: [...CREATE, ["IB0123456789", "{payCode}"], ["https://i.imgur.com/JK2TExl.png", "#"], ...INVOICE],
+    replace: [...CREATE, ["IB0123456789", "{payCode}"], ["https://i.imgur.com/JK2TExl.png", "/demo/tutorials/hilife.png"], ...INVOICE],
   },
   // Creating the order failed (followup)
   "flow/do_payment_create/db_failure": { replace: [] },
@@ -304,6 +304,20 @@ export const KEYS = {
       ["2026/05/04｜20:00:00", "2026/10/20｜21:16:52"],
       ["2026/05/03｜20:00:00", "2026/10/18｜13:40:09"],
       ["2026/05/02｜20:00:00", "2026/10/16｜19:02:37"],
+    ],
+  },
+  // Page 2 of 2, after ▶️ (◀️ and 回首頁 on, ▶️ off). The builder's fixture has five orders, two
+  // on page 2; the first of them is dropped so page 2 holds the fourth order of the four above
+  // (2026/10/15, the first payment on the statistics). The remaining entry is the bot's text.
+  "builder/payment_history/page=2": {
+    replace: [
+      ["顧客 已完成", "{buyer} 已完成"],
+      [
+        "－訂單編號：[000000010001](https://discord.com/channels/111111111111111111/777777777777777777/8888)\n> 繳費時間：2026/05/02｜12:00:00\n> 付款方式：超商代碼｜全家\n> 付款金額：135 元\n\n",
+        "",
+      ],
+      ["000000010000", "241015318842"],
+      ["2026/05/01｜12:00:00", "2026/10/15｜10:24:31"],
     ],
   },
   "builder/payment_history/page=-1": { replace: [] },
@@ -448,6 +462,43 @@ export const KEYS = {
     ],
   },
   "builder/balance_history/page=9/admin=False": { replace: [] },
+  // A member's own history over two pages (another fixture: 10 … 16 from an admin, 91 in all;
+  // the merchant has 5). Page 1, page 2 after ▶️, the statistics and the leaderboard of the same
+  // records. A middle page with 去尾頁 needs a third page, which no fixture has.
+  "builder/balance_history/page=1/admin=False": {
+    replace: [
+      ["顧客 的點數交易紀錄", "{buyer} 的{balanceName}交易紀錄"],
+      [" 點數\n", " {balanceName}\n"],
+      ["2026/05/01｜12:00:06", "2026/10/21｜12:40:18"],
+      ["2026/05/01｜12:00:05", "2026/10/20｜20:05:51"],
+      ["2026/05/01｜12:00:04", "2026/10/19｜09:12:30"],
+      ["2026/05/01｜12:00:03", "2026/10/18｜16:48:02"],
+      ["2026/05/01｜12:00:02", "2026/10/17｜11:27:44"],
+    ],
+  },
+  "builder/balance_history/page=2/admin=False": {
+    replace: [
+      ["顧客 的點數交易紀錄", "{buyer} 的{balanceName}交易紀錄"],
+      [" 點數\n", " {balanceName}\n"],
+      ["2026/05/01｜12:00:01", "2026/10/16｜18:30:15"],
+      ["2026/05/01｜12:00:00", "2026/10/15｜10:12:40"],
+    ],
+  },
+  "builder/balance_history/page=0/admin=False": {
+    replace: [
+      ["顧客 的點數統計數據", "{buyer} 的{balanceName}統計數據"],
+      ["__91__ 點數", "__91__ {balanceName}"],
+      ["2026/05/01｜10 點", "2026/10/15｜10 點"],
+      ["2026/05/01｜16 點", "2026/10/21｜16 點"],
+    ],
+  },
+  "builder/balance_history/page=-1/admin=False": {
+    replace: [
+      ["的點數排行榜", "的{balanceName}排行榜"],
+      ["**顧客**", "**{buyer}**"],
+      ["**管理員**", "**{admin}**"],
+    ],
+  },
 
   // ---- /balance add (an admin adds or removes; the member gets a DM) ----
   "flow/balance_add/40/50/None": {
@@ -637,6 +688,13 @@ export const TEMPLATES = {
     fn: "recheck_all_progress",
     via: "message.edit",
     values: { done: 5, total: 12, eta_minutes: 0 },
+  },
+  // The last edit, once the twelfth order is checked (i == total), just before the summary
+  "text/payment/recheck_all_progress/12": {
+    file: "app/i18n/payment.py",
+    fn: "recheck_all_progress",
+    via: "message.edit",
+    values: { done: 12, total: 12, eta_minutes: 0 },
   },
   "text/payment/recheck_all_summary": {
     file: "app/i18n/payment.py",

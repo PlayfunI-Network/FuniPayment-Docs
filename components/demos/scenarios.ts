@@ -62,6 +62,11 @@ export const SCENARIOS = {
    * 20 and 30 from an admin, 60 in all).
    */
   balanceHistory: { ...PEOPLE, amount: 60, method: "balance", orderId: "241021387465", balance: 60 },
+  /**
+   * The customer's 91 points over two history pages (the screens are fixed: 10 to 16 from an
+   * admin, seven records; the merchant has 5 on the leaderboard).
+   */
+  balanceHistoryPages: { ...PEOPLE, amount: 91, method: "balance", orderId: "241021387465", balance: 91 },
   /** SmilePay refuses a 25000 order at FamilyMart: -3004 超過付款模式設定金額. */
   smilepayError: { ...PEOPLE, amount: 25000, method: "famiport", orderId: "241021903311", errorCode: "-3004" },
 } as const satisfies Record<string, Scenario>;
@@ -128,6 +133,7 @@ export const SNAPSHOT_SCENARIOS: Record<SnapshotId, ScenarioName> = {
   "flow/payment_review/other_as_customer": "fpStoreBarcode",
   "flow/payment_history_command/0": "fpStoreBarcode",
   "flow/payment_history_command/1": "fpStoreBarcode",
+  "builder/payment_history/page=2": "fpStoreBarcode",
   "builder/payment_history/page=-1": "fpStoreBarcode",
   "flow/payment_recheck/paid": "fpStoreBarcode",
   "flow/payment_recheck/not_paid": "fpStoreBarcode",
@@ -139,6 +145,7 @@ export const SNAPSHOT_SCENARIOS: Record<SnapshotId, ScenarioName> = {
   "flow/payment_recheck/paid_underpaid@client.notify_owner": "fpStoreBarcode",
   "text/payment/recheck_all_started": "fpStoreBarcode",
   "text/payment/recheck_all_progress": "fpStoreBarcode",
+  "text/payment/recheck_all_progress/12": "fpStoreBarcode",
   "text/payment/recheck_all_summary": "fpStoreBarcode",
   // Ticket channel automation
   "server/rename_rate_limited": "fpStoreBarcode",
@@ -166,6 +173,10 @@ export const SNAPSHOT_SCENARIOS: Record<SnapshotId, ScenarioName> = {
   "flow/balance_history_command/-1": "balanceHistory",
   "builder/balance_history/page=1/admin=True": "balanceHistory",
   "builder/balance_history/page=9/admin=False": "balanceHistory",
+  "builder/balance_history/page=1/admin=False": "balanceHistoryPages",
+  "builder/balance_history/page=2/admin=False": "balanceHistoryPages",
+  "builder/balance_history/page=0/admin=False": "balanceHistoryPages",
+  "builder/balance_history/page=-1/admin=False": "balanceHistoryPages",
   "flow/balance_add/40/50/None": "balanceAdd",
   "flow/balance_add/40/50/活動": "balanceAdd",
   "flow/balance_add/40/50/None@client.send_dm_to_user": "balanceAdd",
