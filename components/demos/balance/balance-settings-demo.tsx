@@ -1,22 +1,30 @@
 "use client";
-// The dashboard's 點數系統 tab: what each switch is, then turning on 儲值點數 and saving (the
-// edited shot has exactly that change). Starts on the tab itself: tabBalance has no phone target.
+// The dashboard's 點數系統 tab, changed one setting at a time: 點數轉帳 on, 用點數付款 and 點數排行榜
+// off (星光遊戲社 has transfer off and the other two on), a new name, a balance admin role, then
+// save. Each shot keeps the changes before it (capture.config.mjs settingsEdits). Starts on the
+// tab itself: tabBalance has no phone target.
 import { DashboardDemo, type DashboardStep } from "@/components/demo";
 
 export const STEPS: DashboardStep[] = [
-  // Zoom 1 while the switches are explained: closer in, the camera centres on the switch and
-  // cuts its label off.
-  { at: 0, caption: "「點數系統」是總開關，關掉時其他點數功能都不會運作", target: "enable", zoom: 1 },
-  { at: 2200, caption: "「點數轉帳」開啟 /balance transfer", target: "transfer" },
-  { at: 3600, caption: "「用點數付款」讓 /fp 的選單多一個點數選項", target: "payWithBalance" },
-  { at: 5000, caption: "「點數排行榜」開放顧客看排行榜", target: "leaderboard" },
-  { at: 6400, caption: "打開「儲值點數」，顧客就能用 /top-up", target: "topup" },
-  { at: 7200, target: "topup", click: true },
-  { at: 7500, swapTo: "settings-balance-edited" },
-  { at: 8600, caption: "按「儲存變更」", target: "save", zoom: 1.6 },
-  { at: 9400, target: "save", click: true },
-  { at: 9700, caption: "看到「已儲存」就生效了", swapTo: "settings-balance-saved", target: "saved" },
-  { at: 12000, zoom: 1, hideCursor: true },
+  // Zoom 1 on the switches: closer in, the camera centres on the switch and cuts its label off.
+  { at: 0, caption: "打開「點數轉帳」，成員就能用 /balance transfer 互相轉點數", target: "transfer", zoom: 1 },
+  { at: 1000, target: "transfer", click: true },
+  { at: 1300, swapTo: "settings-balance-transfer" },
+  { at: 2200, caption: "關掉「用點數付款」，/fp 的選單就沒有點數選項", target: "payWithBalance" },
+  { at: 3100, target: "payWithBalance", click: true },
+  { at: 3400, swapTo: "settings-balance-pay" },
+  { at: 4300, caption: "關掉「點數排行榜」，只剩點數管理員看得到排行榜", target: "leaderboard" },
+  { at: 5200, target: "leaderboard", click: true },
+  { at: 5500, swapTo: "settings-balance-leaderboard" },
+  { at: 6400, caption: "點數名稱改成你的店的叫法，例如星光幣", target: "name", typing: true },
+  { at: 7400, swapTo: "settings-balance-name", target: "name", typing: true },
+  { at: 8300, caption: "「點數管理員身分組」選誰可以幫人加點、扣點", target: "adminRoles" },
+  { at: 9100, target: "adminRoles", click: true },
+  { at: 9400, swapTo: "settings-balance-roles" },
+  { at: 10300, caption: "按「儲存變更」", target: "save", zoom: 1.6 },
+  { at: 11100, target: "save", click: true },
+  { at: 11400, caption: "看到「已儲存」就生效了", swapTo: "settings-balance-roles-saved", target: "saved" },
+  { at: 13800, zoom: 1, hideCursor: true },
 ];
 
 export function BalanceSettingsDemo() {
@@ -24,7 +32,7 @@ export function BalanceSettingsDemo() {
     <DashboardDemo
       shot="settings-balance"
       steps={STEPS}
-      label="示範：在後台點數系統分頁看過每個開關，打開儲值點數後按儲存變更，看到已儲存"
+      label="示範：在後台點數系統分頁打開點數轉帳，關掉用點數付款和點數排行榜，把點數名稱改成星光幣，選一個點數管理員身分組，按儲存變更後看到已儲存"
     />
   );
 }

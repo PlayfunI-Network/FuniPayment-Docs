@@ -52,11 +52,16 @@ describe("balance demos", () => {
     expect(screen.getAllByText("商城點數消費通知")).toHaveLength(2);
   });
 
-  it("clicks only the history buttons the snapshots have", () => {
-    const labels = (id: keyof typeof BOT_UI) =>
-      (BOT_UI[id] as { components: { type: string; label?: string }[] }).components.map((c) => c.label);
-    expect(labels("flow/balance_history_command/1")).toContain("統計表");
-    expect(labels("flow/balance_history_command/0")).toContain("伺服器排行榜");
+  it("presses only enabled history buttons, in the place each page has them", () => {
+    const buttons = (id: keyof typeof BOT_UI) =>
+      (BOT_UI[id] as { components: { label?: string; disabled?: boolean }[] }).components;
+    // ▶️ is the third button of page 1; 統計表 and 伺服器排行榜 the fourth of pages 2 and 0.
+    expect(buttons(history.PAGES[1])[2]).toMatchObject({ label: "▶️", disabled: false });
+    expect(buttons(history.PAGES[2])[3]).toMatchObject({ label: "統計表", disabled: false });
+    expect(buttons(history.PAGES[0])[3]).toMatchObject({ label: "伺服器排行榜", disabled: false });
+    // The four pages are the same seven records: page 1 says two more, the statistics 91 in all.
+    expect(BOT_UI[history.PAGES[1]].embeds[0].description).toContain("...還有 **2** 筆");
+    expect(BOT_UI[history.PAGES[0]].embeds[0].title).toContain("__91__");
   });
 
   it("aims the settings demo at targets the balance shots have, on the phone pictures too", () => {
