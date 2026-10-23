@@ -44,6 +44,8 @@
 
 每頁寫完都要用 `humanizer:humanizer` skill 跑一遍，改完再回頭把每個「」裡的字跟來源對一次。humanizer 可能會改到 bot 的字，原文優先。
 
+`content/docs/` 底下 features、troubleshooting、reference 三個資料夾的「」由 `components/demos/reference/quotes.test.ts` 自動比對：每個「」都要是 generated 檔、bot 的 `app/i18n` 或後台 `web/src` 裡的字（`{token}` 可以換成實際的值）。Discord 自己的字（例如「管理頻道」）列在測試的 `DISCORD`。
+
 ## 文字從哪裡來
 
 | 內容 | 來源（bot 專案） |
@@ -187,11 +189,11 @@ Discord 畫面（`components/discord`，永遠深色）：
 | `SelectMenu` | 選單，可以打開（`open`、往上開 `up`）、標出選到的項目 |
 | `ChoiceMenu` | 讓讀者自己點的選單（互動用） |
 | `SlashPicker` | 輸入斜線指令時的提示框；給 `options`（一或多個 `{ name, value }`）就是填好參數的輸入框，`options={[]}` 是選好指令、還沒填參數 |
-| `ChatInput` | 空的輸入框 |
+| `ChatInput` | 頻道或私訊的輸入框：空的時候是「傳送訊息到 #頻道」（`channel`）或「傳送訊息給 @名字」（`dm`）；給 `typed` 就是打字中 |
 | `Modal` | 表單視窗（例如填購買人資訊） |
 | `Ephemeral` | 「只有你看得到」的訊息 |
 | `DmWindow` | 私訊視窗 |
-| `ChannelList` / `ChannelRow` | 左側頻道列表，看改名和換分類 |
+| `ChannelList` / `ChannelRow` | 左側頻道列表，看改名和換分類；頻道預設是文字頻道，`kind: "voice"` 畫成語音頻道 |
 | `VoiceChannel` | 語音頻道名稱 |
 | `Attachment` | 訊息附加的圖片 |
 | `Avatar` | 頭像（圖片或彩色字） |
@@ -210,6 +212,7 @@ Discord 畫面（`components/discord`，永遠深色）：
 | `CommandInput`、`InputState` | 頻道的輸入框：空的、打字中（`typing`）、填好參數（`options`） |
 | `stepper`、`SceneStep`、`SceneLayout` | 帶畫面狀態的步驟產生器和它的型別，見「再寫 steps」 |
 | `MessageWindow`、`DiscordStill` | 一個視窗裡只有一則訊息、不播動畫：頻道（給 `channel`）或和機器人的私訊；`DiscordStill` 再包成頁面上的一張圖（要給 `label`） |
+| `Refusal` | 指令被拒絕的靜態畫面：「… 使用了 /指令」加上 bot 的回覆，`dm` 改畫成私訊；情境預設用 `SNAPSHOT_SCENARIOS` 指定的。頁面文字裡也要用「」引用那句回覆，搜尋才找得到 |
 | `SnapshotTabs`、`SnapshotTab` | 幾張靜態畫面用分頁切換，讀者自己點（例如各付款方式的訂單）；`SnapshotTab` 是每個分頁的型別 |
 | `DashboardDemo` | 後台示範：用目標名字指揮游標和鏡頭，見「後台示範」 |
 | `DashboardShot`、`shotTarget` | 後台截圖（單獨放在頁面上時要給 `alt`）與截圖上元素的位置 |

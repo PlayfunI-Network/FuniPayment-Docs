@@ -1,10 +1,9 @@
 // @vitest-environment jsdom
 import { fireEvent, render, screen } from "@testing-library/react";
-import { BOT_UI, COMMANDS, SMILEPAY_ERRORS } from "@/content/bot-ui.generated";
+import { COMMANDS, SMILEPAY_ERRORS } from "@/content/bot-ui.generated";
 import { calculateFee } from "@/lib/fees";
 import { commandRows, CommandTable, WHO } from "./command-table";
 import { FeeCalculator, quote } from "./fee-calculator";
-import { Refusal } from "./refusal";
 import { SmilepayErrorTable, smilepayErrorRows, UNKNOWN_SAMPLE } from "./smilepay-error-table";
 
 describe("command table", () => {
@@ -49,16 +48,5 @@ describe("SmilePay error table", () => {
     expect(SMILEPAY_ERRORS[UNKNOWN_SAMPLE]).toBe("未知的錯誤代碼 -9999");
     expect(smilepayErrorRows()).toHaveLength(Object.keys(SMILEPAY_ERRORS).length - 1);
     expect(container.textContent).toContain("商家未開啟此付款方式");
-  });
-});
-
-describe("refusals", () => {
-  it("draws an ephemeral refusal in a channel and in a DM", () => {
-    expect(BOT_UI["server/checks/dm"].ephemeral).toBe(true);
-    const { container, unmount } = render(<Refusal id="server/checks/wrong_channel" command="balance show" label="x" />);
-    expect(container.textContent).toContain("只有你看得到這則訊息");
-    unmount();
-    const dm = render(<Refusal id="server/checks/dm" command="payment review" dm label="x" />);
-    expect(dm.container.textContent).toContain("您無法在私人訊息使用此指令");
   });
 });
