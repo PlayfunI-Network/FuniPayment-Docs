@@ -1,6 +1,87 @@
 ---
 title: "設定：點數"
-description: "後台設定頁的點數分頁。"
+description: "後台設定頁的點數系統分頁：點數功能開關、點數名稱與點數管理員身分組。"
 ---
 
-{/* TODO */}
+import { BalanceSettingsDemo } from "@/components/demos/dashboard/dashboard-demos";
+
+「點數系統」分頁決定伺服器要不要用點數，以及開放哪些點數功能。點數系統是什麼、顧客怎麼用，見[點數系統](/balance/overview)。
+
+<BalanceSettingsDemo />
+
+## 誰可以改
+
+只有伺服器的擁有者。
+
+## 功能開關
+
+| 開關 | 後台的說明 | 相關指令 |
+|---|---|---|
+| 「點數系統」 | 「關閉時其他點數功能都不會運作。」 | 所有 /balance 指令、/top-up |
+| 「點數轉帳」 | 「顧客之間可以互相轉移點數。」 | [/balance transfer](/balance/balance-transfer) |
+| 「用點數付款」 | 「建立訂單時可以選擇用點數付款。」 | /fp 的點數選項，見[用點數付款](/balance/pay-with-balance) |
+| 「儲值點數」 | 「顧客可以用 /top-up 透過速買配儲值點數。」 | [/top-up 儲值](/balance/top-up) |
+| 「點數排行榜」 | 「顯示伺服器的點數排行榜。」 | [/balance history 與排行榜](/balance/balance-history) |
+
+新伺服器這五個開關都是關的。要用點數，先打開「點數系統」，再打開要用的功能。
+
+「點數系統」關掉時，所有 /balance 指令和 /top-up 都不能用，顧客用 /balance 會收到「此伺服器尚未啟用商城點數系統！」（「商城點數」會換成你設的點數名稱）。不過 /fp 選單裡的點數選項只看「用點數付款」這個開關，要停用點數時，記得把「用點數付款」也關掉。
+
+「點數排行榜」關掉時，一般顧客看不到排行榜，點數管理員還是看得到。
+
+## 點數名稱
+
+機器人訊息裡怎麼稱呼點數，預設是「商城點數」。可以改成你的店慣用的名稱，最多 20 個字，不能空白。
+
+## 點數管理員身分組
+
+後台的說明是「可以替顧客增加、設定點數。」有這些身分組的人可以用 /balance add 和 /balance set，見 [/balance add、/balance set](/balance/balance-add-set)。
+
+這跟「基本」分頁的管理員身分組是分開的。只有管理員身分組的人不能改點數。
+
+## 改設定的步驟
+
+<Steps>
+<Step>
+
+### 打開分頁
+
+在「設定」點「點數系統」。手機上這個分頁在分頁列最右邊，要往左滑才看得到。
+
+</Step>
+<Step>
+
+### 開關功能
+
+切換要用的開關，或修改點數名稱、點數管理員身分組。
+
+</Step>
+<Step>
+
+### 儲存
+
+按「儲存變更」，看到「已儲存」就完成了。
+
+</Step>
+</Steps>
+
+## 常見狀況
+
+<Callout title="顧客用 /top-up 被拒絕">
+機器人回「此伺服器目前未開放自助儲值功能！」表示「儲值點數」沒開。打開它再儲存。
+</Callout>
+
+<Callout title="顧客不能轉點數給別人">
+機器人回「伺服器目前不允許使用者互相轉帳！」表示「點數轉帳」沒開。
+</Callout>
+
+<Callout title="/fp 的選單裡沒有點數選項">
+「用點數付款」沒開。打開它再儲存，下一張 /fp 的選單就會有點數選項。
+</Callout>
+
+## 相關頁面
+
+- [點數系統](/balance/overview)：點數是什麼、怎麼開始用
+- [/top-up 儲值](/balance/top-up)
+- [用點數付款](/balance/pay-with-balance)
+- [總覽與統計](/dashboard/overview)：開啟點數後多出的「儲值金額」
