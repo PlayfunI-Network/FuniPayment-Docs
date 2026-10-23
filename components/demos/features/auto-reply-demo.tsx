@@ -12,6 +12,7 @@ import {
   type CanvasPoint,
   type SceneLayout,
 } from "@/components/demo";
+import { ChatInput } from "@/components/discord";
 import { DEMO_BOT } from "@/lib/scenario";
 import { SCENARIOS } from "../scenarios";
 
@@ -33,28 +34,6 @@ const NARROW: Layout = {
   h: 500,
   at: { typing: { x: 300, y: 462 }, input: { x: 0, y: 320, w: 300, h: 180 }, reply: { x: 0, y: 150, w: 400, h: 290 } },
 };
-
-/** The DM input (zh-TW Discord): 「傳送訊息給 @…」 when empty, else the text being typed. */
-function DmInput({ typed }: { typed: string }) {
-  return (
-    <div className="mt-4 px-4 text-base leading-[1.375rem] whitespace-normal">
-      <div className="flex min-h-11 min-w-0 items-center gap-3 rounded-lg bg-[#383a40] px-4 py-2.5">
-        <svg aria-hidden width="24" height="24" viewBox="0 0 24 24" className="shrink-0 text-[#b5bac1]">
-          <circle cx="12" cy="12" r="10" fill="currentColor" />
-          <path fill="#383a40" d="M12 7a1 1 0 0 1 1 1v3h3a1 1 0 1 1 0 2h-3v3a1 1 0 1 1-2 0v-3H8a1 1 0 1 1 0-2h3V8a1 1 0 0 1 1-1Z" />
-        </svg>
-        {typed ? (
-          <span className="min-w-0 truncate text-[#dbdee1]">
-            {typed}
-            <span aria-hidden className="ml-px inline-block h-5 w-px translate-y-1 bg-[#dbdee1]" />
-          </span>
-        ) : (
-          <span className="min-w-0 truncate text-[#6d6f78]">傳送訊息給 @{DEMO_BOT.name}</span>
-        )}
-      </div>
-    </div>
-  );
-}
 
 const START: Screen = { typed: "", sent: false, reply: false };
 
@@ -89,7 +68,7 @@ export function AutoReplyScreen({ screen, layout }: { screen: Screen; layout: La
           kind: "dm",
           title: DEMO_BOT.name,
           tag: "顧客的私訊",
-          input: <DmInput typed={screen.typed} />,
+          input: <ChatInput dm={DEMO_BOT.name} typed={screen.typed} />,
           messages: (
             <>
               {screen.sent && (

@@ -99,6 +99,8 @@ Discord 限制頻道改名的次數，機器人在同一個頻道 10 分鐘內�
 | `%monthly_completed_fee%` | 本月建立且已完成的訂單手續費 |
 | `%monthly_completed_pay_amount%` | 本月建立且已完成的買家支付總額 |
 
+`%online_members%` 在 v1.0.0 一直是 0。機器人沒有向 Discord 取得成員的上線狀態，所以每個成員都算離線。要顯示人數，請用 `%server_members%` 或 `%real_members%`。
+
 訂單相關的變數只算這個伺服器自己的訂單。變數要整個照抄，前後的 `%` 都不能少，拼錯的字會原樣出現在頻道名稱裡。
 
 ## 常見狀況
