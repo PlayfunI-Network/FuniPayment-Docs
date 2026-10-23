@@ -1,9 +1,19 @@
 // @vitest-environment jsdom
 import { render, screen } from "@testing-library/react";
+import { SCENARIOS } from "@/components/demos/scenarios";
 import { DEMO_SCENARIO } from "@/lib/scenario";
 import { SnapshotEmbed, SnapshotMessage } from "./snapshot";
 
 describe("SnapshotMessage", () => {
+  it.each([
+    ["flow/payment_history_command/0", SCENARIOS.fpStoreBarcode],
+    ["flow/balance_history_command/0", SCENARIOS.balanceHistory],
+  ] as const)("underlines the __marked__ part of %s's embed title instead of showing the markers", (id, scenario) => {
+    const { container } = render(<SnapshotMessage id={id} scenario={scenario} />);
+    expect(container.textContent).not.toContain("__");
+    expect(container.querySelector("article u")).toBeTruthy();
+  });
+
   it("draws /fp's embed and menu with the scenario's amount", () => {
     const { container } = render(<SnapshotMessage id="flow/fp_command/ok" scenario={DEMO_SCENARIO} />);
     expect(screen.getByText("請點選下方選單來決定付款方式")).toBeTruthy();

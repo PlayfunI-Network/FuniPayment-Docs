@@ -40,6 +40,17 @@ export const DEMO_PEOPLE = {
   member: { name: "會員", avatar: "/demo/avatars/member.png" },
 } as const;
 
+/** The bot as the demos show it: its name and avatar on every message and DM it sends. */
+export const DEMO_BOT = { name: "FunI 付款系統", avatar: "/brand/funi-icon.png" } as const;
+
+/** Who sends a message in a demo: the bot or one of the demo people. */
+export type DemoSender = "bot" | "buyer" | "admin" | "member";
+
+/** A sender's name and avatar. */
+export function demoSender(who: DemoSender): { name: string; avatar: string } {
+  return who === "bot" ? DEMO_BOT : DEMO_PEOPLE[who];
+}
+
 /** The buyer information the demo buyer types into the form (synthetic, as on the site). */
 export const DEMO_BUYER_INFO = { name: "王○○", phone: "0912345678", email: "customer@example.com" } as const;
 
@@ -105,6 +116,11 @@ const CLOCK = new Intl.DateTimeFormat("zh-TW", { hour: "numeric", minute: "2-dig
 /** Discord's timestamp for a moment today, e.g. 「今天 下午3:24」 (messages and embed footers). */
 export function discordTime(d: Date): string {
   return `今天 ${CLOCK.format(d)}`;
+}
+
+/** Discord's timestamp for a message sent `minutesAgo` before the demo's "now". */
+export function demoTime(minutesAgo = 0): string {
+  return discordTime(new Date(DEMO_NOW.getTime() - minutesAgo * 60_000));
 }
 
 /** Every token's value for this scenario at `now`. */

@@ -1101,7 +1101,7 @@ export const BOT_UI = {
     "embeds": [
       {
         "title": "付款編號：{orderId}",
-        "description": "**付款者**：<@{buyer}>\n**手續費**：{fee} 元\n*[點我查看付款教學](#)*",
+        "description": "**付款者**：<@{buyer}>\n**手續費**：{fee} 元\n*[點我查看付款教學](/demo/tutorials/hilife.png)*",
         "color": 1027618,
         "url": "https://discord.com/channels/111111111111111111/777777777777777777",
         "author": {
@@ -1150,7 +1150,7 @@ export const BOT_UI = {
     "embeds": [
       {
         "title": "付款編號：{orderId}",
-        "description": "**付款者**：<@{buyer}>\n**手續費**：{fee} 元\n*[點我查看付款教學](#)*",
+        "description": "**付款者**：<@{buyer}>\n**手續費**：{fee} 元\n*[點我查看付款教學](/demo/tutorials/hilife.png)*",
         "color": 1027618,
         "url": "https://discord.com/channels/111111111111111111/777777777777777777",
         "author": {
@@ -1593,6 +1593,53 @@ export const BOT_UI = {
         "label": "▶️",
         "style": "secondary",
         "disabled": false,
+        "url": null
+      },
+      {
+        "type": "button",
+        "label": "統計表",
+        "style": "success",
+        "disabled": false,
+        "url": null
+      }
+    ],
+    "ephemeral": false
+  },
+  "builder/payment_history/page=2": {
+    "kind": "message",
+    "via": "builder",
+    "embeds": [
+      {
+        "title": "第 2 頁／第 2 頁",
+        "description": "－訂單編號：[241015318842](https://discord.com/channels/111111111111111111/777777777777777777/8888)\n> 繳費時間：2026/10/15｜10:24:31\n> 付款方式：超商代碼｜全家\n> 付款金額：135 元\n\n",
+        "color": 14011911,
+        "author": {
+          "name": "{buyer} 已完成的付款訂單",
+          "icon_url": "/demo/avatars/buyer.png"
+        },
+        "has_timestamp": false
+      }
+    ],
+    "components": [
+      {
+        "type": "button",
+        "label": "回首頁",
+        "style": "primary",
+        "disabled": false,
+        "url": null
+      },
+      {
+        "type": "button",
+        "label": "◀️️",
+        "style": "secondary",
+        "disabled": false,
+        "url": null
+      },
+      {
+        "type": "button",
+        "label": "▶️",
+        "style": "secondary",
+        "disabled": true,
         "url": null
       },
       {
@@ -2224,6 +2271,234 @@ export const BOT_UI = {
       }
     ],
     "components": [],
+    "ephemeral": false
+  },
+  "builder/balance_history/page=1/admin=False": {
+    "kind": "message",
+    "via": "builder",
+    "embeds": [
+      {
+        "title": "第 1 頁／第 2 頁",
+        "description": "2026/10/21｜12:40:18\n> 管理員幫您增加了 **16** {balanceName}\n\n2026/10/20｜20:05:51\n> 管理員幫您增加了 **15** {balanceName}\n\n2026/10/19｜09:12:30\n> 管理員幫您增加了 **14** {balanceName}\n\n2026/10/18｜16:48:02\n> 管理員幫您增加了 **13** {balanceName}\n\n2026/10/17｜11:27:44\n> 管理員幫您增加了 **12** {balanceName}\n\n...還有 **2** 筆交易紀錄，點擊下方按鈕查看更多",
+        "color": 47103,
+        "author": {
+          "name": "{buyer} 的{balanceName}交易紀錄",
+          "icon_url": "/demo/avatars/buyer.png"
+        },
+        "footer": {
+          "text": "Powered by PlayfunI Network",
+          "icon_url": "/brand/playfuni-icon.png"
+        },
+        "has_timestamp": true
+      }
+    ],
+    "components": [
+      {
+        "type": "button",
+        "label": "回首頁",
+        "style": "primary",
+        "disabled": true,
+        "url": null
+      },
+      {
+        "type": "button",
+        "label": "◀️️",
+        "style": "secondary",
+        "disabled": true,
+        "url": null
+      },
+      {
+        "type": "button",
+        "label": "▶️",
+        "style": "secondary",
+        "disabled": false,
+        "url": null
+      },
+      {
+        "type": "button",
+        "label": "統計表",
+        "style": "success",
+        "disabled": false,
+        "url": null
+      }
+    ],
+    "ephemeral": false
+  },
+  "builder/balance_history/page=2/admin=False": {
+    "kind": "message",
+    "via": "builder",
+    "embeds": [
+      {
+        "title": "第 2 頁／第 2 頁",
+        "description": "2026/10/16｜18:30:15\n> 管理員幫您增加了 **11** {balanceName}\n\n2026/10/15｜10:12:40\n> 管理員幫您增加了 **10** {balanceName}\n\n",
+        "color": 47103,
+        "author": {
+          "name": "{buyer} 的{balanceName}交易紀錄",
+          "icon_url": "/demo/avatars/buyer.png"
+        },
+        "footer": {
+          "text": "Powered by PlayfunI Network",
+          "icon_url": "/brand/playfuni-icon.png"
+        },
+        "has_timestamp": true
+      }
+    ],
+    "components": [
+      {
+        "type": "button",
+        "label": "回首頁",
+        "style": "primary",
+        "disabled": false,
+        "url": null
+      },
+      {
+        "type": "button",
+        "label": "◀️️",
+        "style": "secondary",
+        "disabled": false,
+        "url": null
+      },
+      {
+        "type": "button",
+        "label": "▶️",
+        "style": "secondary",
+        "disabled": true,
+        "url": null
+      },
+      {
+        "type": "button",
+        "label": "統計表",
+        "style": "success",
+        "disabled": false,
+        "url": null
+      }
+    ],
+    "ephemeral": false
+  },
+  "builder/balance_history/page=0/admin=False": {
+    "kind": "message",
+    "via": "builder",
+    "embeds": [
+      {
+        "title": "您目前擁有：__91__ {balanceName}",
+        "color": 47103,
+        "author": {
+          "name": "{buyer} 的{balanceName}統計數據",
+          "icon_url": "/demo/avatars/buyer.png"
+        },
+        "fields": [
+          {
+            "name": "總轉入數量",
+            "value": "```0 點```",
+            "inline": true
+          },
+          {
+            "name": "總轉出數量",
+            "value": "```0 點```",
+            "inline": true
+          },
+          {
+            "name": "第一筆交易日期",
+            "value": "```2026/10/15｜10 點```",
+            "inline": false
+          },
+          {
+            "name": "最近交易日期",
+            "value": "```2026/10/21｜16 點```",
+            "inline": false
+          }
+        ],
+        "footer": {
+          "text": "Powered by PlayfunI Network",
+          "icon_url": "/brand/playfuni-icon.png"
+        },
+        "has_timestamp": true
+      }
+    ],
+    "components": [
+      {
+        "type": "button",
+        "label": "回首頁",
+        "style": "primary",
+        "disabled": false,
+        "url": null
+      },
+      {
+        "type": "button",
+        "label": "◀️️",
+        "style": "secondary",
+        "disabled": true,
+        "url": null
+      },
+      {
+        "type": "button",
+        "label": "▶️",
+        "style": "secondary",
+        "disabled": true,
+        "url": null
+      },
+      {
+        "type": "button",
+        "label": "伺服器排行榜",
+        "style": "success",
+        "disabled": false,
+        "url": null
+      }
+    ],
+    "ephemeral": false
+  },
+  "builder/balance_history/page=-1/admin=False": {
+    "kind": "message",
+    "via": "builder",
+    "embeds": [
+      {
+        "title": "我的排名: 第1名",
+        "description": "🥇 **{buyer}**: 91 點\n🥈 **{admin}**: 5 點\n🥉 **從缺**: 0 點\n4. **從缺**: 0 點\n5. **從缺**: 0 點\n6. **從缺**: 0 點\n7. **從缺**: 0 點\n8. **從缺**: 0 點\n9. **從缺**: 0 點\n10. **從缺**: 0 點\n",
+        "color": 47103,
+        "author": {
+          "name": "{shop} 的{balanceName}排行榜",
+          "icon_url": "/demo/avatars/buyer.png"
+        },
+        "footer": {
+          "text": "Powered by PlayfunI Network",
+          "icon_url": "/brand/playfuni-icon.png"
+        },
+        "thumbnail": {
+          "url": "/demo/avatars/shop.png"
+        },
+        "has_timestamp": true
+      }
+    ],
+    "components": [
+      {
+        "type": "button",
+        "label": "回首頁",
+        "style": "primary",
+        "disabled": false,
+        "url": null
+      },
+      {
+        "type": "button",
+        "label": "◀️️",
+        "style": "secondary",
+        "disabled": true,
+        "url": null
+      },
+      {
+        "type": "button",
+        "label": "▶️",
+        "style": "secondary",
+        "disabled": true,
+        "url": null
+      },
+      {
+        "type": "button",
+        "label": "統計表",
+        "style": "success",
+        "disabled": false,
+        "url": null
+      }
+    ],
     "ephemeral": false
   },
   "flow/balance_add/40/50/None": {
@@ -3308,6 +3583,14 @@ export const BOT_UI = {
     "kind": "message",
     "via": "message.edit",
     "content": "正在檢查未付款訂單... (5/12)\n預計剩餘時間：約 0 分鐘",
+    "embeds": [],
+    "components": [],
+    "ephemeral": false
+  },
+  "text/payment/recheck_all_progress/12": {
+    "kind": "message",
+    "via": "message.edit",
+    "content": "正在檢查未付款訂單... (12/12)\n預計剩餘時間：約 0 分鐘",
     "embeds": [],
     "components": [],
     "ephemeral": false

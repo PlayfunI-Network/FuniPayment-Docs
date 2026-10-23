@@ -90,6 +90,13 @@ describe("Embed", () => {
     const article = container.querySelector("article") as HTMLElement;
     expect(article.style.borderLeftColor).toBe("rgb(43, 63, 94)");
   });
+
+  it("draws Discord markdown in the title instead of the raw markers", () => {
+    const { container } = render(<Embed color={0x00b7ff} title="您總共消費了：__540 新台幣__ **共** 4 筆" />);
+    expect(container.textContent).toBe("您總共消費了：540 新台幣 共 4 筆");
+    expect(container.querySelector("u")?.textContent).toBe("540 新台幣");
+    expect(container.querySelector("strong")?.textContent).toBe("共");
+  });
 });
 
 describe("Message", () => {
@@ -142,6 +149,30 @@ describe("SlashPicker", () => {
   it("shows the app name it is given", () => {
     render(<SlashPicker command="fp" description="建立付款" appName="示範應用" />);
     expect(screen.getAllByText("示範應用").length).toBeGreaterThan(0);
+  });
+
+  it("holds one pill per filled option, in order, with the popup gone", () => {
+    const { container, rerender } = render(
+      <SlashPicker
+        command="balance transfer"
+        description="轉移點數"
+        appName="示範應用"
+        options={[
+          { name: "接收者", value: "@會員" },
+          { name: "金額", value: "150" },
+          { name: "備註", value: "團購" },
+        ]}
+      />,
+    );
+    const pills = () => [...container.querySelectorAll("[data-slash-option]")].map((p) => p.textContent);
+    expect(pills()).toEqual(["接收者@會員", "金額150", "備註團購"]);
+    expect(screen.queryByText("轉移點數")).toBeNull();
+    // The single `option` is the same as a one-pill list; an empty list is the bare command.
+    rerender(<SlashPicker command="fp" description="建立付款" appName="示範應用" option={{ name: "金額", value: "500" }} />);
+    expect(pills()).toEqual(["金額500"]);
+    rerender(<SlashPicker command="fp" description="建立付款" appName="示範應用" options={[]} />);
+    expect(pills()).toEqual([]);
+    expect(screen.queryByText("建立付款")).toBeNull();
   });
 });
 

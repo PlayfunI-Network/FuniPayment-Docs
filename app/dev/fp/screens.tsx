@@ -4,8 +4,8 @@
 import { FpScreen, LAYOUTS, type Screen } from "@/components/demos/payments/fp-demo";
 
 const SCREENS: Screen[] = [
-  { input: { kind: "command", typed: "/fp" }, bot: "none", channel: "open" },
-  { input: { kind: "option", value: "500" }, bot: "none", channel: "open" },
+  { input: { kind: "typing", typed: "/fp" }, bot: "none", channel: "open" },
+  { input: { kind: "options", options: [{ name: "金額", value: "500" }] }, bot: "none", channel: "open" },
   { input: { kind: "empty" }, bot: "select", channel: "selecting" },
   { input: { kind: "empty" }, bot: "menuPick", channel: "selecting" },
   { input: { kind: "empty" }, bot: "confirm", channel: "selecting" },

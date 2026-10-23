@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { render, screen } from "@testing-library/react";
-import { dashboardPicture } from "@/components/demo";
+import { DiscordScene, dashboardPicture } from "@/components/demo";
 import { BOT_UI } from "@/content/bot-ui.generated";
 import { STEPS as SETTINGS_STEPS } from "./balance-settings-demo";
 import * as add from "./balance-add-demo";
@@ -9,7 +9,6 @@ import * as pay from "./pay-with-balance-demo";
 import * as show from "./balance-show-demo";
 import * as topup from "./top-up-demo";
 import * as transfer from "./balance-transfer-demo";
-import { Scene, type SceneStep } from "./scene";
 
 const DEMOS = { show, transfer, history, add, topup, pay };
 
@@ -29,8 +28,8 @@ describe.each(Object.entries(DEMOS))("%s demo", (_, demo) => {
       }
     });
     // Every screen of the story draws from the snapshots without throwing.
-    for (const s of steps as SceneStep[]) {
-      const { unmount } = render(<Scene panes={s.panes} h={layout.h} />);
+    for (const s of steps) {
+      const { unmount } = render(<DiscordScene layout={layout} panes={s.screen.panes} />);
       unmount();
     }
   });
@@ -39,7 +38,7 @@ describe.each(Object.entries(DEMOS))("%s demo", (_, demo) => {
 describe("balance demos", () => {
   it("ends the transfer on both DMs, with the balances before and after", () => {
     const last = transfer.WIDE_STEPS[transfer.WIDE_STEPS.length - 1];
-    render(<Scene panes={last.panes} h={transfer.LAYOUTS.wide.h} />);
+    render(<DiscordScene layout={transfer.LAYOUTS.wide} panes={last.screen.panes} />);
     expect(screen.getAllByText("商城點數轉帳通知")).toHaveLength(2);
     expect(screen.getByText("550")).toBeTruthy(); // 700 - 150
     expect(screen.getByText("230")).toBeTruthy(); // 80 + 150
@@ -49,15 +48,20 @@ describe("balance demos", () => {
     const menu = BOT_UI["flow/fp_command/ok"].components[0];
     expect(menu.type === "select" && menu.options.at(-1)?.value).toBe("balance");
     const last = pay.WIDE_STEPS[pay.WIDE_STEPS.length - 1];
-    render(<Scene panes={last.panes} h={pay.LAYOUTS.wide.h} />);
+    render(<DiscordScene layout={pay.LAYOUTS.wide} panes={last.screen.panes} />);
     expect(screen.getAllByText("商城點數消費通知")).toHaveLength(2);
   });
 
-  it("clicks only the history buttons the snapshots have", () => {
-    const labels = (id: keyof typeof BOT_UI) =>
-      (BOT_UI[id] as { components: { type: string; label?: string }[] }).components.map((c) => c.label);
-    expect(labels("flow/balance_history_command/1")).toContain("統計表");
-    expect(labels("flow/balance_history_command/0")).toContain("伺服器排行榜");
+  it("presses only enabled history buttons, in the place each page has them", () => {
+    const buttons = (id: keyof typeof BOT_UI) =>
+      (BOT_UI[id] as { components: { label?: string; disabled?: boolean }[] }).components;
+    // ▶️ is the third button of page 1; 統計表 and 伺服器排行榜 the fourth of pages 2 and 0.
+    expect(buttons(history.PAGES[1])[2]).toMatchObject({ label: "▶️", disabled: false });
+    expect(buttons(history.PAGES[2])[3]).toMatchObject({ label: "統計表", disabled: false });
+    expect(buttons(history.PAGES[0])[3]).toMatchObject({ label: "伺服器排行榜", disabled: false });
+    // The four pages are the same seven records: page 1 says two more, the statistics 91 in all.
+    expect(BOT_UI[history.PAGES[1]].embeds[0].description).toContain("...還有 **2** 筆");
+    expect(BOT_UI[history.PAGES[0]].embeds[0].title).toContain("__91__");
   });
 
   it("aims the settings demo at targets the balance shots have, on the phone pictures too", () => {

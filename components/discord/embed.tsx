@@ -56,7 +56,7 @@ export function CodeBlock({ children, emphasis }: { children: ReactNode; emphasi
 
 /**
  * A Discord rich embed (dark theme): 4px colour bar, author line with icon, title (blue
- * when it is a link), markdown description, field grid with code-block values, 80px
+ * when it is a link; markdown such as __underline__ like Discord draws it), markdown description, field grid with code-block values, 80px
  * thumbnail, optional image slot and footer with icon and timestamp.
  */
 export function Embed({
@@ -105,7 +105,7 @@ export function Embed({
           <div
             className={`col-start-1 mt-2 min-w-0 text-base leading-[1.375rem] font-semibold break-words ${titleLink ? "text-[#00a8fc]" : "text-[#f2f3f5]"}`}
           >
-            {title}
+            <DiscordMarkdown text={title} />
           </div>
         )}
         {description != null && (
