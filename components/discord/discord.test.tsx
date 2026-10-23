@@ -90,6 +90,13 @@ describe("Embed", () => {
     const article = container.querySelector("article") as HTMLElement;
     expect(article.style.borderLeftColor).toBe("rgb(43, 63, 94)");
   });
+
+  it("draws Discord markdown in the title instead of the raw markers", () => {
+    const { container } = render(<Embed color={0x00b7ff} title="您總共消費了：__540 新台幣__ **共** 4 筆" />);
+    expect(container.textContent).toBe("您總共消費了：540 新台幣 共 4 筆");
+    expect(container.querySelector("u")?.textContent).toBe("540 新台幣");
+    expect(container.querySelector("strong")?.textContent).toBe("共");
+  });
 });
 
 describe("Message", () => {
