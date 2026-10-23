@@ -3,4 +3,73 @@ title: "/auto-publish 自動發佈"
 description: "在公告頻道自動發佈新訊息。"
 ---
 
-{/* TODO */}
+import { AutoPublishDemo } from "@/components/demos/features/auto-publish-demo";
+
+Discord 公告頻道裡的訊息，要再按「發佈」才會送到追蹤這個頻道的伺服器。在公告頻道輸入一次 `/auto-publish`，之後這個頻道的新訊息機器人都會幫你發佈。
+
+<AutoPublishDemo />
+
+## 誰可以用
+
+在這個頻道有 Discord「管理頻道」權限的人。這個指令跟後台的身分組設定無關，伺服器還沒設定 FunI 付款系統也能用。
+
+## 使用步驟
+
+<Steps>
+<Step>
+
+### 到公告頻道輸入指令
+
+在要自動發佈的公告頻道輸入 `/auto-publish` 送出。這個指令沒有參數。
+
+</Step>
+<Step>
+
+### 看機器人的回覆
+
+機器人回「✅成功將此頻道設定為：自動發佈」。這則回覆頻道裡的人都看得到。
+
+</Step>
+<Step>
+
+### 照常發訊息
+
+之後在這個頻道發的訊息，機器人會馬上發佈，不用再按「發佈」。
+
+</Step>
+</Steps>
+
+## 停用
+
+在同一個頻道再輸入一次 `/auto-publish`，機器人回「⏸️成功將此頻道設定為：不自動發佈」。這個指令每用一次就切換一次。
+
+## 會看到什麼
+
+每一則新訊息都會發佈，不管是誰發的，只有機器人自己發的訊息例外。設定之前就發的訊息不會補發佈。
+
+哪些頻道開了自動發佈，可以在後台的功能頁看到，見[功能頁](/dashboard/features)。後台只能看，要開要關都在 Discord 用這個指令。
+
+## 常見狀況
+
+<Callout title="「此指令只能在公告頻道使用。」">
+輸入指令的頻道不是公告頻道。到 Discord 的頻道設定把它改成公告頻道，或換到公告頻道再輸入一次。
+</Callout>
+
+<Callout title="「抱歉，只有擁有「管理此頻道」權限的人才能使用此指令！」">
+你在這個頻道沒有「管理頻道」權限。請有權限的人來用，或請伺服器擁有者調整你的權限。
+</Callout>
+
+<Callout title="訊息沒有被發佈">
+發佈失敗時機器人不會在頻道說什麼。先檢查機器人在這個頻道的權限：Discord 規定，發佈別人的訊息要有「管理訊息」權限。
+</Callout>
+
+<Callout title="「新增失敗！若此情況持續出現請聯絡作者」或「移除失敗！若此情況持續出現請聯絡作者」">
+機器人存設定時出錯，設定沒有改。稍後再輸入一次，一直失敗的話到[社群 Discord](https://go.funipay.net/discord) 回報。
+</Callout>
+
+## 相關頁面
+
+- [/dynamic-vc-rename 動態語音頻道名稱](/features/dynamic-vc-rename)：另一個在 Discord 用指令設定的工具
+- [功能頁](/dashboard/features)：在後台看哪些頻道開了自動發佈
+- [指令總表](/reference/commands)
+- [誰可以用什麼](/reference/permissions)
