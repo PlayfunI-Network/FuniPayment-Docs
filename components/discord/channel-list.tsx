@@ -12,6 +12,7 @@ export function ChannelRow({
 }) {
   return (
     <div
+      data-kind={kind}
       className={`mx-2 my-px flex h-8 min-w-0 items-center gap-1.5 rounded px-2 transition-colors duration-200 ${highlight ? "bg-[#404249]" : ""}`}
     >
       {kind === "text" ? (
@@ -51,14 +52,15 @@ export function ChannelRow({
 }
 
 /**
- * Discord's channel sidebar (#2b2d31): categories with their text channels. Rows are keyed on
- * the channel name, so a renamed channel, or one moved to another category, slides in.
+ * Discord's channel sidebar (#2b2d31): categories with their channels, text unless `kind` says
+ * voice. Rows are keyed on the channel name, so a renamed channel, or one moved to another
+ * category, slides in.
  */
 export function ChannelList({
   categories,
   className = "",
 }: {
-  categories: { name: string; channels: { name: string; highlight?: boolean }[] }[];
+  categories: { name: string; channels: { name: string; kind?: "text" | "voice"; highlight?: boolean }[] }[];
   className?: string;
 }) {
   return (
@@ -79,7 +81,7 @@ export function ChannelList({
             <span className="min-w-0 truncate">{cat.name}</span>
           </h3>
           {cat.channels.map((ch) => (
-            <ChannelRow key={ch.name} name={ch.name} kind="text" highlight={ch.highlight} />
+            <ChannelRow key={ch.name} name={ch.name} kind={ch.kind ?? "text"} highlight={ch.highlight} />
           ))}
         </section>
       ))}
