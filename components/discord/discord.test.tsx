@@ -150,6 +150,30 @@ describe("SlashPicker", () => {
     render(<SlashPicker command="fp" description="建立付款" appName="示範應用" />);
     expect(screen.getAllByText("示範應用").length).toBeGreaterThan(0);
   });
+
+  it("holds one pill per filled option, in order, with the popup gone", () => {
+    const { container, rerender } = render(
+      <SlashPicker
+        command="balance transfer"
+        description="轉移點數"
+        appName="示範應用"
+        options={[
+          { name: "接收者", value: "@會員" },
+          { name: "金額", value: "150" },
+          { name: "備註", value: "團購" },
+        ]}
+      />,
+    );
+    const pills = () => [...container.querySelectorAll("[data-slash-option]")].map((p) => p.textContent);
+    expect(pills()).toEqual(["接收者@會員", "金額150", "備註團購"]);
+    expect(screen.queryByText("轉移點數")).toBeNull();
+    // The single `option` is the same as a one-pill list; an empty list is the bare command.
+    rerender(<SlashPicker command="fp" description="建立付款" appName="示範應用" option={{ name: "金額", value: "500" }} />);
+    expect(pills()).toEqual(["金額500"]);
+    rerender(<SlashPicker command="fp" description="建立付款" appName="示範應用" options={[]} />);
+    expect(pills()).toEqual([]);
+    expect(screen.queryByText("建立付款")).toBeNull();
+  });
 });
 
 describe("DmWindow", () => {

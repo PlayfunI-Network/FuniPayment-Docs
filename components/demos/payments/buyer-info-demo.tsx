@@ -2,13 +2,20 @@
 // The buyer information step of /payment create: the screen comes up with nothing filled in and
 // 「確認並獲取付款碼」 greyed out; the customer opens 「✏️ 填寫/修改資訊」, types the three fields
 // and submits, and the screen shows the values with the confirm button enabled.
-import { useRef } from "react";
-import { Canvas, DemoStage, SnapshotMessage, useWidth, zoomTo } from "@/components/demo";
-import { Ephemeral, Message, Modal } from "@/components/discord";
+import {
+  ChatMessage,
+  DiscordDemo,
+  DiscordScene,
+  SnapshotMessage,
+  stepper,
+  type CanvasArea,
+  type CanvasPoint,
+  type SceneLayout,
+} from "@/components/demo";
+import { Ephemeral, Modal } from "@/components/discord";
 import { BOT_UI } from "@/content/bot-ui.generated";
 import { DEMO_BUYER_INFO, DEMO_CHANNELS } from "@/lib/scenario";
 import { SCENARIOS } from "../scenarios";
-import { BOT, BUYER, NARROW_BELOW, Screen, stepper, time, type CanvasArea, type CanvasPoint, type Layout } from "./kit";
 
 const SCENARIO = SCENARIOS.payBankTransfer;
 const CHANNEL = DEMO_CHANNELS.command.name;
@@ -27,13 +34,12 @@ type Targets = {
   confirm: CanvasPoint;
   aside: CanvasPoint;
 };
+type Layout = SceneLayout<Targets>;
 
 /** Measured on app/dev/payments-measure under next dev in Chrome at 1280px and 375px viewports. */
-const WIDE: Layout<Targets> = {
+const WIDE: Layout = {
   w: 640,
   h: 640,
-  left: 0,
-  list: false,
   at: {
     card: { x: 40, y: 230, w: 600, h: 400 },
     edit: { x: 235, y: 582 },
@@ -44,11 +50,9 @@ const WIDE: Layout<Targets> = {
     aside: { x: 620, y: 440 },
   },
 };
-const NARROW: Layout<Targets> = {
+const NARROW: Layout = {
   w: 400,
   h: 700,
-  left: 0,
-  list: false,
   at: {
     card: { x: 20, y: 210, w: 380, h: 480 },
     edit: { x: 231, y: 602 },
@@ -61,8 +65,8 @@ const NARROW: Layout<Targets> = {
   },
 };
 
-function timeline(l: Layout<Targets>) {
-  const { steps, step, point } = stepper<Screen>(l, { filled: false, modal: null });
+function timeline(l: Layout) {
+  const { steps, step, point, zoom } = stepper<Screen>(l, { filled: false, modal: null });
   const typeInto = (at: number, field: "name" | "mail" | "phone", typed: Typed) => {
     const p = point(l.at.fields[field], { typing: true });
     step(at, {}, { cursor: { ...p, click: true } });
@@ -71,19 +75,19 @@ function timeline(l: Layout<Targets>) {
   };
   step(0, {}, {
     caption: "還沒填資料，「確認並獲取付款碼」按不下去",
-    shot: zoomTo(l, 1.35, l.at.card),
+    shot: zoom(1.35, l.at.card),
     cursor: { ...point(l.at.aside), hidden: true },
   });
   step(1800, {}, { caption: "按「✏️ 填寫/修改資訊」", cursor: point(l.at.edit) });
   step(2600, {}, { cursor: point(l.at.edit, { click: true }) });
-  step(2900, { modal: {} }, { caption: "填姓名、電子郵件和電話", shot: zoomTo(l, 1.3, l.at.modal), cursor: point(l.at.aside) });
+  step(2900, { modal: {} }, { caption: "填姓名、電子郵件和電話", shot: zoom(1.3, l.at.modal), cursor: point(l.at.aside) });
   const named = typeInto(3600, "name", {});
   typeInto(5800, "phone", typeInto(4700, "mail", named));
   step(7000, {}, { caption: "三欄都填好後送出", cursor: point(l.at.submit) });
   step(7700, {}, { cursor: point(l.at.submit, { click: true }) });
   step(8000, { modal: null, filled: true }, {
     caption: "資料填進畫面，「確認並獲取付款碼」可以按了",
-    shot: zoomTo(l, 1.35, l.at.card),
+    shot: zoom(1.35, l.at.card),
     cursor: point(l.at.aside),
   });
   step(9000, {}, { cursor: point(l.at.confirm) });
@@ -95,27 +99,31 @@ export const LAYOUTS = { wide: WIDE, narrow: NARROW };
 export const WIDE_STEPS = timeline(WIDE);
 export const NARROW_STEPS = timeline(NARROW);
 
-export function BuyerInfoScreen({ screen, layout }: { screen: Screen; layout: Layout<Targets> }) {
+export function BuyerInfoScreen({ screen, layout }: { screen: Screen; layout: Layout }) {
   return (
     <div className="relative h-full w-full">
-      <Screen layout={layout} title={CHANNEL}>
-        <Message
-          author={BOT.name}
-          avatar={BOT.avatar}
-          bot
-          time={time()}
-          interaction={{ user: BUYER.name, avatar: BUYER.avatar, command: "payment create" }}
-        >
-          {screen.filled ? (
-            <Ephemeral>
-              <SnapshotMessage key="filled" id="builder/consumer_info/filled=True/cancel_first=True" scenario={SCENARIO} />
-            </Ephemeral>
-          ) : (
-            // Already ephemeral in the snapshot (the command's own reply).
-            <SnapshotMessage id="flow/payment_create_command/ok" scenario={SCENARIO} />
-          )}
-        </Message>
-      </Screen>
+      <DiscordScene
+        layout={layout}
+        panes={[
+          {
+            id: "channel",
+            kind: "channel",
+            title: CHANNEL,
+            messages: (
+              <ChatMessage from="bot" command={{ by: "buyer", name: "payment create" }}>
+                {screen.filled ? (
+                  <Ephemeral>
+                    <SnapshotMessage key="filled" id="builder/consumer_info/filled=True/cancel_first=True" scenario={SCENARIO} />
+                  </Ephemeral>
+                ) : (
+                  // Already ephemeral in the snapshot (the command's own reply).
+                  <SnapshotMessage id="flow/payment_create_command/ok" scenario={SCENARIO} />
+                )}
+              </ChatMessage>
+            ),
+          },
+        ]}
+      />
       {screen.modal && (
         <div className="demo-in absolute inset-0 flex items-center justify-center bg-black/70 px-2" style={{ paddingBottom: 60 }}>
           <Modal
@@ -129,26 +137,13 @@ export function BuyerInfoScreen({ screen, layout }: { screen: Screen; layout: La
 }
 
 export function BuyerInfoDemo() {
-  const ref = useRef<HTMLDivElement>(null);
-  const width = useWidth(ref);
-  const wide = width === 0 || width >= NARROW_BELOW;
-  const layout = wide ? WIDE : NARROW;
-  const steps = wide ? WIDE_STEPS : NARROW_STEPS;
   return (
-    <div ref={ref}>
-      <DemoStage
-        key={wide ? "wide" : "narrow"}
-        label="示範：購買人資訊還沒填時確認按鈕不能按；顧客按填寫/修改資訊，在表單填入姓名、電子郵件和電話後送出，畫面顯示資料，確認並獲取付款碼變成可以按"
-        aspect={`${layout.w} / ${layout.h}`}
-        steps={steps}
-        caption
-      >
-        {(_, index) => (
-          <Canvas w={layout.w} h={layout.h}>
-            <BuyerInfoScreen screen={steps[index].screen} layout={layout} />
-          </Canvas>
-        )}
-      </DemoStage>
-    </div>
+    <DiscordDemo
+      label="示範：購買人資訊還沒填時確認按鈕不能按；顧客按填寫/修改資訊，在表單填入姓名、電子郵件和電話後送出，畫面顯示資料，確認並獲取付款碼變成可以按"
+      wide={{ layout: WIDE, steps: WIDE_STEPS }}
+      narrow={{ layout: NARROW, steps: NARROW_STEPS }}
+    >
+      {(step, layout) => <BuyerInfoScreen screen={step.screen} layout={layout} />}
+    </DiscordDemo>
   );
 }
