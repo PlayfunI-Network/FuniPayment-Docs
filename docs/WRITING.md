@@ -246,7 +246,7 @@ Discord 畫面（`components/discord`，永遠深色）：
 
 ## 附錄：可用素材
 
-以下是 `npm run list:materials` 在 d3a32d2 加上本次改動 的輸出。之後重新產生素材，以指令的輸出為準。
+以下是 `npm run list:materials` 在第二階段整合（`phase2/consolidate`）時的輸出。之後重新產生素材，以指令的輸出為準。
 
 訂單頁的 `methodFilter`（付款方式）和 `dateFilter`（建立日期）只有按鈕的目標，沒有拍打開後的選單：付款方式的選單會列出機器人網站 `web/src/lib/format.ts` 裡殘留的「信用卡」標籤（本站禁用字詞），日期選單則還沒要求拍。需要這兩個選單的畫面，不要等截圖，改在文字裡描述；只有訂單類型選單（`orders-type-menu`）有拍。
 
@@ -318,6 +318,7 @@ Discord 畫面（`components/discord`，永遠深色）：
 - `flow/payment_review/other_as_customer`（fpStoreBarcode，response.send_message）
 - `flow/payment_history_command/0`（fpStoreBarcode，edit_original_response）
 - `flow/payment_history_command/1`（fpStoreBarcode，edit_original_response）
+- `builder/payment_history/page=2`（fpStoreBarcode，builder）
 - `builder/payment_history/page=-1`（fpStoreBarcode，builder）
 - `flow/payment_recheck/paid`（fpStoreBarcode，followup.send）
 - `flow/payment_recheck/not_paid`（fpStoreBarcode，followup.send）
@@ -329,6 +330,7 @@ Discord 畫面（`components/discord`，永遠深色）：
 - `flow/payment_recheck/paid_underpaid@client.notify_owner`（fpStoreBarcode，client.notify_owner）
 - `text/payment/recheck_all_started`（fpStoreBarcode，followup.send）
 - `text/payment/recheck_all_progress`（fpStoreBarcode，message.edit）
+- `text/payment/recheck_all_progress/12`（fpStoreBarcode，message.edit）
 - `text/payment/recheck_all_summary`（fpStoreBarcode，followup.send）
 
 **Ticket channel automation**
@@ -360,6 +362,10 @@ Discord 畫面（`components/discord`，永遠深色）：
 - `flow/balance_history_command/-1`（balanceHistory，edit_original_response）
 - `builder/balance_history/page=1/admin=True`（balanceHistory，builder）
 - `builder/balance_history/page=9/admin=False`（balanceHistory，builder）
+- `builder/balance_history/page=1/admin=False`（balanceHistoryPages，builder）
+- `builder/balance_history/page=2/admin=False`（balanceHistoryPages，builder）
+- `builder/balance_history/page=0/admin=False`（balanceHistoryPages，builder）
+- `builder/balance_history/page=-1/admin=False`（balanceHistoryPages，builder）
 - `flow/balance_add/40/50/None`（balanceAdd，response.send_message）
 - `flow/balance_add/40/50/活動`（balanceAdd，response.send_message）
 - `flow/balance_add/40/50/None@client.send_dm_to_user`（balanceAdd，client.send_dm_to_user）
@@ -435,9 +441,9 @@ Discord 畫面（`components/discord`，永遠深色）：
 
 其他產生的資料：
 
-- `COMMANDS`（斜線指令與參數）：`auto-publish`、`balance`、`dashboard`、`dynamic-vc-rename`、`fp`、`payment`、`settings`、`top-up`、`-2001`、`-2002`、`-2003`、`-2004`、`-2005`、`-2006`、`-2007`、`-3001`、`-3002`、`-3003`、`-3004`、`-3005`、`-4000`、`-4001`、`-4002`、`-4003`、`-4004`、`-4005`、`-5000`、`-9999`、`dropdown`、`confirm`、`create`、`complete`、`review`、`balanceNickname`
-- `SMILEPAY_ERRORS`（速買配錯誤代碼）：`-2001`、`-2002`、`-2003`、`-2004`、`-2005`、`-2006`、`-2007`、`-3001`、`-3002`、`-3003`、`-3004`、`-3005`、`-4000`、`-4001`、`-4002`、`-4003`、`-4004`、`-4005`、`-5000`、`-9999`、`dropdown`、`confirm`、`create`、`complete`、`review`、`balanceNickname`
-- `BOT_METHOD_LABELS`：`dropdown`、`confirm`、`create`、`complete`、`review`、`balanceNickname`
+- `COMMANDS`（斜線指令與參數）：`auto-publish`、`balance`、`dashboard`、`dynamic-vc-rename`、`fp`、`payment`、`settings`、`top-up`
+- `SMILEPAY_ERRORS`（速買配錯誤代碼）：`-2001`、`-2002`、`-2003`、`-2004`、`-2005`、`-2006`、`-2007`、`-3001`、`-3002`、`-3003`、`-3004`、`-3005`、`-4000`、`-4001`、`-4002`、`-4003`、`-4004`、`-4005`、`-5000`、`-9999`
+- `BOT_METHOD_LABELS`：`dropdown`、`confirm`、`create`、`complete`、`review`
 - `BOT_DEFAULTS`：`balanceNickname`
 
 ### 後台截圖（`DashboardDemo shot=…`）
@@ -455,6 +461,7 @@ Discord 畫面（`components/discord`，永遠深色）：
 - `setup-4`：`bankTransfer`、`storeBarcode`、`ibon`、`famiport`、`hilife`、`next`
 - `setup-5`：`summary`、`agree`、`create`
 - `overview`：`checklist`、`scope`、`feeSwitch`、`period`、`periodToday`、`period7d`、`period30d`、`kpis`、`kpiRevenue`、`kpiCompleted`、`kpiAverage`、`kpiCompletion`、`trend`、`methods`、`recentOrders`、`viewAll`、`firstOrder`、`heatmap`、`customers`、`serverSwitcher`*、`navOverview`*、`navOrders`*、`navSettings`*、`navHistory`*、`navFeatures`*、`theme`*、`periodCustom`*
+- `overview-7d`：`checklist`、`scope`、`feeSwitch`、`period`、`periodToday`、`period7d`、`period30d`、`kpis`、`kpiRevenue`、`kpiCompleted`、`kpiAverage`、`kpiCompletion`、`trend`、`methods`、`recentOrders`、`viewAll`、`firstOrder`、`heatmap`、`customers`、`periodCustom`*
 - `overview-incl-fee`：`checklist`、`scope`、`feeSwitch`、`period`、`periodToday`、`period7d`、`period30d`、`kpis`、`kpiRevenue`、`kpiCompleted`、`kpiAverage`、`kpiCompletion`、`trend`、`methods`、`recentOrders`、`viewAll`、`firstOrder`、`heatmap`、`customers`、`periodCustom`*
 - `overview-custom-period`：`period`、`periodCustom`、`customForm`、`start`、`end`、`apply`
 - `orders`：`scope`、`statusTabs`、`statusAll`、`statusComplete`、`statusPending`、`statusExpired`、`search`、`methodFilter`、`typeFilter`、`dateFilter`、`firstOrder`、`pagination`、`list`、`serverSwitcher`*、`navOverview`*、`navOrders`*、`navSettings`*、`navHistory`*、`navFeatures`*、`theme`*
@@ -471,12 +478,20 @@ Discord 畫面（`components/discord`，永遠深色）：
 - `settings-payment`：`tabs`、`tabBasic`、`tabSmilepay`、`tabPayment`、`table`、`bankTransfer`、`bankTransferFee`、`storeBarcode`、`storeBarcodeFee`、`ibon`、`ibonFee`、`famiport`、`famiportFee`、`hilife`、`hilifeFee`、`extraFee`、`serverSwitcher`*、`navOverview`*、`navOrders`*、`navSettings`*、`navHistory`*、`navFeatures`*、`theme`*、`tabChannels`*、`tabBalance`*
 - `settings-payment-edited`：`tabs`、`tabBasic`、`tabSmilepay`、`tabPayment`、`table`、`bankTransfer`、`bankTransferFee`、`storeBarcode`、`storeBarcodeFee`、`ibon`、`ibonFee`、`famiport`、`famiportFee`、`hilife`、`hilifeFee`、`extraFee`、`saveBar`、`changes`、`revert`、`save`、`tabChannels`*、`tabBalance`*
 - `settings-payment-saved`：`tabs`、`tabBasic`、`tabSmilepay`、`tabPayment`、`table`、`bankTransfer`、`bankTransferFee`、`storeBarcode`、`storeBarcodeFee`、`ibon`、`ibonFee`、`famiport`、`famiportFee`、`hilife`、`hilifeFee`、`extraFee`、`saved`、`tabChannels`*、`tabBalance`*
+- `settings-payment-fee-edited`：`tabs`、`tabBasic`、`tabSmilepay`、`tabPayment`、`table`、`bankTransfer`、`bankTransferFee`、`storeBarcode`、`storeBarcodeFee`、`ibon`、`ibonFee`、`famiport`、`famiportFee`、`hilife`、`hilifeFee`、`extraFee`、`saveBar`、`changes`、`revert`、`save`、`tabChannels`*、`tabBalance`*
+- `settings-payment-fee-saved`：`tabs`、`tabBasic`、`tabSmilepay`、`tabPayment`、`table`、`bankTransfer`、`bankTransferFee`、`storeBarcode`、`storeBarcodeFee`、`ibon`、`ibonFee`、`famiport`、`famiportFee`、`hilife`、`hilifeFee`、`extraFee`、`saved`、`tabChannels`*、`tabBalance`*
 - `settings-channels`：`tabs`、`tabBasic`、`tabSmilepay`、`tabPayment`、`card`、`selectingRename`、`selectingName`、`pendingRename`、`pendingName`、`completeRename`、`completeName`、`expiredRename`、`nameHelp`、`serverSwitcher`*、`navOverview`*、`navOrders`*、`navSettings`*、`navHistory`*、`navFeatures`*、`theme`*、`tabChannels`*、`tabBalance`*、`table`*、`selectingCategory`*、`pendingCategory`*、`completeCategory`*、`expiredCategory`*
 - `settings-channels-edited`：`tabs`、`tabBasic`、`tabSmilepay`、`tabPayment`、`card`、`selectingRename`、`selectingName`、`pendingRename`、`pendingName`、`completeRename`、`completeName`、`expiredRename`、`nameHelp`、`saveBar`、`changes`、`revert`、`save`、`tabChannels`*、`tabBalance`*、`table`*、`selectingCategory`*、`pendingCategory`*、`completeCategory`*、`expiredCategory`*
 - `settings-channels-saved`：`tabs`、`tabBasic`、`tabSmilepay`、`tabPayment`、`card`、`selectingRename`、`selectingName`、`pendingRename`、`pendingName`、`completeRename`、`completeName`、`expiredRename`、`nameHelp`、`saved`、`tabChannels`*、`tabBalance`*、`table`*、`selectingCategory`*、`pendingCategory`*、`completeCategory`*、`expiredCategory`*
 - `settings-balance`：`tabs`、`tabBasic`、`tabSmilepay`、`tabPayment`、`switches`、`enable`、`transfer`、`payWithBalance`、`topup`、`leaderboard`、`name`、`adminRoles`、`serverSwitcher`*、`navOverview`*、`navOrders`*、`navSettings`*、`navHistory`*、`navFeatures`*、`theme`*、`tabChannels`*、`tabBalance`*
 - `settings-balance-edited`：`tabs`、`tabBasic`、`tabSmilepay`、`tabPayment`、`switches`、`enable`、`transfer`、`payWithBalance`、`topup`、`leaderboard`、`name`、`adminRoles`、`saveBar`、`changes`、`revert`、`save`、`tabChannels`*、`tabBalance`*
 - `settings-balance-saved`：`tabs`、`tabBasic`、`tabSmilepay`、`tabPayment`、`switches`、`enable`、`transfer`、`payWithBalance`、`topup`、`leaderboard`、`name`、`adminRoles`、`saved`、`tabChannels`*、`tabBalance`*
+- `settings-balance-transfer`：`tabs`、`tabBasic`、`tabSmilepay`、`tabPayment`、`switches`、`enable`、`transfer`、`payWithBalance`、`topup`、`leaderboard`、`name`、`adminRoles`、`saveBar`、`changes`、`revert`、`save`、`tabChannels`*、`tabBalance`*
+- `settings-balance-pay`：`tabs`、`tabBasic`、`tabSmilepay`、`tabPayment`、`switches`、`enable`、`transfer`、`payWithBalance`、`topup`、`leaderboard`、`name`、`adminRoles`、`saveBar`、`changes`、`revert`、`save`、`tabChannels`*、`tabBalance`*
+- `settings-balance-leaderboard`：`tabs`、`tabBasic`、`tabSmilepay`、`tabPayment`、`switches`、`enable`、`transfer`、`payWithBalance`、`topup`、`leaderboard`、`name`、`adminRoles`、`saveBar`、`changes`、`revert`、`save`、`tabChannels`*、`tabBalance`*
+- `settings-balance-name`：`tabs`、`tabBasic`、`tabSmilepay`、`tabPayment`、`switches`、`enable`、`transfer`、`payWithBalance`、`topup`、`leaderboard`、`name`、`adminRoles`、`saveBar`、`changes`、`revert`、`save`、`tabChannels`*、`tabBalance`*
+- `settings-balance-roles`：`tabs`、`tabBasic`、`tabSmilepay`、`tabPayment`、`switches`、`enable`、`transfer`、`payWithBalance`、`topup`、`leaderboard`、`name`、`adminRoles`、`saveBar`、`changes`、`revert`、`save`、`tabChannels`*、`tabBalance`*
+- `settings-balance-roles-saved`：`tabs`、`tabBasic`、`tabSmilepay`、`tabPayment`、`switches`、`enable`、`transfer`、`payWithBalance`、`topup`、`leaderboard`、`name`、`adminRoles`、`saved`、`tabChannels`*、`tabBalance`*
 - `settings-history`：`intro`、`list`、`webRow`、`secretRow`、`systemRow`、`createdRow`、`pagination`、`serverSwitcher`*、`navOverview`*、`navOrders`*、`navSettings`*、`navHistory`*、`navFeatures`*、`theme`*
 - `features`：`autoPublish`、`autoPublishChannels`、`dynamicVc`、`dynamicVcChannels`、`variables`、`serverSwitcher`*、`navOverview`*、`navOrders`*、`navSettings`*、`navHistory`*、`navFeatures`*、`theme`*
 - `features-variables-open`：`dynamicVc`、`variables`、`variablesSummary`、`variablesList`、`varServerMembers`、`varCompletedAmount`、`varPendingOrders`、`varMonthlyOrders`
