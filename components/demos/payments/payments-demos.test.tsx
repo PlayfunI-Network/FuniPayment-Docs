@@ -76,11 +76,16 @@ describe("snapshot assumptions", () => {
     expect(BOT_UI["modal/consumer_info"].fields.map((f) => f.id)).toEqual(["name", "mail", "phone"]);
   });
 
-  it("history page 1 has a 統計表 button that page 0 disables", () => {
-    const button = (id: "flow/payment_history_command/1" | "flow/payment_history_command/0") =>
-      BOT_UI[id].components.find((c) => c.type === "button" && c.label === "統計表");
-    expect(button("flow/payment_history_command/1")).toMatchObject({ disabled: false });
-    expect(button("flow/payment_history_command/0")).toMatchObject({ disabled: true });
+  it("history page 1 has ▶️ and page 2 統計表 in the fourth place, which page 0 disables", () => {
+    const buttons = (page: keyof typeof history.PAGES) => BOT_UI[history.PAGES[page]].components;
+    expect(buttons(1)[2]).toMatchObject({ label: "▶️", disabled: false });
+    expect(buttons(2)[3]).toMatchObject({ label: "統計表", disabled: false });
+    expect(buttons(2)[2]).toMatchObject({ label: "▶️", disabled: true });
+    expect(buttons(0)[3]).toMatchObject({ label: "統計表", disabled: true });
+    // Page 2 holds the one order page 1 says is left, and the statistics count all four.
+    expect(BOT_UI[history.PAGES[1]].embeds[0].description).toContain("...還有 **1** 筆");
+    expect(BOT_UI[history.PAGES[2]].embeds[0].description?.match(/－訂單編號/g)).toHaveLength(1);
+    expect(BOT_UI[history.PAGES[0]].embeds[0].fields?.[0].value).toContain("4筆");
   });
 });
 
@@ -89,6 +94,15 @@ describe("the end of each story", () => {
     const last = create.WIDE_STEPS[create.WIDE_STEPS.length - 1].screen;
     render(<create.PaymentCreateScreen screen={last} layout={create.LAYOUTS.wide} />);
     expect(screen.getByText("付款編號：241021550918")).toBeTruthy();
+  });
+
+  it("scan_all ends on 12/12 and the summary, which adds up to the 12 it checked", () => {
+    const last = recheck.ALL_WIDE_STEPS[recheck.ALL_WIDE_STEPS.length - 1].screen;
+    render(<recheck.RecheckAllScreen screen={last} layout={recheck.ALL_LAYOUTS.wide} />);
+    expect(screen.getByText(/\(12\/12\)/)).toBeTruthy();
+    expect(screen.getByText("所有未付款訂單更新完畢！")).toBeTruthy();
+    expect(screen.getByText("更新成功：3 筆")).toBeTruthy();
+    expect(screen.getByText("尚未付款：9 筆")).toBeTruthy();
   });
 
   it("the recheck renames the channel and posts the complete notice", () => {

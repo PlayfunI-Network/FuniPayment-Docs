@@ -2,7 +2,8 @@
 // /payment recheck in a ticket channel: the customer says they paid, the merchant runs the
 // command without a payment ID (the channel's last unpaid order), SmilePay says it is paid, and
 // the order completes exactly as after SmilePay's own notice: the payment complete message in
-// the channel, the channel renamed and moved. RecheckAllDemo is the scan_all progress message.
+// the channel, the channel renamed and moved. RecheckAllDemo is scan_all: the progress message
+// edited as it goes (5/12, then 12/12) and the summary posted under it.
 // Channel and category names are illustrative (the bot has no default names).
 import {
   ChatMessage,
@@ -18,7 +19,7 @@ import {
   type SceneLayout,
 } from "@/components/demo";
 import { optionPill, slashCommand } from "@/lib/commands";
-import { DEMO_CHANNELS } from "@/lib/scenario";
+import { DEMO_CHANNELS, type SnapshotId } from "@/lib/scenario";
 import { SCENARIOS } from "../scenarios";
 import { TicketCategories } from "./kit";
 
@@ -140,8 +141,15 @@ export function PaymentRecheckDemo() {
 const SCAN_ALL = optionPill(CMD, "scan_all", 1);
 const COMMAND_CHANNEL = DEMO_CHANNELS.command.name;
 
-export type AllScreen = { input: InputState; progress: null | "started" | "progress" };
-type AllTargets = { typing: CanvasPoint; input: CanvasArea; reply: CanvasArea };
+/** The progress message as it is edited; `summary` is the followup sent once all are checked. */
+const PROGRESS = {
+  started: "text/payment/recheck_all_started",
+  progress: "text/payment/recheck_all_progress",
+  done: "text/payment/recheck_all_progress/12",
+} as const satisfies Record<string, SnapshotId>;
+
+export type AllScreen = { input: InputState; progress: null | keyof typeof PROGRESS; summary: boolean };
+type AllTargets = { typing: CanvasPoint; input: CanvasArea; reply: CanvasArea; summary: CanvasArea };
 type AllLayout = SceneLayout<AllTargets>;
 
 const ALL_WIDE: AllLayout = {
@@ -151,6 +159,7 @@ const ALL_WIDE: AllLayout = {
     typing: { x: 610, y: 482 },
     input: { x: 0, y: 330, w: 640, h: 190 },
     reply: { x: 40, y: 330, w: 600, h: 130 },
+    summary: { x: 40, y: 180, w: 600, h: 280 },
   },
 };
 const ALL_NARROW: AllLayout = {
@@ -160,11 +169,12 @@ const ALL_NARROW: AllLayout = {
     typing: { x: 380, y: 522 },
     input: { x: 0, y: 370, w: 400, h: 190 },
     reply: { x: 20, y: 370, w: 380, h: 130 },
+    summary: { x: 20, y: 200, w: 380, h: 300 },
   },
 };
 
 function allTimeline(l: AllLayout) {
-  const { steps, step, point, zoom } = stepper<AllScreen>(l, { input: { kind: "empty" }, progress: null });
+  const { steps, step, point, zoom } = stepper<AllScreen>(l, { input: { kind: "empty" }, progress: null, summary: false });
   const typing = point(l.at.typing, { typing: true });
   step(0, {}, { caption: "商家輸入 /payment recheck", shot: zoom(1.6, l.at.input), cursor: typing });
   step(300, { input: { kind: "typing", typed: "/pay" } }, { cursor: { ...typing, click: true } });
@@ -176,8 +186,10 @@ function allTimeline(l: AllLayout) {
     shot: zoom(1.6, l.at.reply),
     cursor: { ...typing, hidden: true },
   });
-  step(6300, { progress: "progress" }, { caption: "每查完 5 筆，同一則訊息更新一次進度" });
-  step(9500, {}, { shot: { zoom: 1 } });
+  step(5800, { progress: "progress" }, { caption: "每查完 5 筆，同一則訊息更新一次進度" });
+  step(7800, { progress: "done" }, { caption: "查完最後一筆，進度停在 12/12" });
+  step(9300, { summary: true }, { caption: "接著貼出總結：幾筆更新成功、幾筆還沒付款", shot: zoom(1.3, l.at.summary) });
+  step(12800, {}, { shot: { zoom: 1 } });
   return steps;
 }
 
@@ -196,14 +208,18 @@ export function RecheckAllScreen({ screen, layout }: { screen: AllScreen; layout
           title: COMMAND_CHANNEL,
           input: <CommandInput input={screen.input} channel={COMMAND_CHANNEL} command={CMD} />,
           messages: screen.progress && (
-            <ChatMessage from="bot" command={{ by: "admin", name: CMD.name }}>
-              <div key={screen.progress} className={screen.progress === "started" ? "demo-in" : ""}>
-                <SnapshotMessage
-                  id={screen.progress === "started" ? "text/payment/recheck_all_started" : "text/payment/recheck_all_progress"}
-                  scenario={SCENARIO}
-                />
-              </div>
-            </ChatMessage>
+            <>
+              <ChatMessage from="bot" command={{ by: "admin", name: CMD.name }}>
+                <div key={screen.progress} className={screen.progress === "started" ? "demo-in" : ""}>
+                  <SnapshotMessage id={PROGRESS[screen.progress]} scenario={SCENARIO} />
+                </div>
+              </ChatMessage>
+              {screen.summary && (
+                <ChatMessage from="bot" enter>
+                  <SnapshotMessage id="text/payment/recheck_all_summary" scenario={SCENARIO} />
+                </ChatMessage>
+              )}
+            </>
           ),
         },
       ]}
@@ -214,7 +230,7 @@ export function RecheckAllScreen({ screen, layout }: { screen: AllScreen; layout
 export function RecheckAllDemo() {
   return (
     <DiscordDemo
-      label="示範：商家輸入 /payment recheck 並選擇複查伺服器內所有未付款的訂單，機器人回覆共要檢查 12 筆，之後每查完 5 筆就更新進度"
+      label="示範：商家輸入 /payment recheck 並選擇複查伺服器內所有未付款的訂單，機器人回覆共要檢查 12 筆，每查完 5 筆就更新進度，查完 12 筆後貼出總結：更新成功 3 筆、尚未付款 9 筆"
       wide={{ layout: ALL_WIDE, steps: ALL_WIDE_STEPS }}
       narrow={{ layout: ALL_NARROW, steps: ALL_NARROW_STEPS }}
     >
