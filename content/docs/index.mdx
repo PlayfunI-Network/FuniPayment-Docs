@@ -1,16 +1,30 @@
 ---
 title: 歡迎使用 FunI 付款系統
-description: 在 Discord 伺服器直接收款，這裡說明怎麼設定與使用。
+description: 在你的 Discord 伺服器開單收款，付款完成自動通知。
 ---
 
-FunI 付款系統讓你在自己的 Discord 伺服器裡收款。顧客輸入指令，自己選付款方式，付款完成後你和顧客都會收到通知。
+import { HomeDemo } from "@/components/demos/getting-started/home-demo";
 
-## 這份文件有什麼
+FunI 付款系統是一個 Discord 機器人。接上你的速買配（SmilePay）商家帳號後，就能在伺服器裡開單收款：你在頻道輸入金額，顧客自己選銀行轉帳或超商付款，付完之後機器人會通知你和顧客。
 
-目前是骨架階段，之後會陸續補上開通、付款方式、指令與常見問題。你可以先用上方的搜尋，確認中文詞（例如「手續費」「超商條碼」）找得到頁面。
+<HomeDemo />
 
-## 先認識的幾個詞
+## 能做什麼
 
-- 商家：在 Discord 伺服器裡收款的人。
-- 顧客：用指令付款的人。
-- 後台：設定付款方式與查看訂單的網頁。
+- 開單：輸入 `/fp` 和金額就開好一張單，顧客自己選付款方式。也可以用 `/payment create` 直接指定付款方式。見[/fp 快速開單](/payments/fp)。
+- 收款通知：付款完成後，訂單頻道、付款者的私訊和你的日誌頻道都會收到通知，訂單頻道也能自動改名、換分類。見[收款與通知](/getting-started/get-paid)。
+- 點數：開啟後，顧客可以儲值點數，再用點數付款。見[點數系統](/balance/overview)。
+- 網頁後台：看收款統計和每一筆訂單，所有設定也都在這裡改。見[總覽與統計](/dashboard/overview)。
+
+## 從哪裡開始
+
+第一次使用的話，照這個順序做：
+
+1. [開始之前](/getting-started/before-you-start)：準備一個你能管理的 Discord 伺服器和速買配商家帳號。
+2. [邀請機器人](/getting-started/invite)：把機器人加進伺服器。
+3. [登入後台](/getting-started/login)：用 Discord 帳號登入網頁後台。
+4. [設定精靈](/getting-started/setup-wizard)：五個步驟設定好收款。
+5. [開出第一張訂單](/getting-started/first-order)：用 `/fp` 開一張小額訂單試試看。
+6. [收款與通知](/getting-started/get-paid)：顧客付款後會發生什麼事。
+
+已經設定好的話，直接看[收款](/payments/fp)或[網頁後台](/dashboard/overview)。來付款的顧客請看[怎麼付款](/buyers/how-to-pay)。

@@ -3,4 +3,67 @@ title: "開出第一張訂單"
 description: "用 /fp 開單，看顧客選擇付款方式。"
 ---
 
-{/* TODO */}
+import { FirstOrderDemo } from "@/components/demos/getting-started/first-order-demo";
+
+設定好之後，就能在 Discord 開單了。最簡單的方式是 `/fp`：你只要輸入金額，付款方式讓顧客自己選。
+
+<FirstOrderDemo />
+
+## 先開一張小額訂單試試
+
+設定精靈最後一步也建議：先用 `/fp` 開一筆小額訂單，自己付一次，確認整個流程都正常。你可以自己當顧客，付完之後看看通知有沒有出現在該出現的地方（見[收款與通知](/getting-started/get-paid)），再到後台的訂單頁看這筆訂單。
+
+## 誰可以開單
+
+要有你在設定精靈選的「管理員身分組」。伺服器擁有者自己沒有這個身分組的話，也一樣不能用 `/fp`，記得在 Discord 把身分組加給自己。
+
+## 開單步驟
+
+<Steps>
+<Step>
+
+### 輸入 /fp
+
+到訂單頻道（或任何能輸入指令的頻道），輸入 `/fp`，「金額」填訂單金額，按 Enter 送出。
+
+</Step>
+<Step>
+
+### 顧客選付款方式
+
+機器人回覆「請點選下方選單來決定付款方式」。顧客打開「選擇付款方式」選單，選一種付款方式。選單只會列出你在設定精靈開啟的付款方式，每個後面寫著手續費。
+
+</Step>
+<Step>
+
+### 顧客確認並拿到付款資訊
+
+顧客確認金額和手續費，填好購買人資訊，按「確認並獲取付款碼」。機器人把訂單貼到頻道，上面有付款編號、付款金額和付款期限，顧客照著去付款就好。
+
+</Step>
+</Steps>
+
+完整的步驟、每個畫面和參數說明，見[/fp 快速開單](/payments/fp)。
+
+## 常見狀況
+
+<Callout title="輸入 /fp 後出現「抱歉，您沒有權限使用此指令。」">
+你沒有「管理員身分組」。在 Discord 把這個身分組加給自己，或到後台[設定：基本](/dashboard/settings-basic)換成你有的身分組。
+</Callout>
+
+<Callout title="出現「您無法在此頻道使用此指令」開頭的訊息">
+你在設定精靈選了「指令頻道」，這個頻道不在裡面，也不在開單分類下。訊息會告訴你該去哪個頻道。
+</Callout>
+
+<Callout title="按下確認後出現「訂單建立失敗...」">
+訊息裡的「錯誤訊息：」會寫出原因。第一張單就失敗的話，先檢查速買配的資料：對照[速買配錯誤代碼](/troubleshooting/smilepay-errors)，需要的話到後台[設定：速買配](/dashboard/settings-smilepay)改正，再重新輸入 `/fp`。
+</Callout>
+
+其他狀況見[指令不能用](/troubleshooting/command-errors)。
+
+## 相關頁面
+
+- [/fp 快速開單](/payments/fp)：完整說明
+- [收款與通知](/getting-started/get-paid)：下一步
+- [/payment create](/payments/payment-create)：開單時直接指定付款方式
+- [購買人資訊與實名規定](/payments/buyer-info)
