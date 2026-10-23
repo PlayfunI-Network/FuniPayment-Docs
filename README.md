@@ -13,7 +13,7 @@ npm run lint
 npm run typecheck
 ```
 
-之後會加入（目前還沒有）：
+其他指令：
 
 - `npm run check:export`：建置後檢查 `out/`（必要檔案、禁用字詞、大小上限）。
 - `npm run sync:bot`：從機器人專案同步 bot 上的文字，產生 `bot-ui.generated.ts`。
