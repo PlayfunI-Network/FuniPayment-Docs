@@ -2,7 +2,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { checkRedirects, checkSizes, findBannedWords, findBrokenLinks, walk } from "./check-export-lib.mjs";
+import { checkRedirects, checkRequired, checkSizes, findBannedWords, findBrokenLinks, walk } from "./check-export-lib.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const outDir = path.join(root, "out");
@@ -13,10 +13,7 @@ if (!fs.existsSync(outDir)) {
   process.exit(1);
 }
 
-for (const required of ["index.html", "404.html", "_redirects"]) {
-  if (!fs.existsSync(path.join(outDir, required))) errors.push(`缺少 out/${required}`);
-}
-if (fs.existsSync(path.join(outDir, "dev"))) errors.push("out/dev 不應存在（開發用頁面被匯出了）");
+errors.push(...checkRequired(outDir));
 
 const redirectsFile = path.join(outDir, "_redirects");
 if (fs.existsSync(redirectsFile)) errors.push(...checkRedirects(fs.readFileSync(redirectsFile, "utf8"), outDir));
