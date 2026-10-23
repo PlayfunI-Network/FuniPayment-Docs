@@ -2,13 +2,10 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { checkRedirects, findBannedWords, findBrokenLinks, walk } from "./check-export-lib.mjs";
+import { checkRedirects, checkSizes, findBannedWords, findBrokenLinks, walk } from "./check-export-lib.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const outDir = path.join(root, "out");
-const MAX_TOTAL = 20 * 1024 * 1024;
-const MAX_IMAGE = 200 * 1024;
-const IMAGE_EXT = /\.(png|jpe?g|webp|gif|avif|svg|ico)$/i;
 const errors = [];
 
 if (!fs.existsSync(outDir)) {
@@ -36,15 +33,9 @@ for (const file of textFiles) {
   if (found.length > 0) errors.push(`${path.relative(root, file)}：出現禁用字詞 ${found.join("、")}`);
 }
 
-let total = 0;
-for (const file of walk(outDir)) {
-  const size = fs.statSync(file).size;
-  total += size;
-  if (IMAGE_EXT.test(file) && size > MAX_IMAGE) {
-    errors.push(`${path.relative(outDir, file)}：圖片 ${Math.round(size / 1024)} KB，超過 200 KB`);
-  }
-}
-if (total > MAX_TOTAL) errors.push(`out/ 共 ${(total / 1024 / 1024).toFixed(1)} MB，超過 20 MB`);
+const sizes = checkSizes(walk(outDir).map((file) => ({ path: path.relative(outDir, file), size: fs.statSync(file).size })));
+errors.push(...sizes.errors);
+const total = sizes.total;
 
 if (errors.length > 0) {
   console.error(errors.map((e) => `✗ ${e}`).join("\n"));

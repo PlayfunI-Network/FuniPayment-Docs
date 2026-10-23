@@ -2,7 +2,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { afterAll, beforeAll, expect, test } from "vitest";
-import { checkRedirects, findBannedWords, findBrokenLinks } from "./check-export-lib.mjs";
+import { checkRedirects, checkSizes, findBannedWords, findBrokenLinks } from "./check-export-lib.mjs";
 
 let tmp;
 beforeAll(() => {
@@ -31,4 +31,23 @@ test("禁用字詞", () => {
 });
 test("站內連結找不到頁面時回報", () => {
   expect(findBrokenLinks(tmp)).toEqual(["index.html：連結 /missing 找不到頁面"]);
+});
+test("大小：圖片 200 KB、每頁 HTML 500 KB、整站 60 MB", () => {
+  const KB = 1024;
+  const ok = checkSizes([
+    { path: "demo/a.png", size: 200 * KB },
+    { path: "payments/fp.html", size: 500 * KB },
+    { path: "_next/static/x.js", size: 59 * 1024 * KB },
+  ]);
+  expect(ok.errors).toEqual([]);
+  expect(checkSizes([
+    { path: "demo/a.png", size: 201 * KB },
+    { path: "payments/fp.html", size: 501 * KB },
+    // Neither an image nor a page: only the total counts it.
+    { path: "_next/static/big.js", size: 60 * 1024 * KB },
+  ]).errors).toEqual([
+    "demo/a.png：圖片 201 KB，超過 200 KB",
+    "payments/fp.html：頁面 HTML 501 KB，超過 500 KB",
+    "out/ 共 60.7 MB，超過 60 MB",
+  ]);
 });

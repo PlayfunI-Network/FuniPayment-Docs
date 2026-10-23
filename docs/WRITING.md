@@ -74,7 +74,8 @@
 `DemoStage` 收一個 `steps` 陣列。每一步有 `at`（開始後第幾毫秒）、`caption`（畫面下方那一行說明）、`shot`（鏡頭）和 `cursor`（游標）。`shot` 和 `cursor` 會沿用到下一次被設定為止。
 
 - `steps` 一定要是模組層級的常數。`useTimeline` 是用陣列本身來判斷要不要重播，每次 render 都產生新陣列的話，動畫會一直從頭開始。
-- 畫面狀態和步驟放在一起。fp 用 `FpStep = DemoStep & { screen }`，`children(step, index)` 用 `steps[index].screen` 決定要畫什麼。
+- 畫面狀態和步驟放在一起。每一步是 `SceneStep<S> = DemoStep & { screen: S }`，`S` 是這段示範自己定的畫面狀態（fp 是輸入框、哪則 bot 訊息、頻道在哪個階段）。
+- 步驟用 `components/demo` 的 `stepper(layout, 起始狀態)` 產生：`step(at, 改了什麼, { caption, shot, cursor })` 只寫這一步改掉的欄位（`{}` 是不變），沒改的會沿用上一步；`point`、`zoom` 把畫布座標換成游標和鏡頭的值。
 - 有點擊的地方分成兩步：先移過去並按下（`click: true`），過 300 ms 左右畫面再變。看的人才看得出是「按了才變」。
 - caption 寫「誰做了什麼」，一行就好，例如「顧客打開選單，選「四大超商條碼」」。
 - 減少動態時只會顯示最後一格，所以最後一格要能單獨看懂。fp 最後一格是頻道已經換到待付款分類、訂單訊息完整的全景。
@@ -101,6 +102,7 @@ bot 的字一律用 `SnapshotMessage` / `SnapshotEmbed` 畫，id 就是 ui.json 
 ### 4. 鏡頭與游標
 
 - 畫面畫在固定大小的畫布上，再縮放到舞台寬度，所以座標可以用畫布的 px 來算。共用的工具在 `components/demo`：`Canvas`（畫布）、`useWidth`（量寬度，用來選版面）、`canvasRect` / `canvasPoint`（畫布 px 換成鏡頭和游標要的比例）、`zoomTo`（放大）。
+- Discord 的示範不用自己寫外框。`DiscordDemo` 收寬版、窄版各一組 `{ layout, steps }`，舞台寬度小於 600 px 時換窄版並從頭播；`children(step, layout)` 用 `DiscordScene` 畫那一格。`DiscordScene` 是頻道列表（版面有 `list` 時）加上一或多個視窗（頻道或私訊，`grow` 分高度），訊息靠下、上方淡出。版面的型別是 `SceneLayout<座標>`，有頻道列表時 `left` 設成 `LIST_W`。
 - 每種舞台寬度一個版面，各自量座標。fp 的寬版是 880×780，有頻道列表；舞台寬度小於 600 px 時換成窄版 400×760，沒有頻道列表，換版就重播。
 - 手機上的字要看得清楚：放大時文字換算後至少要有 11 px。窄版的畫布要做窄，不要把桌機的畫布直接縮小。fp 窄版在 343 px 的舞台上縮成 0.86 倍，embed 的 14 px 字約 12 px。
 - 座標要實際量，不要用猜的。開 `npm run dev`，到 `/dev/fp` 這類開發頁把每個畫面原尺寸畫出來，用 Playwright 讀元素的 `getBoundingClientRect`。1280 和 375 兩種寬度都要量：元件的 `sm:` 樣式在手機上會讓位置差到 8 px，點的位置要選在兩種寬度都還在按鈕裡的地方。
@@ -178,13 +180,13 @@ Discord 畫面（`components/discord`，永遠深色）：
 |---|---|
 | `DiscordWindow` | 頻道視窗外框：標題列加訊息區 |
 | `ChannelHeader` | 頻道標題列，改名時會換字 |
-| `Message` / `ActionRow` | 一則訊息（頭像、名字、時間、「使用了 /指令」那行）／一排按鈕 |
-| `Embed`、`CodeBlock` | embed 本體；一般用 `SnapshotMessage`，不要手寫 |
+| `Message` / `ActionRow` | 一則訊息（頭像、名字、時間、「使用了 /指令」那行）／一排按鈕；示範裡用下面的 `ChatMessage` |
+| `Embed`、`CodeBlock` | embed 本體（標題、說明、欄位都會畫 Discord 的粗體和底線）；一般用 `SnapshotMessage`，不要手寫 |
 | `DiscordMarkdown` | Discord 的粗體、底線、連結、mention、`<t:…>` |
 | `DiscordButton` | 按鈕，有 `disabled` 和按下的樣子 |
 | `SelectMenu` | 選單，可以打開（`open`、往上開 `up`）、標出選到的項目 |
 | `ChoiceMenu` | 讓讀者自己點的選單（互動用） |
-| `SlashPicker` | 輸入斜線指令時的提示框，和填了參數的輸入框 |
+| `SlashPicker` | 輸入斜線指令時的提示框；給 `options`（一或多個 `{ name, value }`）就是填好參數的輸入框，`options={[]}` 是選好指令、還沒填參數 |
 | `ChatInput` | 空的輸入框 |
 | `Modal` | 表單視窗（例如填購買人資訊） |
 | `Ephemeral` | 「只有你看得到」的訊息 |
@@ -202,8 +204,25 @@ Discord 畫面（`components/discord`，永遠深色）：
 | `Camera`、`Cursor`、`Caption` | 鏡頭、游標、說明列（`DemoStage` 已經包好，通常不用直接用） |
 | `SnapshotMessage` / `SnapshotEmbed` | 從 ui.json 畫出 bot 的訊息或單一 embed |
 | `Canvas`、`useWidth`、`canvasRect`、`canvasPoint`、`zoomTo` | 固定畫布與座標工具 |
+| `DiscordDemo` | Discord 示範的外框：寬窄兩種版面，各有自己的 steps，換版從頭播 |
+| `DiscordScene`、`Pane` | 一格 Discord 畫面：頻道列表加一或多個視窗；`tag` 在視窗右上角標「顧客的私訊」這類說明 |
+| `ChatMessage` | 示範裡的一則訊息：`from`（`bot`、`buyer`、`admin`、`member`）、`command`（「… 使用了 /指令」那行）、`ago`（幾分鐘前）、`enter`（滑進來） |
+| `CommandInput`、`InputState` | 頻道的輸入框：空的、打字中（`typing`）、填好參數（`options`） |
+| `stepper`、`SceneStep`、`SceneLayout` | 帶畫面狀態的步驟產生器和它的型別，見「再寫 steps」 |
+| `MessageWindow`、`DiscordStill` | 一個視窗裡只有一則訊息、不播動畫：頻道（給 `channel`）或和機器人的私訊；`DiscordStill` 再包成頁面上的一張圖（要給 `label`） |
+| `SnapshotTabs` | 幾張靜態畫面用分頁切換，讀者自己點（例如各付款方式的訂單） |
 | `DashboardDemo` | 後台示範：用目標名字指揮游標和鏡頭，見「後台示範」 |
 | `DashboardShot`、`shotTarget` | 後台截圖（單獨放在頁面上時要給 `alt`）與截圖上元素的位置 |
+
+其他共用的東西：
+
+| 名稱 | 用途 |
+|---|---|
+| `lib/commands.ts` 的 `slashCommand("payment create")` | 指令或子指令的名稱、說明、參數，來自 `COMMANDS` |
+| `lib/commands.ts` 的 `optionPill(指令, 參數, 值)` | 輸入框裡填好的參數：參數的中文名稱和值；有選項的參數給選項的值，顯示選項的中文（例如 `"公開顯示"`、`"bank_transfer"`） |
+| `lib/scenario.ts` 的 `DEMO_BOT` | 機器人的名稱和頭像，和 `DEMO_PEOPLE` 放在一起 |
+| `lib/scenario.ts` 的 `demoTime(幾分鐘前)` | 訊息上的時間（「今天 下午3:24」） |
+| `components/demos/payments/kit.tsx` 的 `TicketCategories` | 示範用的開單分類和頻道列表，訂單頻道依階段出現在不同分類 |
 
 ## 要新的 ui.json key 或截圖
 
@@ -227,7 +246,7 @@ Discord 畫面（`components/discord`，永遠深色）：
 
 ## 附錄：可用素材
 
-以下是 `npm run list:materials` 在 d3a32d2 加上本次改動 的輸出。之後重新產生素材，以指令的輸出為準。
+以下是 `npm run list:materials` 在第二階段整合（`phase2/consolidate`）時的輸出。之後重新產生素材，以指令的輸出為準。
 
 訂單頁的 `methodFilter`（付款方式）和 `dateFilter`（建立日期）只有按鈕的目標，沒有拍打開後的選單：付款方式的選單會列出機器人網站 `web/src/lib/format.ts` 裡殘留的「信用卡」標籤（本站禁用字詞），日期選單則還沒要求拍。需要這兩個選單的畫面，不要等截圖，改在文字裡描述；只有訂單類型選單（`orders-type-menu`）有拍。
 
@@ -299,6 +318,7 @@ Discord 畫面（`components/discord`，永遠深色）：
 - `flow/payment_review/other_as_customer`（fpStoreBarcode，response.send_message）
 - `flow/payment_history_command/0`（fpStoreBarcode，edit_original_response）
 - `flow/payment_history_command/1`（fpStoreBarcode，edit_original_response）
+- `builder/payment_history/page=2`（fpStoreBarcode，builder）
 - `builder/payment_history/page=-1`（fpStoreBarcode，builder）
 - `flow/payment_recheck/paid`（fpStoreBarcode，followup.send）
 - `flow/payment_recheck/not_paid`（fpStoreBarcode，followup.send）
@@ -310,6 +330,7 @@ Discord 畫面（`components/discord`，永遠深色）：
 - `flow/payment_recheck/paid_underpaid@client.notify_owner`（fpStoreBarcode，client.notify_owner）
 - `text/payment/recheck_all_started`（fpStoreBarcode，followup.send）
 - `text/payment/recheck_all_progress`（fpStoreBarcode，message.edit）
+- `text/payment/recheck_all_progress/12`（fpStoreBarcode，message.edit）
 - `text/payment/recheck_all_summary`（fpStoreBarcode，followup.send）
 
 **Ticket channel automation**
@@ -341,6 +362,10 @@ Discord 畫面（`components/discord`，永遠深色）：
 - `flow/balance_history_command/-1`（balanceHistory，edit_original_response）
 - `builder/balance_history/page=1/admin=True`（balanceHistory，builder）
 - `builder/balance_history/page=9/admin=False`（balanceHistory，builder）
+- `builder/balance_history/page=1/admin=False`（balanceHistoryPages，builder）
+- `builder/balance_history/page=2/admin=False`（balanceHistoryPages，builder）
+- `builder/balance_history/page=0/admin=False`（balanceHistoryPages，builder）
+- `builder/balance_history/page=-1/admin=False`（balanceHistoryPages，builder）
 - `flow/balance_add/40/50/None`（balanceAdd，response.send_message）
 - `flow/balance_add/40/50/活動`（balanceAdd，response.send_message）
 - `flow/balance_add/40/50/None@client.send_dm_to_user`（balanceAdd，client.send_dm_to_user）
@@ -416,9 +441,9 @@ Discord 畫面（`components/discord`，永遠深色）：
 
 其他產生的資料：
 
-- `COMMANDS`（斜線指令與參數）：`auto-publish`、`balance`、`dashboard`、`dynamic-vc-rename`、`fp`、`payment`、`settings`、`top-up`、`-2001`、`-2002`、`-2003`、`-2004`、`-2005`、`-2006`、`-2007`、`-3001`、`-3002`、`-3003`、`-3004`、`-3005`、`-4000`、`-4001`、`-4002`、`-4003`、`-4004`、`-4005`、`-5000`、`-9999`、`dropdown`、`confirm`、`create`、`complete`、`review`、`balanceNickname`
-- `SMILEPAY_ERRORS`（速買配錯誤代碼）：`-2001`、`-2002`、`-2003`、`-2004`、`-2005`、`-2006`、`-2007`、`-3001`、`-3002`、`-3003`、`-3004`、`-3005`、`-4000`、`-4001`、`-4002`、`-4003`、`-4004`、`-4005`、`-5000`、`-9999`、`dropdown`、`confirm`、`create`、`complete`、`review`、`balanceNickname`
-- `BOT_METHOD_LABELS`：`dropdown`、`confirm`、`create`、`complete`、`review`、`balanceNickname`
+- `COMMANDS`（斜線指令與參數）：`auto-publish`、`balance`、`dashboard`、`dynamic-vc-rename`、`fp`、`payment`、`settings`、`top-up`
+- `SMILEPAY_ERRORS`（速買配錯誤代碼）：`-2001`、`-2002`、`-2003`、`-2004`、`-2005`、`-2006`、`-2007`、`-3001`、`-3002`、`-3003`、`-3004`、`-3005`、`-4000`、`-4001`、`-4002`、`-4003`、`-4004`、`-4005`、`-5000`、`-9999`
+- `BOT_METHOD_LABELS`：`dropdown`、`confirm`、`create`、`complete`、`review`
 - `BOT_DEFAULTS`：`balanceNickname`
 
 ### 後台截圖（`DashboardDemo shot=…`）
@@ -436,6 +461,7 @@ Discord 畫面（`components/discord`，永遠深色）：
 - `setup-4`：`bankTransfer`、`storeBarcode`、`ibon`、`famiport`、`hilife`、`next`
 - `setup-5`：`summary`、`agree`、`create`
 - `overview`：`checklist`、`scope`、`feeSwitch`、`period`、`periodToday`、`period7d`、`period30d`、`kpis`、`kpiRevenue`、`kpiCompleted`、`kpiAverage`、`kpiCompletion`、`trend`、`methods`、`recentOrders`、`viewAll`、`firstOrder`、`heatmap`、`customers`、`serverSwitcher`*、`navOverview`*、`navOrders`*、`navSettings`*、`navHistory`*、`navFeatures`*、`theme`*、`periodCustom`*
+- `overview-7d`：`checklist`、`scope`、`feeSwitch`、`period`、`periodToday`、`period7d`、`period30d`、`kpis`、`kpiRevenue`、`kpiCompleted`、`kpiAverage`、`kpiCompletion`、`trend`、`methods`、`recentOrders`、`viewAll`、`firstOrder`、`heatmap`、`customers`、`periodCustom`*
 - `overview-incl-fee`：`checklist`、`scope`、`feeSwitch`、`period`、`periodToday`、`period7d`、`period30d`、`kpis`、`kpiRevenue`、`kpiCompleted`、`kpiAverage`、`kpiCompletion`、`trend`、`methods`、`recentOrders`、`viewAll`、`firstOrder`、`heatmap`、`customers`、`periodCustom`*
 - `overview-custom-period`：`period`、`periodCustom`、`customForm`、`start`、`end`、`apply`
 - `orders`：`scope`、`statusTabs`、`statusAll`、`statusComplete`、`statusPending`、`statusExpired`、`search`、`methodFilter`、`typeFilter`、`dateFilter`、`firstOrder`、`pagination`、`list`、`serverSwitcher`*、`navOverview`*、`navOrders`*、`navSettings`*、`navHistory`*、`navFeatures`*、`theme`*
@@ -452,12 +478,20 @@ Discord 畫面（`components/discord`，永遠深色）：
 - `settings-payment`：`tabs`、`tabBasic`、`tabSmilepay`、`tabPayment`、`table`、`bankTransfer`、`bankTransferFee`、`storeBarcode`、`storeBarcodeFee`、`ibon`、`ibonFee`、`famiport`、`famiportFee`、`hilife`、`hilifeFee`、`extraFee`、`serverSwitcher`*、`navOverview`*、`navOrders`*、`navSettings`*、`navHistory`*、`navFeatures`*、`theme`*、`tabChannels`*、`tabBalance`*
 - `settings-payment-edited`：`tabs`、`tabBasic`、`tabSmilepay`、`tabPayment`、`table`、`bankTransfer`、`bankTransferFee`、`storeBarcode`、`storeBarcodeFee`、`ibon`、`ibonFee`、`famiport`、`famiportFee`、`hilife`、`hilifeFee`、`extraFee`、`saveBar`、`changes`、`revert`、`save`、`tabChannels`*、`tabBalance`*
 - `settings-payment-saved`：`tabs`、`tabBasic`、`tabSmilepay`、`tabPayment`、`table`、`bankTransfer`、`bankTransferFee`、`storeBarcode`、`storeBarcodeFee`、`ibon`、`ibonFee`、`famiport`、`famiportFee`、`hilife`、`hilifeFee`、`extraFee`、`saved`、`tabChannels`*、`tabBalance`*
+- `settings-payment-fee-edited`：`tabs`、`tabBasic`、`tabSmilepay`、`tabPayment`、`table`、`bankTransfer`、`bankTransferFee`、`storeBarcode`、`storeBarcodeFee`、`ibon`、`ibonFee`、`famiport`、`famiportFee`、`hilife`、`hilifeFee`、`extraFee`、`saveBar`、`changes`、`revert`、`save`、`tabChannels`*、`tabBalance`*
+- `settings-payment-fee-saved`：`tabs`、`tabBasic`、`tabSmilepay`、`tabPayment`、`table`、`bankTransfer`、`bankTransferFee`、`storeBarcode`、`storeBarcodeFee`、`ibon`、`ibonFee`、`famiport`、`famiportFee`、`hilife`、`hilifeFee`、`extraFee`、`saved`、`tabChannels`*、`tabBalance`*
 - `settings-channels`：`tabs`、`tabBasic`、`tabSmilepay`、`tabPayment`、`card`、`selectingRename`、`selectingName`、`pendingRename`、`pendingName`、`completeRename`、`completeName`、`expiredRename`、`nameHelp`、`serverSwitcher`*、`navOverview`*、`navOrders`*、`navSettings`*、`navHistory`*、`navFeatures`*、`theme`*、`tabChannels`*、`tabBalance`*、`table`*、`selectingCategory`*、`pendingCategory`*、`completeCategory`*、`expiredCategory`*
 - `settings-channels-edited`：`tabs`、`tabBasic`、`tabSmilepay`、`tabPayment`、`card`、`selectingRename`、`selectingName`、`pendingRename`、`pendingName`、`completeRename`、`completeName`、`expiredRename`、`nameHelp`、`saveBar`、`changes`、`revert`、`save`、`tabChannels`*、`tabBalance`*、`table`*、`selectingCategory`*、`pendingCategory`*、`completeCategory`*、`expiredCategory`*
 - `settings-channels-saved`：`tabs`、`tabBasic`、`tabSmilepay`、`tabPayment`、`card`、`selectingRename`、`selectingName`、`pendingRename`、`pendingName`、`completeRename`、`completeName`、`expiredRename`、`nameHelp`、`saved`、`tabChannels`*、`tabBalance`*、`table`*、`selectingCategory`*、`pendingCategory`*、`completeCategory`*、`expiredCategory`*
 - `settings-balance`：`tabs`、`tabBasic`、`tabSmilepay`、`tabPayment`、`switches`、`enable`、`transfer`、`payWithBalance`、`topup`、`leaderboard`、`name`、`adminRoles`、`serverSwitcher`*、`navOverview`*、`navOrders`*、`navSettings`*、`navHistory`*、`navFeatures`*、`theme`*、`tabChannels`*、`tabBalance`*
 - `settings-balance-edited`：`tabs`、`tabBasic`、`tabSmilepay`、`tabPayment`、`switches`、`enable`、`transfer`、`payWithBalance`、`topup`、`leaderboard`、`name`、`adminRoles`、`saveBar`、`changes`、`revert`、`save`、`tabChannels`*、`tabBalance`*
 - `settings-balance-saved`：`tabs`、`tabBasic`、`tabSmilepay`、`tabPayment`、`switches`、`enable`、`transfer`、`payWithBalance`、`topup`、`leaderboard`、`name`、`adminRoles`、`saved`、`tabChannels`*、`tabBalance`*
+- `settings-balance-transfer`：`tabs`、`tabBasic`、`tabSmilepay`、`tabPayment`、`switches`、`enable`、`transfer`、`payWithBalance`、`topup`、`leaderboard`、`name`、`adminRoles`、`saveBar`、`changes`、`revert`、`save`、`tabChannels`*、`tabBalance`*
+- `settings-balance-pay`：`tabs`、`tabBasic`、`tabSmilepay`、`tabPayment`、`switches`、`enable`、`transfer`、`payWithBalance`、`topup`、`leaderboard`、`name`、`adminRoles`、`saveBar`、`changes`、`revert`、`save`、`tabChannels`*、`tabBalance`*
+- `settings-balance-leaderboard`：`tabs`、`tabBasic`、`tabSmilepay`、`tabPayment`、`switches`、`enable`、`transfer`、`payWithBalance`、`topup`、`leaderboard`、`name`、`adminRoles`、`saveBar`、`changes`、`revert`、`save`、`tabChannels`*、`tabBalance`*
+- `settings-balance-name`：`tabs`、`tabBasic`、`tabSmilepay`、`tabPayment`、`switches`、`enable`、`transfer`、`payWithBalance`、`topup`、`leaderboard`、`name`、`adminRoles`、`saveBar`、`changes`、`revert`、`save`、`tabChannels`*、`tabBalance`*
+- `settings-balance-roles`：`tabs`、`tabBasic`、`tabSmilepay`、`tabPayment`、`switches`、`enable`、`transfer`、`payWithBalance`、`topup`、`leaderboard`、`name`、`adminRoles`、`saveBar`、`changes`、`revert`、`save`、`tabChannels`*、`tabBalance`*
+- `settings-balance-roles-saved`：`tabs`、`tabBasic`、`tabSmilepay`、`tabPayment`、`switches`、`enable`、`transfer`、`payWithBalance`、`topup`、`leaderboard`、`name`、`adminRoles`、`saved`、`tabChannels`*、`tabBalance`*
 - `settings-history`：`intro`、`list`、`webRow`、`secretRow`、`systemRow`、`createdRow`、`pagination`、`serverSwitcher`*、`navOverview`*、`navOrders`*、`navSettings`*、`navHistory`*、`navFeatures`*、`theme`*
 - `features`：`autoPublish`、`autoPublishChannels`、`dynamicVc`、`dynamicVcChannels`、`variables`、`serverSwitcher`*、`navOverview`*、`navOrders`*、`navSettings`*、`navHistory`*、`navFeatures`*、`theme`*
 - `features-variables-open`：`dynamicVc`、`variables`、`variablesSummary`、`variablesList`、`varServerMembers`、`varCompletedAmount`、`varPendingOrders`、`varMonthlyOrders`

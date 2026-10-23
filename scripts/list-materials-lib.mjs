@@ -4,10 +4,18 @@
 import fs from "node:fs";
 import path from "node:path";
 
+/**
+ * A file's text with every line ending as \n: a Windows checkout (core.autocrlf) has \r\n, and
+ * the patterns below match lines by \n.
+ */
+function readText(file) {
+  return fs.readFileSync(file, "utf8").replace(/\r\n/g, "\n");
+}
+
 /** The bot screens: `{ family, key, scenario, kind, via }`, in SNAPSHOT_SCENARIOS order, then the rest of BOT_UI. */
 export function botScreens(root) {
-  const generated = fs.readFileSync(path.join(root, "content/bot-ui.generated.ts"), "utf8");
-  const scenarios = fs.readFileSync(path.join(root, "components/demos/scenarios.ts"), "utf8");
+  const generated = readText(path.join(root, "content/bot-ui.generated.ts"));
+  const scenarios = readText(path.join(root, "components/demos/scenarios.ts"));
   const ui = generated.slice(generated.indexOf("export const BOT_UI"), generated.indexOf("export const COMMANDS"));
   const entries = new Map();
   for (const m of ui.matchAll(/^ {2}"([^"]+)": \{\n {4}"kind": "([^"]+)"(?:,\n {4}"via": "([^"]+)")?/gm)) {
@@ -31,14 +39,15 @@ export function botScreens(root) {
 /** The keys of one `export const NAME = { ... }` object of the generated file. */
 function topKeys(generated, name) {
   const start = generated.indexOf(`export const ${name} = {`);
-  const end = generated.indexOf("\n};", start);
+  // The object ends at the first unindented 「}」 (「};」, 「} as const;」, 「} satisfies …;」).
+  const end = generated.indexOf("\n}", start);
   return [...generated.slice(start, end).matchAll(/^ {2}"([^"]+)":/gm)].map((m) => m[1]);
 }
 
 /** The whole list as Markdown (what WRITING.md's 「可用素材」 appendix pastes). */
 export function materialsMarkdown(root) {
-  const generated = fs.readFileSync(path.join(root, "content/bot-ui.generated.ts"), "utf8");
-  const shots = JSON.parse(fs.readFileSync(path.join(root, "content/dashboard-shots.generated.json"), "utf8"));
+  const generated = readText(path.join(root, "content/bot-ui.generated.ts"));
+  const shots = JSON.parse(readText(path.join(root, "content/dashboard-shots.generated.json")));
   const out = [];
   out.push("### Bot 畫面（`SnapshotMessage id=…`）", "");
   out.push("每個 key 後面是它的情境（`SNAPSHOT_SCENARIOS`）和 `via`（訊息出現在哪裡，見 `lib/bot-ui-types.ts` 的 `MessageEntry.via`）。`key@part` 是同一個流程裡另一則訊息（私訊、日誌）。", "");

@@ -1,3 +1,5 @@
+import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import shots from "../content/dashboard-shots.generated.json";
@@ -22,5 +24,30 @@ test("每張後台截圖和它的每個目標都在清單裡", () => {
     const line = md.split("\n").find((l) => l.startsWith(`- \`${id}\``));
     expect(line, id).toBeTruthy();
     for (const name of Object.keys(shot.targets)) expect(line, `${id}.${name}`).toContain(`\`${name}\``);
+  }
+});
+
+test("其他產生的資料只列各自的 key（COMMANDS 不會列到速買配錯誤代碼）", async () => {
+  const { COMMANDS, SMILEPAY_ERRORS } = await import("../content/bot-ui.generated.ts");
+  const md = materialsMarkdown(root);
+  const line = (name) => md.split("\n").find((l) => l.startsWith(`- \`${name}\``));
+  const keys = (name) => [...line(name).matchAll(/`([^`]+)`/g)].slice(1).map((m) => m[1]);
+  expect(keys("COMMANDS")).toEqual(Object.keys(COMMANDS));
+  expect(keys("SMILEPAY_ERRORS")).toEqual(Object.keys(SMILEPAY_ERRORS));
+});
+
+test("CRLF 的檔案（Windows 的 worktree）也讀得到每個畫面和目標", () => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "funipay-materials-"));
+  try {
+    for (const file of ["content/bot-ui.generated.ts", "components/demos/scenarios.ts", "content/dashboard-shots.generated.json"]) {
+      const text = fs.readFileSync(path.join(root, file), "utf8").replace(/\r\n/g, "\n");
+      fs.mkdirSync(path.dirname(path.join(tmp, file)), { recursive: true });
+      fs.writeFileSync(path.join(tmp, file), text.replace(/\n/g, "\r\n"));
+    }
+    expect(botScreens(tmp)).toEqual(botScreens(root));
+    expect(botScreens(tmp).length).toBeGreaterThan(100);
+    expect(materialsMarkdown(tmp)).toBe(materialsMarkdown(root));
+  } finally {
+    fs.rmSync(tmp, { recursive: true, force: true });
   }
 });

@@ -4,45 +4,37 @@
 // time), they press 確認並獲取付款碼, the message turns into 「✅ 資訊確認中，請稍候...」 and the
 // order lands in the channel. The channel is a command channel outside the ticket categories,
 // so nothing is renamed (illustrative name).
-import { useRef } from "react";
-import { Canvas, DemoStage, SnapshotMessage, useWidth, zoomTo } from "@/components/demo";
-import { Ephemeral, Message } from "@/components/discord";
-import { DEMO_CHANNELS } from "@/lib/scenario";
-import { SCENARIOS } from "../scenarios";
 import {
-  BOT,
-  BUYER,
+  ChatMessage,
   CommandInput,
-  NARROW_BELOW,
-  Screen,
-  optionPill,
-  paymentSub,
+  DiscordDemo,
+  DiscordScene,
+  SnapshotMessage,
   stepper,
-  time,
   type CanvasArea,
   type CanvasPoint,
   type InputState,
-  type Layout,
-} from "./kit";
+  type SceneLayout,
+} from "@/components/demo";
+import { Ephemeral } from "@/components/discord";
+import { optionPill, slashCommand } from "@/lib/commands";
+import { DEMO_CHANNELS } from "@/lib/scenario";
+import { SCENARIOS } from "../scenarios";
 
 const SCENARIO = SCENARIOS.payBankTransfer;
-const SUB = paymentSub("create");
+const CMD = slashCommand("payment create");
 const CHANNEL = DEMO_CHANNELS.command.name;
-const OPTIONS = [
-  optionPill(SUB, "method", SCENARIO.method),
-  optionPill(SUB, "amount", undefined, String(SCENARIO.amount)),
-];
+const OPTIONS = [optionPill(CMD, "method", SCENARIO.method), optionPill(CMD, "amount", SCENARIO.amount)];
 
 type Bot = "none" | "buyer" | "confirming" | "order";
 export type Screen = { input: InputState; bot: Bot };
 type Targets = { typing: CanvasPoint; input: CanvasArea; buyer: CanvasArea; confirm: CanvasPoint; aside: CanvasPoint; order: CanvasArea };
+type Layout = SceneLayout<Targets>;
 
 /** Measured on app/dev/payments-measure under next dev in Chrome at 1280px and 375px viewports. */
-const WIDE: Layout<Targets> = {
+const WIDE: Layout = {
   w: 640,
   h: 720,
-  left: 0,
-  list: false,
   at: {
     typing: { x: 420, y: 682 },
     input: { x: 0, y: 500, w: 640, h: 220 },
@@ -52,11 +44,9 @@ const WIDE: Layout<Targets> = {
     order: { x: 40, y: 250, w: 600, h: 400 },
   },
 };
-const NARROW: Layout<Targets> = {
+const NARROW: Layout = {
   w: 400,
   h: 760,
-  left: 0,
-  list: false,
   at: {
     typing: { x: 360, y: 722 },
     input: { x: 0, y: 550, w: 400, h: 210 },
@@ -68,19 +58,21 @@ const NARROW: Layout<Targets> = {
   },
 };
 
-function timeline(l: Layout<Targets>) {
-  const { steps, step, point } = stepper<Screen>(l, { input: { kind: "empty" }, bot: "none" });
+function timeline(l: Layout) {
+  const { steps, step, point, zoom } = stepper<Screen>(l, { input: { kind: "empty" }, bot: "none" });
   const typing = point(l.at.typing, { typing: true });
   step(0, {}, { caption: "顧客在指令頻道輸入 /payment create", shot: { zoom: 1 }, cursor: { ...typing, hidden: true } });
-  step(600, {}, { shot: zoomTo(l, 1.8, l.at.input), cursor: typing });
+  step(600, {}, { shot: zoom(1.8, l.at.input), cursor: typing });
   step(900, { input: { kind: "typing", typed: "/pay" } }, { cursor: { ...typing, click: true } });
   step(1300, { input: { kind: "typing", typed: "/payment cr" } });
   step(1700, { input: { kind: "typing", typed: "/payment create" } });
-  step(2400, { input: { kind: "options", options: [OPTIONS[0]] } }, { caption: "選付款方式「銀行轉帳」，金額填 1200 後送出" });
+  step(2400, { input: { kind: "options", options: [OPTIONS[0]] } }, {
+    caption: `選付款方式「${OPTIONS[0].value}」，金額填 ${SCENARIO.amount} 後送出`,
+  });
   step(3200, { input: { kind: "options", options: OPTIONS } });
   step(4100, { input: { kind: "empty" }, bot: "buyer" }, {
     caption: "購買人資訊只有顧客自己看得到，上次填過的會自動帶入",
-    shot: zoomTo(l, 1.4, l.at.buyer),
+    shot: zoom(1.4, l.at.buyer),
     cursor: { ...point(l.at.aside), hidden: true },
   });
   step(6300, {}, { caption: "確認沒問題，按「確認並獲取付款碼」", cursor: point(l.at.confirm) });
@@ -88,7 +80,7 @@ function timeline(l: Layout<Targets>) {
   step(7600, { bot: "confirming" }, { cursor: point(l.at.aside) });
   step(8700, { bot: "order" }, {
     caption: "訂單建立，銀行帳號和付款期限貼在頻道裡",
-    shot: zoomTo(l, 1.15, l.at.order),
+    shot: zoom(1.15, l.at.order),
     cursor: { ...point(l.at.aside), hidden: true },
   });
   step(11800, {}, { shot: { zoom: 1 } });
@@ -117,61 +109,45 @@ function Reply({ bot }: { bot: Exclude<Bot, "none" | "order"> }) {
   );
 }
 
-export function PaymentCreateScreen({ screen, layout }: { screen: Screen; layout: Layout<Targets> }) {
+export function PaymentCreateScreen({ screen, layout }: { screen: Screen; layout: Layout }) {
   return (
-    <Screen
+    <DiscordScene
       layout={layout}
-      title={CHANNEL}
-      input={<CommandInput input={screen.input} channel={CHANNEL} command="payment create" description={SUB.description} />}
-    >
-      <Message author={BUYER.name} avatar={BUYER.avatar} time={time(4)}>
-        我要匯款付 1200 元
-      </Message>
-      {(screen.bot === "buyer" || screen.bot === "confirming") && (
-        <Message
-          author={BOT.name}
-          avatar={BOT.avatar}
-          bot
-          time={time()}
-          interaction={{ user: BUYER.name, avatar: BUYER.avatar, command: "payment create" }}
-        >
-          <div className="demo-in">
-            <Reply bot={screen.bot} />
-          </div>
-        </Message>
-      )}
-      {screen.bot === "order" && (
-        <Message author={BOT.name} avatar={BOT.avatar} bot time={time()}>
-          <div className="demo-in">
-            <SnapshotMessage id="builder/payment_create/bank_transfer/invoice=False" scenario={SCENARIO} />
-          </div>
-        </Message>
-      )}
-    </Screen>
+      panes={[
+        {
+          id: "channel",
+          kind: "channel",
+          title: CHANNEL,
+          input: <CommandInput input={screen.input} channel={CHANNEL} command={CMD} />,
+          messages: (
+            <>
+              <ChatMessage from="buyer" ago={4}>{`我要匯款付 ${SCENARIO.amount} 元`}</ChatMessage>
+              {(screen.bot === "buyer" || screen.bot === "confirming") && (
+                <ChatMessage from="bot" command={{ by: "buyer", name: CMD.name }} enter>
+                  <Reply bot={screen.bot} />
+                </ChatMessage>
+              )}
+              {screen.bot === "order" && (
+                <ChatMessage from="bot" enter>
+                  <SnapshotMessage id="builder/payment_create/bank_transfer/invoice=False" scenario={SCENARIO} />
+                </ChatMessage>
+              )}
+            </>
+          ),
+        },
+      ]}
+    />
   );
 }
 
 export function PaymentCreateDemo() {
-  const ref = useRef<HTMLDivElement>(null);
-  const width = useWidth(ref);
-  const wide = width === 0 || width >= NARROW_BELOW;
-  const layout = wide ? WIDE : NARROW;
-  const steps = wide ? WIDE_STEPS : NARROW_STEPS;
   return (
-    <div ref={ref}>
-      <DemoStage
-        key={wide ? "wide" : "narrow"}
-        label={`示範：顧客輸入 /payment create，付款方式選銀行轉帳、金額 ${SCENARIO.amount}，確認只有自己看得到的購買人資訊後，機器人在頻道貼出含銀行帳號的訂單`}
-        aspect={`${layout.w} / ${layout.h}`}
-        steps={steps}
-        caption
-      >
-        {(_, index) => (
-          <Canvas w={layout.w} h={layout.h}>
-            <PaymentCreateScreen screen={steps[index].screen} layout={layout} />
-          </Canvas>
-        )}
-      </DemoStage>
-    </div>
+    <DiscordDemo
+      label={`示範：顧客輸入 /payment create，付款方式選銀行轉帳、金額 ${SCENARIO.amount}，確認只有自己看得到的購買人資訊後，機器人在頻道貼出含銀行帳號的訂單`}
+      wide={{ layout: WIDE, steps: WIDE_STEPS }}
+      narrow={{ layout: NARROW, steps: NARROW_STEPS }}
+    >
+      {(step, layout) => <PaymentCreateScreen screen={step.screen} layout={layout} />}
+    </DiscordDemo>
   );
 }
