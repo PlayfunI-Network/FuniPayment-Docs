@@ -16,8 +16,8 @@ import {
   type SceneLayout,
   type SceneStep,
 } from "@/components/demo";
-import { STAGES } from "@/components/demos/payments/channel-automation-demo";
-import { TicketCategories } from "@/components/demos/payments/kit";
+import { STAGES } from "../shared/channel-automation-screen";
+import { TicketCategories } from "../shared/ticket-categories";
 import { DEMO_BOT } from "@/lib/scenario";
 import { SCENARIOS } from "../scenarios";
 

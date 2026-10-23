@@ -39,8 +39,8 @@ export function Modal({
         </svg>
       </div>
       <div className="flex flex-col gap-5 px-4 pb-6">
-        {fields.map((f) => (
-          <div key={f.label} className="min-w-0">
+        {fields.map((f, i) => (
+          <div key={`${i}:${f.label}`} className="min-w-0">
             <div className="mb-2 text-xs leading-4 font-bold tracking-[0.02em] break-words text-[#b5bac1]">
               {f.label}
               {f.required && <span className="pl-1 text-[#f23f43]">*</span>}

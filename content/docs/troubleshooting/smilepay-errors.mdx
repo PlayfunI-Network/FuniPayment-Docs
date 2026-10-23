@@ -25,7 +25,7 @@ import { SmilepayErrorTable } from "@/components/demos/reference/smilepay-error-
 你在速買配沒有開通這種付款方式。這個代碼跟其他代碼不一樣，機器人會多做兩件事：
 
 - 「錯誤訊息：」寫「此商家目前沒有開放此付款方式，請聯繫管理員再試一次」，不是表上的字。
-- 自動在後台把這個付款方式關掉，並私訊伺服器擁有者：「因為在速買配尚未啟用此服務，系統已自動關閉此付款方式」。設定紀錄會多一筆來源是「系統」的紀錄。
+- 自動在後台把這個付款方式關掉，並私訊伺服器擁有者：「因為在速買配尚未啟用此服務，系統已自動關閉此付款方式」。設定變更紀錄會多一筆來源是「系統」的紀錄。
 
 到速買配開通這個付款方式後，回後台的「付款方式與手續費」分頁把它打開，見[設定：付款方式與手續費](/dashboard/settings-payment)。
 
@@ -65,5 +65,5 @@ import { SmilepayErrorTable } from "@/components/demos/reference/smilepay-error-
 
 - [設定：速買配](/dashboard/settings-smilepay)：商家代號、參數碼、檢查碼
 - [設定：付款方式與手續費](/dashboard/settings-payment)：開關付款方式
-- [設定紀錄](/dashboard/settings-history)：看付款方式是不是被系統關掉
+- [設定變更紀錄](/dashboard/settings-history)：看付款方式是不是被系統關掉
 - [指令不能用](/troubleshooting/command-errors)：指令一送出就被拒絕的情況

@@ -14,10 +14,10 @@ import {
   type SharedProps,
 } from "fumadocs-ui/components/dialog/search";
 import { create } from "zbsearch";
-import { zhTokenizer } from "@/lib/search";
+import { rankByTitle, zhTokenizer } from "@/lib/search";
 
 // 與伺服器端 createFromSource 的 advanced 索引同一份欄位，查詢時才會用同一個斷詞。
-const client = staticClient({
+const engine = staticClient({
   from: "/api/search",
   initDB: () =>
     create({
@@ -34,6 +34,11 @@ const client = staticClient({
       components: { tokenizer: zhTokenizer },
     }),
 });
+// 標題含有搜尋詞的頁排前面（引擎本身照索引順序排）。
+const client: typeof engine = {
+  ...engine,
+  search: async (query) => rankByTitle(await engine.search(query), query),
+};
 
 export default function ZhSearchDialog(props: SharedProps) {
   const search = useDocsSearch({ client });

@@ -1,4 +1,4 @@
-import { tokenizeZh } from "./search";
+import { rankByTitle, tokenizeZh } from "./search";
 
 test("中文以單字與雙字切開，英文數字整段保留", () => {
   const t = tokenizeZh("四大超商條碼 /fp 1000元");
@@ -19,4 +19,22 @@ test("指令也能用不帶斜線的字搜到", () => {
 
 test("空字串沒有詞", () => {
   expect(tokenizeZh("")).toEqual([]);
+});
+
+test("標題含有搜尋詞的頁排到前面，同一頁的段落跟著走", () => {
+  const items = [
+    { type: "page", content: "開出第一張訂單" },
+    { type: "text", content: "輸入 /fp" },
+    { type: "page", content: "用點數付款" },
+    { type: "page", content: "/fp 快速開單" },
+    { type: "heading", content: "參數" },
+  ];
+  expect(rankByTitle(items, "fp").map((i) => i.content)).toEqual([
+    "/fp 快速開單",
+    "參數",
+    "開出第一張訂單",
+    "輸入 /fp",
+    "用點數付款",
+  ]);
+  expect(rankByTitle(items, "")).toBe(items);
 });

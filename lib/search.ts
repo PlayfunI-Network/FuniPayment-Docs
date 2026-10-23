@@ -38,3 +38,31 @@ export const zhTokenizer = {
   normalizationCache: new Map<string, string>(),
   tokenize: (raw: string) => tokenizeZh(raw),
 };
+
+type ResultItem = { type: string; content: unknown };
+
+/**
+ * 搜尋結果以頁為一組（頁標題那筆在前，後面是那頁的段落），引擎照索引順序排，不看標題。
+ * 這裡把標題含有搜尋詞的頁移到前面：標題完全相同、標題開頭是搜尋詞、標題含有搜尋詞，其餘照原順序。
+ */
+export function rankByTitle<T extends ResultItem>(items: T[], query: string): T[] {
+  const q = query.trim().toLowerCase();
+  if (!q) return items;
+  const groups: T[][] = [];
+  for (const item of items) {
+    if (item.type === "page" || groups.length === 0) groups.push([item]);
+    else groups[groups.length - 1].push(item);
+  }
+  const rank = (group: T[]) => {
+    const title = group[0].type === "page" && typeof group[0].content === "string" ? group[0].content.toLowerCase() : "";
+    // 「/fp 快速開單」用「fp」也算開頭
+    const bare = title.replace(/^\//, "");
+    if (title === q || bare === q) return 0;
+    if (title.startsWith(q) || bare.startsWith(q)) return 1;
+    return title.includes(q) ? 2 : 3;
+  };
+  return groups
+    .map((group, i) => ({ group, i, r: rank(group) }))
+    .sort((a, b) => a.r - b.r || a.i - b.i)
+    .flatMap((g) => g.group);
+}
