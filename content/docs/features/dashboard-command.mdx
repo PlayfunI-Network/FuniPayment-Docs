@@ -3,4 +3,52 @@ title: "/dashboard 與 /settings"
 description: "取得網頁後台連結的兩個指令。"
 ---
 
-{/* TODO */}
+import { DashboardCommandReplies } from "@/components/demos/features/dashboard-command-replies";
+
+這兩個指令都會給你網頁後台的連結。`/dashboard` 打開這個伺服器的後台，`/settings` 帶你到後台的設定頁。機器人的設定只能在網頁後台改，Discord 上已經沒有設定面板了。
+
+<DashboardCommandReplies />
+
+## 誰可以用
+
+| 指令 | 誰看得到、誰能用 |
+|---|---|
+| `/dashboard` | 有 Discord「管理伺服器」權限的人。沒有這個權限的人，指令清單裡不會出現它。只能在伺服器裡用，私訊裡不能用。 |
+| `/settings` | 所有人，伺服器和私訊裡都能用。 |
+
+兩個指令的回覆都只有輸入的人看得到。
+
+拿到連結不代表能打開後台。後台用 Discord 帳號登入，只有在後台設定這個伺服器的商家擁有者可以看這個伺服器的資料和改設定。登入方式見[登入後台](/getting-started/login)。
+
+## 會看到什麼
+
+### /dashboard
+
+伺服器已經設定好時，回覆的標題是「FunI 付款系統後台」，下面一個「開啟後台」按鈕，打開這個伺服器的後台總覽。
+
+伺服器還沒設定時，說明換成還沒有設定 FunI 付款系統，按鈕有兩個：「開始設定」打開設定精靈並先選好這個伺服器，「開啟後台」打開後台首頁。設定精靈見[設定精靈](/getting-started/setup-wizard)。
+
+### /settings
+
+回覆的標題是「設定已移到網頁後台」，按鈕是「前往網頁後台」。按鈕打開哪裡要看情況：
+
+- 伺服器已經設定好：這個伺服器的設定頁。
+- 伺服器還沒設定：設定精靈，並先選好這個伺服器。
+- 在私訊裡輸入：後台首頁。
+
+## 常見狀況
+
+<Callout title="找不到 /dashboard">
+你沒有這個伺服器的「管理伺服器」權限，Discord 就不會列出這個指令。請伺服器擁有者來用，或改用 `/settings`，它所有人都能用。
+</Callout>
+
+<Callout title="按了按鈕，後台卻看不到這個伺服器">
+後台只讓這個伺服器的商家擁有者看，也就是當初在設定精靈設定它的那個 Discord 帳號。換那個帳號登入。
+</Callout>
+
+## 相關頁面
+
+- [登入後台](/getting-started/login)
+- [設定精靈](/getting-started/setup-wizard)
+- [設定：基本](/dashboard/settings-basic)：設定頁的第一個分頁
+- [指令總表](/reference/commands)
