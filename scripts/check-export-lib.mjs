@@ -18,9 +18,20 @@ export function walk(dir) {
   return files;
 }
 
+/** decodeURIComponent, or null for a malformed escape (a broken link, not a crash). */
+function decode(text) {
+  try {
+    return decodeURIComponent(text);
+  } catch {
+    return null;
+  }
+}
+
 /** Does a site path like /payments/fp (or /, or /a/) map to a file in outDir? */
 export function pageExists(sitePath, outDir) {
-  const clean = decodeURIComponent(sitePath.split(/[?#]/)[0]).replace(/\/+$/, "");
+  const decoded = decode(sitePath.split(/[?#]/)[0]);
+  if (decoded === null) return false;
+  const clean = decoded.replace(/\/+$/, "");
   if (clean === "") return fs.existsSync(path.join(outDir, "index.html"));
   const base = path.join(outDir, clean);
   return (
@@ -48,14 +59,27 @@ export function findBannedWords(text) {
   return BANNED_WORDS.filter((word) => text.includes(word));
 }
 
-/** Errors for in-site <a href="/..."> links in the exported html that have no matching file. */
+/** Errors for out/ files the deploy needs: the home page, the 404 page, _redirects, and no out/dev. */
+export function checkRequired(outDir) {
+  const errors = [];
+  for (const required of ["index.html", "404.html", "_redirects"]) {
+    if (!fs.existsSync(path.join(outDir, required))) errors.push(`缺少 out/${required}`);
+  }
+  if (fs.existsSync(path.join(outDir, "dev"))) errors.push("out/dev 不應存在（開發用頁面被匯出了）");
+  return errors;
+}
+
+/**
+ * Errors for in-site links and assets in the exported html that have no matching file: href and
+ * src attributes (links, images, scripts, stylesheets), in double or single quotes.
+ */
 export function findBrokenLinks(outDir) {
   const errors = [];
   for (const file of walk(outDir).filter((f) => f.endsWith(".html"))) {
     const html = fs.readFileSync(file, "utf8");
     const seen = new Set();
-    for (const match of html.matchAll(/<a\s[^>]*?href="(\/[^"]*)"/g)) {
-      const href = match[1];
+    for (const match of html.matchAll(/\s(?:href|src)=(?:"(\/[^"]*)"|'(\/[^']*)')/g)) {
+      const href = (match[1] ?? match[2]).replace(/&amp;/g, "&");
       if (href.startsWith("//") || seen.has(href)) continue;
       seen.add(href);
       const sitePath = href.split(/[?#]/)[0];

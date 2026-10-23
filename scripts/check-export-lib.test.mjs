@@ -2,16 +2,19 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { afterAll, beforeAll, expect, test } from "vitest";
-import { checkRedirects, checkSizes, findBannedWords, findBrokenLinks } from "./check-export-lib.mjs";
+import { checkRedirects, checkRequired, checkSizes, findBannedWords, findBrokenLinks } from "./check-export-lib.mjs";
 
 let tmp;
 beforeAll(() => {
   tmp = fs.mkdtempSync(path.join(os.tmpdir(), "funipay-export-"));
   fs.mkdirSync(path.join(tmp, "payments"), { recursive: true });
   fs.writeFileSync(path.join(tmp, "payments", "fp.html"), "<html></html>");
+  fs.mkdirSync(path.join(tmp, "demo"));
+  fs.writeFileSync(path.join(tmp, "demo", "a.png"), "");
   fs.writeFileSync(
     path.join(tmp, "index.html"),
-    '<a href="/payments/fp">ok</a><a href="/payments/fp#x">ok</a><a href="/missing">bad</a><a href="https://a.b/c">ext</a>',
+    '<a href="/payments/fp">ok</a><a href="/payments/fp#x">ok</a><a href="/missing">bad</a><a href="https://a.b/c">ext</a>' +
+      `<img src="/demo/a.png"><img src='/demo/gone.png'><a href="/%E0%A4%A">malformed</a>`,
   );
 });
 afterAll(() => fs.rmSync(tmp, { recursive: true, force: true }));
@@ -30,7 +33,17 @@ test("禁用字詞", () => {
   expect(findBannedWords("乾淨的文字")).toEqual([]);
 });
 test("站內連結找不到頁面時回報", () => {
-  expect(findBrokenLinks(tmp)).toEqual(["index.html：連結 /missing 找不到頁面"]);
+  expect(findBrokenLinks(tmp)).toEqual([
+    "index.html：連結 /missing 找不到頁面",
+    "index.html：連結 /demo/gone.png 找不到頁面",
+    "index.html：連結 /%E0%A4%A 找不到頁面",
+  ]);
+});
+test("必要檔案與 out/dev", () => {
+  expect(checkRequired(tmp)).toEqual(["缺少 out/404.html", "缺少 out/_redirects"]);
+  fs.mkdirSync(path.join(tmp, "dev"));
+  expect(checkRequired(tmp)).toContain("out/dev 不應存在（開發用頁面被匯出了）");
+  fs.rmSync(path.join(tmp, "dev"), { recursive: true });
 });
 test("大小：圖片 200 KB、每頁 HTML 500 KB、整站 60 MB", () => {
   const KB = 1024;
