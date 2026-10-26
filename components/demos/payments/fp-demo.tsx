@@ -19,12 +19,14 @@ const START: Screen = { input: { kind: "empty" }, bot: "none", channel: "open" }
 const amount = (typed: string): InputState => ({ kind: "options", options: [optionPill(FP, "amount", typed)] });
 
 function timeline(l: Layout) {
-  const { steps, step, point, zoom } = stepper<Screen>(l, START);
+  // The whole screen throughout: drawn at canvas size (or, narrow, a phone-width canvas) every
+  // embed, button and menu reads without zooming in.
+  const { steps, step, point } = stepper<Screen>(l, START);
   const at = l.at;
   const typing = point(at.typing, { typing: true });
 
-  step(0, {}, { caption: "商家在訂單頻道輸入 /fp", shot: { zoom: 1 }, cursor: { ...typing, hidden: true } });
-  step(600, {}, { shot: zoom(1.9, at.input), cursor: typing });
+  step(0, {}, { caption: "商家在訂單頻道輸入 /fp", cursor: { ...typing, hidden: true } });
+  step(600, {}, { cursor: typing });
   step(1000, { input: { kind: "typing", typed: "/" } }, { cursor: { ...typing, click: true } });
   step(1250, { input: { kind: "typing", typed: "/f" } });
   step(1500, { input: { kind: "typing", typed: "/fp" } });
@@ -34,35 +36,25 @@ function timeline(l: Layout) {
   step(2800, { input: amount(String(SCENARIO.amount)) });
   step(3500, { input: { kind: "empty" }, bot: "select", channel: "selecting" }, {
     caption: "機器人回覆付款方式選單，頻道也跟著改名、換分類",
-    // The whole screen, so the renamed channel in its new category is in view.
-    shot: { zoom: 1 },
     cursor: { ...typing, hidden: true },
   });
-  step(4900, {}, {
-    caption: "顧客打開選單，選「四大超商條碼」",
-    shot: zoom(1.35, at.reply),
-    cursor: point(at.select),
-  });
+  step(4900, {}, { caption: "顧客打開選單，選「四大超商條碼」", cursor: point(at.select) });
   step(5800, {}, { cursor: point(at.select, { click: true }) });
-  step(6000, { bot: "menu" }, { shot: zoom(1.6, at.menu) });
+  step(6000, { bot: "menu" });
   step(6800, {}, { cursor: point(at.option) });
   step(7500, { bot: "menuPick" }, { cursor: point(at.option, { click: true }) });
-  step(7800, { bot: "confirm" }, {
-    caption: "確認金額和手續費，按「下一步」",
-    shot: zoom(1.35, at.confirmScreen),
-    cursor: point(at.aside),
-  });
+  step(7800, { bot: "confirm" }, { caption: "確認金額和手續費，按「下一步」", cursor: point(at.aside) });
   step(8500, {}, { cursor: point(at.next) });
   step(9300, {}, { cursor: point(at.next, { click: true }) });
-  step(9600, { bot: "buyer" }, { caption: "確認購買人資訊，取得付款碼", shot: zoom(1.4, at.buyer) });
+  step(9600, { bot: "buyer" }, { caption: "確認購買人資訊，取得付款碼" });
   step(10300, {}, { cursor: point(at.confirm) });
   step(11100, {}, { cursor: point(at.confirm, { click: true }) });
   step(11500, { bot: "order", channel: "pending" }, {
     caption: "訂單成立，條碼貼在頻道裡，頻道再換到待付款的分類",
-    shot: zoom(1.1, at.order),
     cursor: { ...point(at.confirm), hidden: true },
   });
-  step(13300, {}, { shot: { zoom: 1 } });
+  // Holds on the order before the loop starts over.
+  step(13300, {});
   return steps;
 }
 

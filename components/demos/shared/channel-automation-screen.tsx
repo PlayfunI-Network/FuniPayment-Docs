@@ -11,7 +11,6 @@ import {
   DiscordScene,
   LIST_W,
   SnapshotMessage,
-  type CanvasArea,
   type SceneLayout,
 } from "@/components/demo";
 import { SCENARIOS } from "../scenarios";
@@ -34,22 +33,16 @@ const CATEGORIES = [
 ];
 
 export type Screen = { stage: Stage };
-type Targets = { list: CanvasArea; window: CanvasArea };
-export type ChannelAutomationLayout = SceneLayout<Targets>;
+export type ChannelAutomationLayout = SceneLayout;
 type Layout = ChannelAutomationLayout;
 
-const WIDE: Layout = {
-  w: LIST_W + 640,
-  h: 700,
-  left: LIST_W,
-  list: true,
-  at: { list: { x: -LIST_W, y: 0, w: LIST_W + 300, h: 520 }, window: { x: 0, y: 0, w: 640, h: 700 } },
-};
-const NARROW: Layout = {
-  w: 400,
-  h: 720,
-  at: { list: { x: 0, y: 0, w: 400, h: 240 }, window: { x: 0, y: 0, w: 400, h: 720 } },
-};
+/**
+ * The window is 480 wide so the whole screen is drawn at 0.94 on a 678px stage: the 12px category
+ * names show at 11px and the channel names at 15px, readable without zooming in on the list (a
+ * 640px window came out at 0.77: 9px). Narrow, the window header shows the channel's name.
+ */
+const WIDE: Layout = { w: LIST_W + 480, h: 660, left: LIST_W, list: true, at: {} };
+const NARROW: Layout = { w: 400, h: 720, at: {} };
 
 export const LAYOUTS = { wide: WIDE, narrow: NARROW };
 

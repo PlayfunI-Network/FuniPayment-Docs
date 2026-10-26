@@ -2,33 +2,26 @@
 // One ticket channel through an order: /fp (selecting), order created (pending), paid
 // (complete). The screens are in components/demos/shared/channel-automation-screen.tsx; this file
 // holds the timeline.
-import { DiscordDemo, zoomTo, type SceneStep } from "@/components/demo";
-import {
-  ChannelAutomationScreen,
-  LAYOUTS,
-  type ChannelAutomationLayout as Layout,
-  type Screen,
-} from "../shared/channel-automation-screen";
+import { DiscordDemo, type SceneStep } from "@/components/demo";
+import { ChannelAutomationScreen, LAYOUTS, type Screen } from "../shared/channel-automation-screen";
 
 const { wide: WIDE, narrow: NARROW } = LAYOUTS;
 
-function timeline(l: Layout): SceneStep<Screen>[] {
-  // On the narrow screen the header shows the name; zoom on it so the rename reads.
-  const name = l.list ? zoomTo(l, 1.5, l.at.list) : zoomTo(l, 1.6, { x: 0, y: 0, w: 400, h: 300 });
-  return [
-    { at: 0, screen: { stage: "open" }, caption: "訂單頻道剛開，還在開單分類", shot: name },
-    { at: 2200, screen: { stage: "selecting" }, caption: "/fp 送出：換成「選擇付款方式時」的名稱和分類", shot: { zoom: 1 } },
-    { at: 3600, screen: { stage: "selecting" }, shot: name },
-    { at: 5400, screen: { stage: "pending" }, caption: "訂單建立：換成「待付款時」的名稱和分類", shot: { zoom: 1 } },
-    { at: 6800, screen: { stage: "pending" }, shot: name },
-    { at: 8600, screen: { stage: "complete" }, caption: "付款完成：換成「付款完成時」的名稱和分類", shot: { zoom: 1 } },
-    { at: 10000, screen: { stage: "complete" }, shot: name },
-    { at: 12500, screen: { stage: "complete" }, shot: { zoom: 1 } },
-  ];
-}
+/**
+ * The same on both layouts: the whole screen throughout, so each rename and move is seen as it
+ * happens (the channel list wide, the window header narrow).
+ */
+const STEPS: SceneStep<Screen>[] = [
+  { at: 0, screen: { stage: "open" }, caption: "訂單頻道剛開，還在開單分類" },
+  { at: 2600, screen: { stage: "selecting" }, caption: "/fp 送出：換成「選擇付款方式時」的名稱和分類" },
+  { at: 5600, screen: { stage: "pending" }, caption: "訂單建立：換成「待付款時」的名稱和分類" },
+  { at: 8600, screen: { stage: "complete" }, caption: "付款完成：換成「付款完成時」的名稱和分類" },
+  // Holds on the last stage before the loop starts over.
+  { at: 11500, screen: { stage: "complete" } },
+];
 
-export const WIDE_STEPS = timeline(WIDE);
-export const NARROW_STEPS = timeline(NARROW);
+export const WIDE_STEPS = STEPS;
+export const NARROW_STEPS = STEPS;
 
 export function ChannelAutomationDemo() {
   return (
