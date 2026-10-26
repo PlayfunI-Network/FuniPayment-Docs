@@ -45,6 +45,13 @@ test("寬畫面照 zoom 放大", () => {
   expect(t.scale).toBe(2);
 });
 
+test("635 px 的舞台（桌機上的設定精靈）不加成；600 以下才加成，exact 不加成", () => {
+  const focus = { x: 0.45, y: 0.45, w: 0.1, h: 0.1 };
+  expect(cameraTransform({ zoom: 1.5, focus }, { w: 635, h: 400 }).scale).toBe(1.5);
+  expect(cameraTransform({ zoom: 1.5, focus }, { w: 343, h: 400 }).scale).toBeCloseTo(1.5 * 1.35);
+  expect(cameraTransform({ zoom: 1.5, focus, exact: true }, { w: 343, h: 400 }).scale).toBe(1.5);
+});
+
 test("還沒量到大小時是全景", () => {
   expect(cameraTransform({ zoom: 2, focus: { x: 0, y: 0, w: 0.1, h: 0.1 } }, { w: 0, h: 0 })).toEqual({
     scale: 1,
