@@ -9,7 +9,6 @@ import {
   DiscordScene,
   SnapshotMessage,
   stepper,
-  type CanvasArea,
   type CanvasPoint,
   type Pane,
   type SceneLayout,
@@ -22,20 +21,19 @@ const SCENARIO = SCENARIOS.fpStoreBarcode;
 const SYSTEM_CHANNEL = "歡迎";
 
 export type Screen = { channel: boolean; dm: boolean; show: "channel" | "dm" };
-type Targets = { channelMsg: CanvasArea; dmMsg: CanvasArea; start: CanvasPoint; aside: CanvasPoint };
+type Targets = { start: CanvasPoint; aside: CanvasPoint };
 type Layout = SceneLayout<Targets>;
 
 /**
- * Points and areas from the window's left edge, measured on this page under next dev in Chrome at
- * 1280px and 375px viewports. Both show one window at a time (both at once made the wide stage
- * over 1000px tall).
+ * Points from the window's left edge, measured on this page under next dev in Chrome at 1280px
+ * and 375px viewports. Both show one window at a time (both at once made the wide stage over
+ * 1000px tall). The whole story plays at full view: the embed's 14px text shows at 14.9px on a
+ * 680px stage (wide) and 12px on a 343px one (narrow).
  */
 const WIDE: Layout = {
   w: 640,
   h: 560,
   at: {
-    channelMsg: { x: 0, y: 200, w: 640, h: 345 },
-    dmMsg: { x: 0, y: 165, w: 640, h: 380 },
     start: { x: 128, y: 526 },
     aside: { x: 520, y: 480 },
   },
@@ -44,8 +42,6 @@ const NARROW: Layout = {
   w: 400,
   h: 760,
   at: {
-    channelMsg: { x: 0, y: 340, w: 400, h: 405 },
-    dmMsg: { x: 0, y: 290, w: 400, h: 455 },
     start: { x: 120, y: 726 },
     aside: { x: 330, y: 660 },
   },
@@ -54,18 +50,15 @@ const NARROW: Layout = {
 const START: Screen = { channel: false, dm: false, show: "channel" };
 
 function timeline(l: Layout) {
-  const { steps, step, point, zoom } = stepper<Screen>(l, START);
+  const { steps, step, point } = stepper<Screen>(l, START);
   const at = l.at;
   step(0, {}, { caption: "機器人剛加入伺服器", shot: { zoom: 1 }, cursor: { ...point(at.aside), hidden: true } });
-  step(1200, { channel: true }, { caption: "系統訊息頻道收到「感謝邀請 FunI 付款系統！」", shot: zoom(1.2, at.channelMsg) });
-  step(4200, { dm: true, show: "dm" }, {
-    caption: "伺服器擁有者也收到私訊，開頭寫著是哪個伺服器加了機器人",
-    shot: zoom(1.2, at.dmMsg),
-  });
+  step(1200, { channel: true }, { caption: "系統訊息頻道收到「感謝邀請 FunI 付款系統！」" });
+  step(4200, { dm: true, show: "dm" }, { caption: "伺服器擁有者也收到私訊，開頭寫著是哪個伺服器加了機器人" });
   step(7400, {}, { caption: "按「開始設定」打開後台的設定精靈", cursor: point(at.start) });
   step(8600, {}, { cursor: point(at.start, { click: true }) });
   step(9000, {}, { cursor: point(at.aside) });
-  step(11400, {}, { shot: { zoom: 1 }, cursor: { ...point(at.aside), hidden: true } });
+  step(11400, {}, { cursor: { ...point(at.aside), hidden: true } });
   return steps;
 }
 
