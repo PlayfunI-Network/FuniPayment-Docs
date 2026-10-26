@@ -13,7 +13,6 @@ import {
   LIST_W,
   SnapshotMessage,
   stepper,
-  type CanvasArea,
   type CanvasPoint,
   type InputState,
   type Pane,
@@ -36,34 +35,22 @@ const TEMPLATE_PILL = (typed: string) => optionPill(CMD, "rename_name", typed);
 /** Height of the voice category strip above the channel in the narrow layout. */
 const STRIP_H = 116;
 
-type Targets = { typing: CanvasPoint; input: CanvasArea; reply: CanvasArea; voice: CanvasArea };
+type Targets = { typing: CanvasPoint };
 type Layout = SceneLayout<Targets>;
 export type Screen = { input: InputState; reply: boolean; voice: keyof typeof VOICE };
 
 // Measured in Chrome at 1280px (wide) and 375px (narrow) viewports with every screen drawn unscaled.
-// In the narrow layout `voice` is in the strip above the window and y counts from the canvas top.
 const WIDE: Layout = {
   w: LIST_W + 600,
   h: 520,
   left: LIST_W,
   list: true,
-  at: {
-    typing: { x: 420, y: 482 },
-    input: { x: 0, y: 330, w: 460, h: 190 },
-    reply: { x: 0, y: 260, w: 600, h: 200 },
-    voice: { x: -LIST_W, y: 60, w: LIST_W + 300, h: 160 },
-  },
+  at: { typing: { x: 420, y: 482 } },
 };
 const NARROW: Layout = {
   w: 400,
   h: 640,
-  at: {
-    typing: { x: 330, y: 602 },
-    // The whole width: both filled options wrap across it.
-    input: { x: 0, y: 430, w: 400, h: 210 },
-    reply: { x: 0, y: 380, w: 400, h: 200 },
-    voice: { x: 0, y: 0, w: 400, h: 200 },
-  },
+  at: { typing: { x: 330, y: 602 } },
 };
 
 /** The sidebar: the commands channel, then the category with the voice channel (only that in the strip). */
@@ -104,7 +91,7 @@ function channelPane(screen: Screen): Pane {
 const START: Screen = { input: { kind: "empty" }, reply: false, voice: "before" };
 
 function timeline(l: Layout) {
-  const { steps, step, point, zoom } = stepper<Screen>(l, START);
+  const { steps, step, point } = stepper<Screen>(l, START);
   const typing = point(l.at.typing, { typing: true });
   const typed = (t: string): InputState => ({ kind: "typing", typed: t });
   const options = (template: string): InputState => ({
@@ -113,7 +100,7 @@ function timeline(l: Layout) {
   });
 
   step(0, {}, { caption: "商家輸入 /dynamic-vc-rename", shot: { zoom: 1 }, cursor: { ...typing, hidden: true } });
-  step(600, {}, { shot: zoom(1.7, l.at.input), cursor: typing });
+  step(600, {}, { cursor: typing });
   step(1000, { input: typed("/") }, { cursor: { ...typing, click: true } });
   step(1300, { input: typed("/dyn") });
   step(1600, { input: typed("/dynamic-vc") });
@@ -124,12 +111,9 @@ function timeline(l: Layout) {
   step(4600, { input: options(TEMPLATE) });
   step(5600, { input: { kind: "empty" }, reply: true, voice: "after" }, {
     caption: "機器人回覆設定成功，語音頻道名稱換成目前的訂單數",
-    shot: { zoom: 1 },
     cursor: { ...typing, hidden: true },
   });
-  step(8200, {}, { shot: zoom(1.6, l.at.voice) });
   step(9400, { voice: "later" }, { caption: "之後每 10 分鐘，名稱跟著最新的數字更新" });
-  step(11600, {}, { shot: { zoom: 1 } });
   step(13000, {}, {});
   return steps;
 }

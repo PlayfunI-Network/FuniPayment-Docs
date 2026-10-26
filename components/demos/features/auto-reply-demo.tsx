@@ -8,7 +8,6 @@ import {
   DiscordScene,
   SnapshotMessage,
   stepper,
-  type CanvasArea,
   type CanvasPoint,
   type SceneLayout,
 } from "@/components/demo";
@@ -20,36 +19,35 @@ const SCENARIO = SCENARIOS.fpStoreBarcode;
 /** What the customer types: it contains the trigger word 在嗎. */
 export const TYPED = "在嗎？我剛剛付款了";
 
-type Layout = SceneLayout<{ typing: CanvasPoint; input: CanvasArea; reply: CanvasArea }>;
+type Layout = SceneLayout<{ typing: CanvasPoint }>;
 export type Screen = { typed: string; sent: boolean; reply: boolean };
 
 // Measured in Chrome at 1280px (wide) and 375px (narrow) viewports with every screen drawn unscaled.
 const WIDE: Layout = {
   w: 640,
   h: 440,
-  at: { typing: { x: 330, y: 402 }, input: { x: 0, y: 260, w: 460, h: 180 }, reply: { x: 0, y: 140, w: 640, h: 240 } },
+  at: { typing: { x: 330, y: 402 } },
 };
 const NARROW: Layout = {
   w: 400,
   h: 500,
-  at: { typing: { x: 300, y: 462 }, input: { x: 0, y: 320, w: 300, h: 180 }, reply: { x: 0, y: 150, w: 400, h: 290 } },
+  at: { typing: { x: 300, y: 462 } },
 };
 
 const START: Screen = { typed: "", sent: false, reply: false };
 
 function timeline(l: Layout) {
-  const { steps, step, point, zoom } = stepper<Screen>(l, START);
+  const { steps, step, point } = stepper<Screen>(l, START);
   const typing = point(l.at.typing, { typing: true });
 
   step(0, {}, { caption: "顧客私訊機器人，以為對面是真人", shot: { zoom: 1 }, cursor: { ...typing, hidden: true } });
-  step(700, {}, { shot: zoom(1.7, l.at.input), cursor: typing });
+  step(700, {}, { cursor: typing });
   step(1100, { typed: "在" }, { cursor: { ...typing, click: true } });
   step(1400, { typed: "在嗎？" });
   step(1800, { typed: "在嗎？我剛剛" });
   step(2200, { typed: TYPED });
-  step(3100, { typed: "", sent: true }, { caption: "訊息裡有觸發的字詞，這裡是在嗎", shot: { zoom: 1 }, cursor: { ...typing, hidden: true } });
-  step(4300, { reply: true }, { caption: "機器人自動回覆：它不是真人，訂單問題請找客服", shot: zoom(1.3, l.at.reply) });
-  step(8200, {}, { shot: { zoom: 1 } });
+  step(3100, { typed: "", sent: true }, { caption: "訊息裡有觸發的字詞，這裡是在嗎", cursor: { ...typing, hidden: true } });
+  step(4300, { reply: true }, { caption: "機器人自動回覆：它不是真人，訂單問題請找客服" });
   step(9500, {}, {});
   return steps;
 }

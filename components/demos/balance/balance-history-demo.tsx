@@ -9,7 +9,6 @@ import {
   DiscordScene,
   SnapshotMessage,
   stepper,
-  type CanvasArea,
   type CanvasPoint,
   type InputState,
   type Pane,
@@ -34,8 +33,6 @@ type Page = keyof typeof PAGES;
 
 type Layout = SceneLayout<{
   typing: CanvasPoint;
-  input: CanvasArea;
-  reply: CanvasArea;
   /** ▶️ on page 1, 統計表 on page 2, 伺服器排行榜 on page 0 (each the button the step presses). */
   next: CanvasPoint;
   stats: CanvasPoint;
@@ -50,8 +47,6 @@ const WIDE: Layout = {
   h: 760,
   at: {
     typing: { x: 200, y: 722 },
-    input: { x: 0, y: 560, w: 520, h: 200 },
-    reply: { x: 0, y: 160, w: 640, h: 540 },
     next: { x: 250, y: 666 },
     stats: { x: 323, y: 666 },
     leaderboard: { x: 340, y: 666 },
@@ -59,18 +54,18 @@ const WIDE: Layout = {
   },
 };
 const NARROW: Layout = {
-  // 460 wide so the four buttons stay on one row at every viewport (at 400 they wrap
-  // differently with and without the kit's sm: paddings).
-  w: 460,
+  // 420 wide, so the embeds' 14 px text is 11 px or more on a 341 px stage (at 460 it was 10.4).
+  // The four buttons of pages 1 and 2 stay on one row with and without the kit's sm: paddings;
+  // on the statistics page 伺服器排行榜 wraps under the others with them (viewports 768–918 px,
+  // where the stage is under 600 px), so the cursor aims at the phone's one-row position.
+  w: 420,
   h: 800,
   at: {
     typing: { x: 200, y: 762 },
-    input: { x: 0, y: 600, w: 460, h: 200 },
-    reply: { x: 0, y: 190, w: 460, h: 550 },
     next: { x: 250, y: 706 },
     stats: { x: 323, y: 706 },
     leaderboard: { x: 340, y: 706 },
-    aside: { x: 444, y: 400 },
+    aside: { x: 404, y: 400 },
   },
 };
 
@@ -91,7 +86,7 @@ const channel = (input: InputState, page: Page | null): Pane[] => [
 ];
 
 function timeline(l: Layout) {
-  const { steps, step, point, zoom } = stepper<Screen>(l, { panes: [] });
+  const { steps, step, point } = stepper<Screen>(l, { panes: [] });
   const typing = point(l.at.typing, { typing: true });
   const typed = (t: string): InputState => ({ kind: "typing", typed: t });
   const empty: InputState = { kind: "empty" };
@@ -102,7 +97,7 @@ function timeline(l: Layout) {
 
   step(0, { panes: channel(empty, null) }, {
     caption: `顧客輸入 /balance history，${MODE.name}選「${MODE.value}」`,
-    shot: zoom(1.6, l.at.input),
+    shot: { zoom: 1 },
     cursor: typing,
   });
   step(300, { panes: channel(typed("/bal"), null) }, { cursor: { ...typing, click: true } });
@@ -111,7 +106,6 @@ function timeline(l: Layout) {
   step(1500, { panes: channel({ kind: "options", options: [MODE] }, null) });
   step(2400, { panes: channel(empty, 1) }, {
     caption: "第 1 頁列出最近的點數異動，一頁 5 筆",
-    shot: zoom(1.25, l.at.reply),
     cursor: { ...point(l.at.aside), hidden: true },
   });
   step(4000, {}, { caption: "按「▶️」翻到第 2 頁，看比較早的紀錄", cursor: point(l.at.next) });
@@ -120,7 +114,7 @@ function timeline(l: Layout) {
   press(6500, l.at.stats, 0);
   step(9000, {}, { caption: "再按「伺服器排行榜」看前 10 名和自己的排名", cursor: point(l.at.leaderboard) });
   press(9000, l.at.leaderboard, -1);
-  step(12500, {}, { shot: { zoom: 1 }, cursor: { ...point(l.at.aside), hidden: true } });
+  step(12500, {}, { cursor: { ...point(l.at.aside), hidden: true } });
   return steps;
 }
 

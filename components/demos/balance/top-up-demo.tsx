@@ -10,7 +10,6 @@ import {
   SnapshotEmbed,
   SnapshotMessage,
   stepper,
-  type CanvasArea,
   type CanvasPoint,
   type InputState,
   type Pane,
@@ -30,10 +29,7 @@ type Reply = "select" | "menu" | "menuPick" | "confirm" | "done";
 
 type Layout = SceneLayout<{
   typing: CanvasPoint;
-  input: CanvasArea;
-  reply: CanvasArea;
   select: CanvasPoint;
-  menu: CanvasArea;
   option: CanvasPoint;
   confirm: CanvasPoint;
   aside: CanvasPoint;
@@ -45,27 +41,22 @@ const WIDE: Layout = {
   h: 720,
   at: {
     typing: { x: 120, y: 682 },
-    input: { x: 0, y: 520, w: 440, h: 200 },
-    reply: { x: 0, y: 240, w: 640, h: 420 },
     select: { x: 230, y: 597 },
-    menu: { x: 0, y: 280, w: 560, h: 360 },
     option: { x: 200, y: 466 },
     confirm: { x: 236, y: 606 },
     aside: { x: 600, y: 450 },
   },
 };
+// 360 wide: 只有你看得到這則訊息 (12 px) is 11 px or more on a 341 px stage.
 const NARROW: Layout = {
-  w: 400,
+  w: 360,
   h: 760,
   at: {
     typing: { x: 120, y: 722 },
-    input: { x: 0, y: 560, w: 400, h: 200 },
-    reply: { x: 0, y: 220, w: 400, h: 480 },
     select: { x: 180, y: 637 },
-    menu: { x: 0, y: 300, w: 400, h: 400 },
     option: { x: 180, y: 506 },
     confirm: { x: 236, y: 646 },
-    aside: { x: 384, y: 450 },
+    aside: { x: 344, y: 450 },
   },
 };
 
@@ -137,13 +128,13 @@ const dm = (paid: boolean): Pane[] => [
 ];
 
 function timeline(l: Layout) {
-  const { steps, step, point, zoom } = stepper<Screen>(l, { panes: [] });
+  const { steps, step, point } = stepper<Screen>(l, { panes: [] });
   const typing = point(l.at.typing, { typing: true });
   const empty: InputState = { kind: "empty" };
 
   step(0, { panes: channel(empty, null) }, {
     caption: `顧客輸入 /top-up，${AMOUNT.name}填 ${AMOUNT.value}`,
-    shot: zoom(1.7, l.at.input),
+    shot: { zoom: 1 },
     cursor: typing,
   });
   step(300, { panes: channel({ kind: "typing", typed: "/top" }, null) }, { cursor: { ...typing, click: true } });
@@ -151,22 +142,20 @@ function timeline(l: Layout) {
   step(1300, { panes: channel({ kind: "options", options: [AMOUNT] }, null) });
   step(2500, { panes: channel(empty, "select") }, {
     caption: "回覆只有顧客看得到；打開選單選「7-11 超商代碼」",
-    shot: zoom(1.3, l.at.reply),
     cursor: point(l.at.select),
   });
   step(3500, {}, { cursor: point(l.at.select, { click: true }) });
-  step(3700, { panes: channel(empty, "menu") }, { shot: zoom(1.4, l.at.menu) });
+  step(3700, { panes: channel(empty, "menu") });
   step(4400, {}, { cursor: point(l.at.option) });
   step(5000, { panes: channel(empty, "menuPick") }, { cursor: point(l.at.option, { click: true }) });
   step(5300, { panes: channel(empty, "confirm") }, {
     caption: "確認點數、付款金額和手續費，按「確認並獲取付款碼」",
-    shot: zoom(1.3, l.at.reply),
     cursor: point(l.at.aside),
   });
   step(6100, {}, { cursor: point(l.at.confirm) });
   step(6900, {}, { cursor: point(l.at.confirm, { click: true }) });
   step(7200, { panes: channel(empty, "done") }, { cursor: { ...point(l.at.aside), hidden: true } });
-  step(8600, { panes: dm(false) }, { caption: "付款資訊私訊給顧客，照著去 7-11 付款", shot: { zoom: 1 } });
+  step(8600, { panes: dm(false) }, { caption: "付款資訊私訊給顧客，照著去 7-11 付款" });
   step(11000, { panes: dm(true) }, { caption: "付款完成後，點數自動入帳，私訊寫著新的餘額" });
   step(14000, {}, {});
   return steps;
