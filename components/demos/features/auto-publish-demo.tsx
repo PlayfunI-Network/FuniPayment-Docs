@@ -11,7 +11,6 @@ import {
   DiscordScene,
   SnapshotMessage,
   stepper,
-  type CanvasArea,
   type CanvasPoint,
   type InputState,
   type Pane,
@@ -29,7 +28,7 @@ export const CHANNEL = "公告";
 const FOLLOWER = "合作伺服器公告";
 const ANNOUNCEMENT = "本週六晚上 8 點開放新伺服器，記得準時上線！";
 
-type Targets = { typing: CanvasPoint; input: CanvasArea; reply: CanvasArea; follower: CanvasArea };
+type Targets = { typing: CanvasPoint };
 type Layout = SceneLayout<Targets>;
 /** What is on screen: the input, whether the reply and the announcement are there, and if it has been published. */
 export type Screen = { input: InputState; reply: boolean; posted: boolean; published: boolean };
@@ -38,23 +37,13 @@ export type Screen = { input: InputState; reply: boolean; posted: boolean; publi
 const WIDE: Layout = {
   w: 640,
   h: 620,
-  at: {
-    typing: { x: 260, y: 335 },
-    input: { x: 0, y: 190, w: 440, h: 180 },
-    // Narrower than the window, so the camera can move in on the messages.
-    reply: { x: 0, y: 150, w: 460, h: 210 },
-    follower: { x: 0, y: 470, w: 460, h: 130 },
-  },
+  at: { typing: { x: 260, y: 335 } },
 };
+// 360 wide: the windows' tags (12 px) are 11 px or more on a 341 px stage.
 const NARROW: Layout = {
-  w: 400,
+  w: 360,
   h: 680,
-  at: {
-    typing: { x: 260, y: 365 },
-    input: { x: 0, y: 220, w: 300, h: 180 },
-    reply: { x: 0, y: 110, w: 400, h: 290 },
-    follower: { x: 0, y: 410, w: 400, h: 270 },
-  },
+  at: { typing: { x: 260, y: 365 } },
 };
 
 export function panes(screen: Screen): Pane[] {
@@ -102,12 +91,12 @@ export function panes(screen: Screen): Pane[] {
 const START: Screen = { input: { kind: "empty" }, reply: false, posted: false, published: false };
 
 function timeline(l: Layout) {
-  const { steps, step, point, zoom } = stepper<Screen>(l, START);
+  const { steps, step, point } = stepper<Screen>(l, START);
   const typing = point(l.at.typing, { typing: true });
   const typed = (t: string): InputState => ({ kind: "typing", typed: t });
 
   step(0, {}, { caption: "商家在公告頻道輸入 /auto-publish", shot: { zoom: 1 }, cursor: { ...typing, hidden: true } });
-  step(600, {}, { shot: zoom(1.8, l.at.input), cursor: typing });
+  step(600, {}, { cursor: typing });
   step(1000, { input: typed("/") }, { cursor: { ...typing, click: true } });
   step(1300, { input: typed("/auto") });
   step(1600, { input: typed("/auto-pub") });
@@ -115,15 +104,12 @@ function timeline(l: Layout) {
   step(2700, { input: { kind: "options", options: [] } }, { caption: "這個指令沒有參數，直接送出" });
   step(3700, { input: { kind: "empty" }, reply: true }, {
     caption: "機器人回覆這個頻道已設定為自動發佈",
-    shot: zoom(1.4, l.at.reply),
     cursor: { ...typing, hidden: true },
   });
   step(6000, { posted: true }, { caption: "之後商家在這裡發的訊息……" });
   step(7200, { published: true }, {
     caption: "機器人會立刻發佈，追蹤這個頻道的伺服器馬上收到",
-    shot: zoom(1.3, l.at.follower),
   });
-  step(9800, {}, { shot: { zoom: 1 } });
   step(11500, {}, {});
   return steps;
 }

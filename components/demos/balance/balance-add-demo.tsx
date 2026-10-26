@@ -9,7 +9,6 @@ import {
   DiscordScene,
   SnapshotMessage,
   stepper,
-  type CanvasArea,
   type CanvasPoint,
   type InputState,
   type Pane,
@@ -23,18 +22,18 @@ const SCENARIO = SCENARIOS.balanceAdd;
 const CMD = slashCommand("balance add");
 const CHANNEL = DEMO_CHANNELS.command.name;
 
-type Layout = SceneLayout<{ typing: CanvasPoint; input: CanvasArea; result: CanvasArea }>;
+type Layout = SceneLayout<{ typing: CanvasPoint }>;
 export type Screen = { panes: Pane[] };
 
 const WIDE: Layout = {
   w: 640,
   h: 760,
-  at: { typing: { x: 220, y: 722 }, input: { x: 0, y: 560, w: 640, h: 200 }, result: { x: 0, y: 360, w: 640, h: 340 } },
+  at: { typing: { x: 220, y: 722 } },
 };
 const NARROW: Layout = {
   w: 400,
   h: 800,
-  at: { typing: { x: 220, y: 762 }, input: { x: 0, y: 600, w: 400, h: 200 }, result: { x: 0, y: 370, w: 400, h: 370 } },
+  at: { typing: { x: 220, y: 762 } },
 };
 
 const channel = (input: InputState, result: boolean): Pane => ({
@@ -79,14 +78,14 @@ const OPTIONS: InputState = {
 };
 
 function timeline(l: Layout) {
-  const { steps, step, point, zoom } = stepper<Screen>(l, { panes: [] });
+  const { steps, step, point } = stepper<Screen>(l, { panes: [] });
   const typing = point(l.at.typing, { typing: true });
   const typed = (t: string): InputState => ({ kind: "typing", typed: t });
   const empty: InputState = { kind: "empty" };
 
   step(0, { panes: [channel(empty, false)] }, {
     caption: `商家輸入 /balance add，填上顧客、金額 ${SCENARIO.amount} 和備註`,
-    shot: zoom(1.6, l.at.input),
+    shot: { zoom: 1 },
     cursor: typing,
   });
   step(300, { panes: [channel(typed("/bal"), false)] }, { cursor: { ...typing, click: true } });
@@ -95,12 +94,10 @@ function timeline(l: Layout) {
   step(1600, { panes: [channel(OPTIONS, false)] });
   step(3000, { panes: [channel(empty, true)] }, {
     caption: "機器人在頻道貼出「餘額增加成功」，寫著理由和執行者",
-    shot: zoom(1.3, l.at.result),
     cursor: { ...typing, hidden: true },
   });
   step(6200, { panes: [channel(empty, true), DM] }, {
     caption: `${DEMO_PEOPLE.buyer.name}收到「餘額異動通知」私訊，裡面沒有理由和執行者`,
-    shot: { zoom: 1 },
   });
   step(10000, {}, {});
   return steps;

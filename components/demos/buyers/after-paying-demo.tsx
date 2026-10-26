@@ -7,8 +7,6 @@ import {
   DiscordDemo,
   DiscordScene,
   SnapshotMessage,
-  zoomTo,
-  type CanvasArea,
   type SceneLayout,
   type SceneStep,
 } from "@/components/demo";
@@ -18,33 +16,30 @@ import { SCENARIOS } from "../scenarios";
 const SCENARIO = SCENARIOS.payIbon;
 
 export type Screen = { paid: boolean };
-type Targets = { order: CanvasArea; notice: CanvasArea };
-type Layout = SceneLayout<Targets>;
+type Layout = SceneLayout<Record<string, never>>;
 
 const WIDE: Layout = {
   w: 640,
   h: 680,
-  at: { order: { x: 40, y: 255, w: 600, h: 410 }, notice: { x: 40, y: 290, w: 600, h: 380 } },
+  at: {},
 };
 const NARROW: Layout = {
   w: 400,
   h: 760,
-  at: { order: { x: 20, y: 320, w: 380, h: 425 }, notice: { x: 20, y: 355, w: 380, h: 390 } },
+  at: {},
 };
 
-function timeline(l: Layout): SceneStep<Screen>[] {
-  return [
-    { at: 0, screen: { paid: false }, caption: "開單時，機器人把訂單私訊給你", shot: zoomTo(l, 1.25, l.at.order) },
-    { at: 3200, screen: { paid: false }, caption: "你到 7-11 付款", shot: { zoom: 1 } },
-    { at: 5000, screen: { paid: true }, caption: "速買配通知付款完成後，私訊多了一則付款完成通知" },
-    { at: 6000, screen: { paid: true }, shot: zoomTo(l, 1.3, l.at.notice) },
-    { at: 10000, screen: { paid: true }, shot: { zoom: 1 } },
-  ];
-}
+// Both layouts show the whole DM: the order and the notice read without zooming.
+const STEPS: SceneStep<Screen>[] = [
+  { at: 0, screen: { paid: false }, caption: "開單時，機器人把訂單私訊給你", shot: { zoom: 1 } },
+  { at: 3200, screen: { paid: false }, caption: "你到 7-11 付款" },
+  { at: 5000, screen: { paid: true }, caption: "速買配通知付款完成後，私訊多了一則付款完成通知" },
+  { at: 10000, screen: { paid: true } },
+];
 
 export const LAYOUTS = { wide: WIDE, narrow: NARROW };
-export const WIDE_STEPS = timeline(WIDE);
-export const NARROW_STEPS = timeline(NARROW);
+export const WIDE_STEPS = STEPS;
+export const NARROW_STEPS = STEPS;
 
 export function AfterPayingScreen({ screen, layout }: { screen: Screen; layout: Layout }) {
   return (

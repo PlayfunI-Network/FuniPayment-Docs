@@ -8,7 +8,6 @@ import {
   DiscordScene,
   SnapshotMessage,
   stepper,
-  type CanvasArea,
   type CanvasPoint,
   type InputState,
   type Pane,
@@ -23,19 +22,19 @@ const CMD = slashCommand("balance show");
 const MODE = optionPill(CMD, "mode", "公開顯示");
 const CHANNEL = DEMO_CHANNELS.command.name;
 
-type Layout = SceneLayout<{ typing: CanvasPoint; input: CanvasArea; reply: CanvasArea }>;
+type Layout = SceneLayout<{ typing: CanvasPoint }>;
 export type Screen = { panes: Pane[] };
 
 // Measured in Chrome at 1280px (wide) and 375px (narrow) viewports with every screen drawn unscaled.
 const WIDE: Layout = {
   w: 640,
   h: 440,
-  at: { typing: { x: 200, y: 402 }, input: { x: 0, y: 250, w: 440, h: 190 }, reply: { x: 0, y: 150, w: 640, h: 230 } },
+  at: { typing: { x: 200, y: 402 } },
 };
 const NARROW: Layout = {
   w: 400,
   h: 480,
-  at: { typing: { x: 200, y: 442 }, input: { x: 0, y: 290, w: 400, h: 190 }, reply: { x: 0, y: 180, w: 400, h: 240 } },
+  at: { typing: { x: 200, y: 442 } },
 };
 
 const channel = (input: InputState, reply: boolean): Pane[] => [
@@ -60,7 +59,7 @@ const channel = (input: InputState, reply: boolean): Pane[] => [
 ];
 
 function timeline(l: Layout) {
-  const { steps, step, point, zoom } = stepper<Screen>(l, { panes: [] });
+  const { steps, step, point } = stepper<Screen>(l, { panes: [] });
   const typing = point(l.at.typing, { typing: true });
   const typed = (t: string): InputState => ({ kind: "typing", typed: t });
 
@@ -69,7 +68,7 @@ function timeline(l: Layout) {
     shot: { zoom: 1 },
     cursor: { ...typing, hidden: true },
   });
-  step(600, {}, { shot: zoom(1.8, l.at.input), cursor: typing });
+  step(600, {}, { cursor: typing });
   step(1000, { panes: channel(typed("/"), false) }, { cursor: { ...typing, click: true } });
   step(1300, { panes: channel(typed("/bal"), false) });
   step(1600, { panes: channel(typed("/balance s"), false) });
@@ -79,10 +78,9 @@ function timeline(l: Layout) {
   });
   step(4200, { panes: channel({ kind: "empty" }, true) }, {
     caption: "機器人在頻道貼出顧客目前的點數",
-    shot: zoom(1.4, l.at.reply),
     cursor: { ...typing, hidden: true },
   });
-  step(7000, {}, { shot: { zoom: 1 } });
+  step(7000, {}, {});
   return steps;
 }
 
