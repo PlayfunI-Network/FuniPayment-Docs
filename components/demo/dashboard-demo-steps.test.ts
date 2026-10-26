@@ -47,6 +47,21 @@ describe("resolveSteps", () => {
     expect(() => resolveSteps(picture, "short", [{ at: 0, target: "save" }, { at: 900, swapTo: "tall" }], "desktop")).toThrow("save");
   });
 
+  test("放大時換目標，鏡頭跟著移過去", () => {
+    const frames = resolveSteps(picture, "short", [{ at: 0, target: "title", zoom: 1.5 }, { at: 900, target: "save" }], "desktop");
+    expect(frames[1].shot).toMatchObject({ zoom: 1.5, focus: { x: 0.8 } });
+  });
+
+  test("手機版截圖只照 phoneZoom 放大，沒寫就是全景，而且不加成", () => {
+    const plain = resolveSteps(picture, "short", [{ at: 0, target: "save", zoom: 2 }], "mobile");
+    expect(plain[0].shot).toEqual({ zoom: 1 });
+    const phone = resolveSteps(picture, "short", [{ at: 0, target: "save", zoom: 2, phoneZoom: 1.2 }], "mobile");
+    expect(phone[0].shot).toMatchObject({ zoom: 1.2, exact: true });
+    const desk = resolveSteps(picture, "short", [{ at: 0, target: "save", zoom: 2, phoneZoom: 1.2 }], "desktop");
+    expect(desk[0].shot).toMatchObject({ zoom: 2 });
+    expect(desk[0].shot).not.toHaveProperty("exact");
+  });
+
   test("hideCursor 藏起游標", () => {
     const frames = resolveSteps(picture, "short", [{ at: 0, target: "save" }, { at: 900, hideCursor: true }], "desktop");
     expect(frames[1].cursor?.hidden).toBe(true);

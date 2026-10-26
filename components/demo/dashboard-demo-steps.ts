@@ -11,7 +11,10 @@ import type { DemoStep } from "./stage";
  * One moment of a dashboard demo, `at` ms after it starts.
  * - `target`: a target name of the shot on screen; the cursor moves to it (and stays there).
  * - `zoom`: the camera moves `zoom` times closer onto the target (this step's, or the last one);
- *   1 shows the whole stage again. Carries over like `shot` in DemoStep.
+ *   1 shows the whole stage again. Carries over like `shot` in DemoStep. While it is above 1, a
+ *   step naming a new target moves the camera onto it.
+ * - `phoneZoom`: the zoom on the phone pictures, which are drawn at phone size: there a step that
+ *   sets `zoom` but no `phoneZoom` shows the whole picture. Not boosted on narrow stages.
  * - `click` presses the cursor; `typing` turns it into a text I-beam.
  * - `hideCursor` hides the cursor (until a later step names a target).
  * - `swapTo`: from this step on, another shot is on screen (the page after a click, a typed
@@ -23,6 +26,7 @@ export type DashboardStep = {
   caption?: string;
   target?: string;
   zoom?: number;
+  phoneZoom?: number;
   click?: boolean;
   typing?: boolean;
   hideCursor?: boolean;
@@ -102,9 +106,10 @@ function pointOn(r: Rect, extra: Partial<CursorState>): CursorState {
 }
 
 /** Zoom onto `r`, never so close that it no longer fits the stage (like canvas zoomTo). */
-function zoomOn(r: Rect, zoom: number): Shot {
+function zoomOn(r: Rect, zoom: number, layout: DashboardLayout): Shot {
   if (zoom <= 1) return { zoom: 1 };
-  return { zoom: Math.max(1, Math.min(zoom, 1 / r.w, 1 / r.h)), focus: r };
+  const shot: Shot = { zoom: Math.max(1, Math.min(zoom, 1 / r.w, 1 / r.h)), focus: r };
+  return layout === "mobile" ? { ...shot, exact: true } : shot;
 }
 
 /**
@@ -130,17 +135,18 @@ export function resolveSteps(picture: PictureOf, shot: string, steps: readonly D
       hidden = false;
     }
     if (s.hideCursor) hidden = true;
-    if (s.zoom !== undefined) zoom = s.zoom;
+    const setZoom = layout === "mobile" ? (s.phoneZoom ?? (s.zoom === undefined ? undefined : 1)) : s.zoom;
+    if (setZoom !== undefined) zoom = setZoom;
     const rect = target ? pic.targets[target] : undefined;
     // A target named on an earlier shot may be gone after a swap
     if (target && !rect) throw new Error(`第 ${i + 1} 步：換成「${shotId}」後，前面用的目標「${target}」不在這張截圖上，請重新指定 target`);
     scroll = Math.min(scroll, maxScroll(tall, ratio));
-    if (rect && (s.target || s.zoom !== undefined)) scroll = scrollFor(rect, tall, ratio, scroll);
+    if (rect && (s.target || setZoom !== undefined)) scroll = scrollFor(rect, tall, ratio, scroll);
 
     const out: DashboardFrame = { at: s.at, shotId, scroll };
     if (s.caption) out.caption = s.caption;
     const onStage = rect ? stageRect(rect, tall, ratio, scroll) : undefined;
-    if (s.zoom !== undefined || (zoom > 1 && scroll !== before.scroll)) out.shot = onStage ? zoomOn(onStage, zoom) : { zoom: 1 };
+    if (setZoom !== undefined || (zoom > 1 && (s.target || scroll !== before.scroll))) out.shot = onStage ? zoomOn(onStage, zoom, layout) : { zoom: 1 };
     const moved = scroll !== before.scroll || shotId !== before.shotId;
     if (onStage && (s.target || s.click || s.typing || s.hideCursor || moved)) {
       out.cursor = pointOn(onStage, { click: s.click, typing: s.typing, hidden });
