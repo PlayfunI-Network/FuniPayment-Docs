@@ -9,7 +9,6 @@ import {
   DiscordScene,
   SnapshotMessage,
   stepper,
-  type CanvasArea,
   type CanvasPoint,
   type InputState,
   type Pane,
@@ -24,7 +23,7 @@ const SCENARIO = SCENARIOS.transfer;
 const CMD = slashCommand("balance transfer");
 const CHANNEL = DEMO_CHANNELS.command.name;
 
-type Layout = SceneLayout<{ typing: CanvasPoint; input: CanvasArea; confirmMsg: CanvasArea; confirm: CanvasPoint; aside: CanvasPoint }>;
+type Layout = SceneLayout<{ typing: CanvasPoint; confirm: CanvasPoint; aside: CanvasPoint }>;
 export type Screen = { panes: Pane[] };
 
 const WIDE: Layout = {
@@ -32,21 +31,18 @@ const WIDE: Layout = {
   h: 700,
   at: {
     typing: { x: 230, y: 662 },
-    input: { x: 0, y: 500, w: 640, h: 200 },
-    confirmMsg: { x: 0, y: 300, w: 640, h: 340 },
     confirm: { x: 215, y: 582 },
     aside: { x: 600, y: 450 },
   },
 };
+// 360 wide: 只有你看得到這則訊息 (12 px) is 11 px or more on a 341 px stage.
 const NARROW: Layout = {
-  w: 400,
+  w: 360,
   h: 760,
   at: {
     typing: { x: 230, y: 722 },
-    input: { x: 0, y: 560, w: 400, h: 200 },
-    confirmMsg: { x: 0, y: 320, w: 400, h: 380 },
     confirm: { x: 215, y: 642 },
-    aside: { x: 384, y: 450 },
+    aside: { x: 344, y: 450 },
   },
 };
 
@@ -113,7 +109,7 @@ const DMS: Pane[] = [
 ];
 
 function timeline(l: Layout) {
-  const { steps, step, point, zoom } = stepper<Screen>(l, { panes: [] });
+  const { steps, step, point } = stepper<Screen>(l, { panes: [] });
   const typing = point(l.at.typing, { typing: true });
   const typed = (t: string): InputState => ({ kind: "typing", typed: t });
 
@@ -122,14 +118,13 @@ function timeline(l: Layout) {
     shot: { zoom: 1 },
     cursor: { ...typing, hidden: true },
   });
-  step(500, {}, { shot: zoom(1.6, l.at.input), cursor: typing });
+  step(500, {}, { cursor: typing });
   step(800, { panes: channel(typed("/bal"), "none") }, { cursor: { ...typing, click: true } });
   step(1100, { panes: channel(typed("/balance tr"), "none") });
   step(1400, { panes: channel(typed("/balance transfer"), "none") });
   step(2100, { panes: channel(OPTIONS, "none") });
   step(3300, { panes: channel({ kind: "empty" }, "ask") }, {
     caption: "確認畫面只有顧客看得到，核對金額和對象後按「確認並轉帳」",
-    shot: zoom(1.3, l.at.confirmMsg),
     cursor: { ...point(l.at.aside), hidden: true },
   });
   step(4500, {}, { cursor: point(l.at.confirm) });
@@ -137,7 +132,6 @@ function timeline(l: Layout) {
   step(5800, { panes: channel({ kind: "empty" }, "done") }, { caption: "轉帳完成，確認畫面換成「轉帳成功」", cursor: point(l.at.aside) });
   step(7800, { panes: DMS }, {
     caption: `${DEMO_PEOPLE.buyer.name}和${SCENARIO.recipient}各收到一則私訊，寫著轉帳前後的餘額`,
-    shot: { zoom: 1 },
     cursor: { ...point(l.at.aside), hidden: true },
   });
   step(11500, {}, {});
