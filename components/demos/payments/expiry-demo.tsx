@@ -8,8 +8,6 @@ import {
   DiscordScene,
   LIST_W,
   SnapshotMessage,
-  zoomTo,
-  type CanvasArea,
   type SceneLayout,
   type SceneStep,
 } from "@/components/demo";
@@ -32,35 +30,27 @@ const CATEGORIES = [
 ];
 
 export type Screen = { expired: boolean };
-type Targets = { list: CanvasArea; message: CanvasArea };
-type Layout = SceneLayout<Targets>;
+type Layout = SceneLayout;
 
-const WIDE: Layout = {
-  w: LIST_W + 640,
-  h: 460,
-  left: LIST_W,
-  list: true,
-  at: { list: { x: -LIST_W, y: 0, w: LIST_W + 300, h: 400 }, message: { x: 40, y: 160, w: 600, h: 290 } },
-};
-const NARROW: Layout = {
-  w: 400,
-  h: 500,
-  at: { list: { x: 0, y: 0, w: 400, h: 280 }, message: { x: 20, y: 160, w: 380, h: 330 } },
-};
+/**
+ * The window is 480 wide so the whole screen is drawn at 0.94 on a 678px stage: the 12px category
+ * names show at 11px and the message's 14px text at 13px without zooming in.
+ */
+const WIDE: Layout = { w: LIST_W + 480, h: 460, left: LIST_W, list: true, at: {} };
+const NARROW: Layout = { w: 400, h: 500, at: {} };
 
-function timeline(l: Layout): SceneStep<Screen>[] {
-  return [
-    { at: 0, screen: { expired: false }, caption: "商家送出 /fp，顧客一直沒有選付款方式", shot: zoomTo(l, 1.3, l.at.message) },
-    { at: 2600, screen: { expired: false }, caption: "24 小時後……", shot: { zoom: 1 } },
-    { at: 4000, screen: { expired: true }, caption: "選單變成過期訊息，頻道換成「訂單過期時」的名稱和分類" },
-    { at: 6400, screen: { expired: true }, shot: zoomTo(l, 1.3, l.at.message) },
-    { at: 9000, screen: { expired: true }, shot: { zoom: 1 } },
-  ];
-}
+/** The same on both layouts: the whole screen, with nothing to zoom in on. */
+const STEPS: SceneStep<Screen>[] = [
+  { at: 0, screen: { expired: false }, caption: "商家送出 /fp，顧客一直沒有選付款方式" },
+  { at: 2600, screen: { expired: false }, caption: "24 小時後……" },
+  { at: 4000, screen: { expired: true }, caption: "選單變成過期訊息，頻道換成「訂單過期時」的名稱和分類" },
+  // Holds on the expired message before the loop starts over.
+  { at: 9000, screen: { expired: true } },
+];
 
 export const LAYOUTS = { wide: WIDE, narrow: NARROW };
-export const WIDE_STEPS = timeline(WIDE);
-export const NARROW_STEPS = timeline(NARROW);
+export const WIDE_STEPS = STEPS;
+export const NARROW_STEPS = STEPS;
 
 export function ExpiryScreen({ screen, layout }: { screen: Screen; layout: Layout }) {
   const here = screen.expired ? CHANNEL.expired : CHANNEL.selecting;
