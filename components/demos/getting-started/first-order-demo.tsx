@@ -4,11 +4,9 @@
 // the order itself) is on the /fp page; this page links there. Same screens and measured points
 // as the fp demo, a shorter timeline.
 //
-// The camera: on the narrow layout the embeds' 14px text already shows at 12px, so it stays at full
-// view. The wide canvas (880px, shared with the fp demo) shows that text at 10.8px on a 680px
-// stage, so once the typing starts the camera moves in 1.12 times (12.1px), on the bottom of the
-// window where every step happens, and stays there until the closing full view.
-import { DiscordDemo, LIST_W, stepper, type CanvasArea, type InputState, type Shot } from "@/components/demo";
+// The camera stays at full view: the shared screens are sized so the embeds' 14px text shows at
+// 12px or more on both layouts.
+import { DiscordDemo, stepper, type InputState } from "@/components/demo";
 import { FpScreen, LAYOUTS, type Screen } from "../shared/fp-screen";
 import { optionPill, slashCommand } from "@/lib/commands";
 import { SCENARIOS } from "../scenarios";
@@ -21,17 +19,13 @@ type Layout = (typeof LAYOUTS)["wide"];
 const START: Screen = { input: { kind: "empty" }, bot: "none", channel: "open" };
 const amount = (typed: string): InputState => ({ kind: "options", options: [optionPill(FP, "amount", typed)] });
 
-/** The bottom of the wide screen from its left edge: the channel list stays whole and only the empty right end of the window is cut. */
-const WIDE_CLOSE: CanvasArea = { x: -LIST_W, y: 380, w: 640, h: 400 };
-
-function timeline(l: Layout, closeArea?: CanvasArea) {
-  const { steps, step, point, zoom } = stepper<Screen>(l, START);
+function timeline(l: Layout) {
+  const { steps, step, point } = stepper<Screen>(l, START);
   const at = l.at;
   const typing = point(at.typing, { typing: true });
-  const close: Shot | undefined = closeArea && zoom(1.12, closeArea);
 
   step(0, {}, { caption: "在訂單頻道輸入 /fp", shot: { zoom: 1 }, cursor: { ...typing, hidden: true } });
-  step(600, {}, { shot: close, cursor: typing });
+  step(600, {}, { cursor: typing });
   step(1000, { input: { kind: "typing", typed: "/" } }, { cursor: { ...typing, click: true } });
   step(1250, { input: { kind: "typing", typed: "/f" } });
   step(1500, { input: { kind: "typing", typed: "/fp" } });
@@ -57,7 +51,7 @@ function timeline(l: Layout, closeArea?: CanvasArea) {
 }
 
 export { LAYOUTS };
-export const WIDE_STEPS = timeline(LAYOUTS.wide, WIDE_CLOSE);
+export const WIDE_STEPS = timeline(LAYOUTS.wide);
 export const NARROW_STEPS = timeline(LAYOUTS.narrow);
 export const FirstOrderScreen = FpScreen;
 
