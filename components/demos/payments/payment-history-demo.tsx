@@ -10,7 +10,6 @@ import {
   DiscordScene,
   SnapshotMessage,
   stepper,
-  type CanvasArea,
   type CanvasPoint,
   type InputState,
   type SceneLayout,
@@ -32,7 +31,7 @@ export const PAGES = {
 
 export type Screen = { input: InputState; page: null | keyof typeof PAGES };
 /** `next` is ▶️ on page 1, `stats` 統計表 on page 2 (the fourth button on both pages). */
-type Targets = { typing: CanvasPoint; input: CanvasArea; reply: CanvasArea; next: CanvasPoint; stats: CanvasPoint; aside: CanvasPoint };
+type Targets = { typing: CanvasPoint; next: CanvasPoint; stats: CanvasPoint; aside: CanvasPoint };
 type Layout = SceneLayout<Targets>;
 
 /** Measured on app/dev/payments-measure under next dev in Chrome at 1280px and 375px viewports. */
@@ -41,39 +40,35 @@ const WIDE: Layout = {
   h: 700,
   at: {
     typing: { x: 330, y: 662 },
-    input: { x: 0, y: 490, w: 640, h: 210 },
-    reply: { x: 40, y: 125, w: 600, h: 505 },
     next: { x: 250, y: 606 },
     stats: { x: 325, y: 606 },
     aside: { x: 620, y: 400 },
   },
 };
 const NARROW: Layout = {
-  // 460 wide so the four buttons stay on one row at every viewport (at 400 統計表 wraps to a
-  // second row with the kit's sm: paddings and stays on the first without them).
-  w: 460,
+  // 420 wide: the four buttons stay on one row at every viewport (at 410 統計表 wraps to a
+  // second row with the kit's sm: paddings and stays on the first without them), and at a 343px
+  // stage the embed's 14px text still shows at about 11.4px (460 wide it was 10.4px).
+  w: 420,
   h: 760,
   at: {
     typing: { x: 300, y: 722 },
-    input: { x: 0, y: 550, w: 460, h: 210 },
-    reply: { x: 20, y: 185, w: 440, h: 505 },
     next: { x: 250, y: 666 },
     stats: { x: 323, y: 666 },
-    aside: { x: 452, y: 420 },
+    aside: { x: 412, y: 420 },
   },
 };
 
 function timeline(l: Layout) {
-  const { steps, step, point, zoom } = stepper<Screen>(l, { input: { kind: "empty" }, page: null });
+  const { steps, step, point } = stepper<Screen>(l, { input: { kind: "empty" }, page: null });
   const typing = point(l.at.typing, { typing: true });
-  step(0, {}, { caption: "顧客輸入 /payment history", shot: zoom(1.8, l.at.input), cursor: typing });
+  step(0, {}, { caption: "顧客輸入 /payment history", cursor: typing });
   step(300, { input: { kind: "typing", typed: "/pay" } }, { cursor: { ...typing, click: true } });
   step(700, { input: { kind: "typing", typed: "/payment hi" } });
   step(1100, { input: { kind: "typing", typed: "/payment history" } });
   step(1800, { input: { kind: "options", options: [MODE] } }, { caption: `顯示模式選「${MODE.value}」後送出` });
   step(2900, { input: { kind: "empty" }, page: 1 }, {
     caption: "列出已完成的付款，每頁 3 筆",
-    shot: zoom(1.2, l.at.reply),
     cursor: { ...point(l.at.aside), hidden: true },
   });
   step(4800, {}, { caption: "按「▶️」翻到第 2 頁，看第 4 筆", cursor: point(l.at.next) });
@@ -82,7 +77,7 @@ function timeline(l: Layout) {
   step(7300, {}, { caption: "按「統計表」", cursor: point(l.at.stats) });
   step(8100, {}, { cursor: point(l.at.stats, { click: true }) });
   step(8400, { page: 0 }, { caption: "同一則訊息換成統計數據", cursor: point(l.at.aside) });
-  step(12000, {}, { shot: { zoom: 1 }, cursor: { ...point(l.at.aside), hidden: true } });
+  step(12000, {}, { cursor: { ...point(l.at.aside), hidden: true } });
   return steps;
 }
 
