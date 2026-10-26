@@ -4,14 +4,14 @@
 // channel (app/bot/notifier.py payment_completed, send_to_dm_and_log); the ticket channel is then
 // moved to the 付款完成時 category and renamed. One window at a time, with the ticket categories
 // beside it on the wide layout. Channel names are examples a merchant could set on the dashboard.
+// The whole story plays at full view: the wide window is 500px (not 640px), so at a 680px stage
+// the embeds' 14px text shows at 12.9px and the categories' 12px headings at 11px.
 import {
   ChatMessage,
   DiscordDemo,
   DiscordScene,
   LIST_W,
   SnapshotMessage,
-  zoomTo,
-  type CanvasArea,
   type Pane,
   type SceneLayout,
   type SceneStep,
@@ -30,44 +30,24 @@ const CATEGORIES = [
 ];
 
 export type Screen = { paid: boolean; show: "channel" | "dm" | "log" };
-type Targets = { message: CanvasArea; name: CanvasArea };
-type Layout = SceneLayout<Targets>;
+type Layout = SceneLayout<Record<string, never>>;
 
-const WIDE: Layout = {
-  w: LIST_W + 640,
-  h: 700,
-  left: LIST_W,
-  list: true,
-  at: {
-    message: { x: 0, y: 220, w: 640, h: 480 },
-    name: { x: -LIST_W, y: 0, w: LIST_W + 300, h: 420 },
-  },
-};
-const NARROW: Layout = {
-  w: 400,
-  h: 720,
-  at: {
-    message: { x: 0, y: 230, w: 400, h: 490 },
-    name: { x: 0, y: 0, w: 400, h: 300 },
-  },
-};
+const WIDE: Layout = { w: LIST_W + 500, h: 700, left: LIST_W, list: true, at: {} };
+const NARROW: Layout = { w: 400, h: 720, at: {} };
 
-function timeline(l: Layout): SceneStep<Screen>[] {
-  const message = zoomTo(l, 1.25, l.at.message);
-  return [
-    { at: 0, screen: { paid: false, show: "channel" }, caption: "顧客拿著條碼到超商付款", shot: { zoom: 1 } },
-    { at: 2200, screen: { paid: true, show: "channel" }, caption: "速買配通知付款完成，訂單頻道收到付款完成通知", shot: message },
-    { at: 5000, screen: { paid: true, show: "channel" }, caption: "訂單頻道換成「付款完成時」的名稱和分類", shot: zoomTo(l, 1.5, l.at.name) },
-    { at: 7400, screen: { paid: true, show: "dm" }, caption: "付款者的私訊也收到同一則通知", shot: message },
-    { at: 9800, screen: { paid: true, show: "log" }, caption: "日誌頻道也收到一份", shot: message },
-    { at: 12200, screen: { paid: true, show: "channel" }, caption: "訂單頻道、付款者的私訊、日誌頻道都收到了", shot: { zoom: 1 } },
-    { at: 14200, screen: { paid: true, show: "channel" } },
-  ];
-}
+const STEPS: SceneStep<Screen>[] = [
+  { at: 0, screen: { paid: false, show: "channel" }, caption: "顧客拿著條碼到超商付款", shot: { zoom: 1 } },
+  { at: 2200, screen: { paid: true, show: "channel" }, caption: "速買配通知付款完成，訂單頻道收到付款完成通知" },
+  { at: 5000, screen: { paid: true, show: "channel" }, caption: "訂單頻道換成「付款完成時」的名稱和分類" },
+  { at: 7400, screen: { paid: true, show: "dm" }, caption: "付款者的私訊也收到同一則通知" },
+  { at: 9800, screen: { paid: true, show: "log" }, caption: "日誌頻道也收到一份" },
+  { at: 12200, screen: { paid: true, show: "channel" }, caption: "訂單頻道、付款者的私訊、日誌頻道都收到了" },
+  { at: 14200, screen: { paid: true, show: "channel" } },
+];
 
 export const LAYOUTS = { wide: WIDE, narrow: NARROW };
-export const WIDE_STEPS = timeline(WIDE);
-export const NARROW_STEPS = timeline(NARROW);
+export const WIDE_STEPS = STEPS;
+export const NARROW_STEPS = STEPS;
 
 const notice = (
   <ChatMessage from="bot" enter>
