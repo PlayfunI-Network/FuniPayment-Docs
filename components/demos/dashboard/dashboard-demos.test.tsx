@@ -4,21 +4,20 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { DASHBOARD_SHOTS, dashboardPicture } from "@/components/demo";
 import { chooseLayout, markersFor, resolveSteps } from "@/components/demo/dashboard-demo-steps";
 import {
-  BALANCE_STEPS, BASIC_STEPS, BalanceSettingsDemo, BasicSettingsDemo, CHANNELS_STEPS, ChannelsSettingsDemo, FEATURES_STEPS,
-  FeaturesDemo, HISTORY_STEPS, ORDERS_STEPS, OVERVIEW_STEPS, OrdersDemo, OverviewDemo, PAYMENT_STEPS, PaymentSettingsDemo,
-  SMILEPAY_STEPS, SettingsHistoryDemo, SmilePaySettingsDemo,
+  BALANCE, BASIC, BalanceSettingsDemo, BasicSettingsDemo, CHANNELS, ChannelsSettingsDemo, FEATURES, FeaturesDemo, HISTORY,
+  ORDERS, OVERVIEW, OrdersDemo, OverviewDemo, PAYMENT, PaymentSettingsDemo, SMILEPAY, SettingsHistoryDemo, SmilePaySettingsDemo,
 } from "./dashboard-demos";
 
 const DEMOS = [
-  { shot: "overview", steps: OVERVIEW_STEPS, Demo: OverviewDemo },
-  { shot: "orders", steps: ORDERS_STEPS, Demo: OrdersDemo },
-  { shot: "settings-basic", steps: BASIC_STEPS, Demo: BasicSettingsDemo },
-  { shot: "settings-smilepay", steps: SMILEPAY_STEPS, Demo: SmilePaySettingsDemo },
-  { shot: "settings-payment", steps: PAYMENT_STEPS, Demo: PaymentSettingsDemo },
-  { shot: "settings-channels", steps: CHANNELS_STEPS, Demo: ChannelsSettingsDemo },
-  { shot: "settings-balance", steps: BALANCE_STEPS, Demo: BalanceSettingsDemo },
-  { shot: "settings-history", steps: HISTORY_STEPS, Demo: SettingsHistoryDemo },
-  { shot: "features", steps: FEATURES_STEPS, Demo: FeaturesDemo },
+  { shot: "overview", steps: OVERVIEW, Demo: OverviewDemo },
+  { shot: "orders", steps: ORDERS, Demo: OrdersDemo },
+  { shot: "settings-basic", steps: BASIC, Demo: BasicSettingsDemo },
+  { shot: "settings-smilepay", steps: SMILEPAY, Demo: SmilePaySettingsDemo },
+  { shot: "settings-payment", steps: PAYMENT, Demo: PaymentSettingsDemo },
+  { shot: "settings-channels", steps: CHANNELS, Demo: ChannelsSettingsDemo },
+  { shot: "settings-balance", steps: BALANCE, Demo: BalanceSettingsDemo },
+  { shot: "settings-history", steps: HISTORY, Demo: SettingsHistoryDemo },
+  { shot: "features", steps: FEATURES, Demo: FeaturesDemo },
 ];
 
 function stubReducedMotion(reduced: boolean) {
@@ -33,7 +32,9 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe.each(DEMOS)("$shot demo", ({ shot, steps, Demo }) => {
+describe.each(DEMOS)("$shot demo", ({ shot, steps: both, Demo }) => {
+  const steps = both.desktop;
+
   it("runs 6 to 15 seconds, in order", () => {
     const last = steps[steps.length - 1].at;
     expect(last).toBeGreaterThanOrEqual(6000);
@@ -41,12 +42,18 @@ describe.each(DEMOS)("$shot demo", ({ shot, steps, Demo }) => {
     steps.forEach((s, i) => i > 0 && expect(s.at).toBeGreaterThan(steps[i - 1].at));
   });
 
+  it("plays the same steps on the phone, only zooming differently", () => {
+    const withoutZoom = (list: typeof steps) => list.map((s) => ({ ...s, zoom: undefined }));
+    expect(withoutZoom(both.phone)).toEqual(withoutZoom(steps));
+    expect(both.phone[both.phone.length - 1].zoom).toBe(1);
+  });
+
   it("uses the phone pictures on a narrow stage", () => {
-    expect(chooseLayout(DASHBOARD_SHOTS, shot, steps, true)).toBe("mobile");
+    expect(chooseLayout(DASHBOARD_SHOTS, shot, both.phone, true)).toBe("mobile");
   });
 
   it.each(["desktop", "mobile"] as const)("aims inside the %s stage", (layout) => {
-    for (const f of resolveSteps(dashboardPicture, shot, steps, layout)) {
+    for (const f of resolveSteps(dashboardPicture, shot, layout === "mobile" ? both.phone : steps, layout)) {
       if (!f.cursor || f.cursor.hidden) continue;
       expect(f.cursor.x, `${f.at}`).toBeGreaterThan(0);
       expect(f.cursor.x, `${f.at}`).toBeLessThan(1);
