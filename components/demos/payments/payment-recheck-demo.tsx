@@ -13,7 +13,6 @@ import {
   LIST_W,
   SnapshotMessage,
   stepper,
-  type CanvasArea,
   type CanvasPoint,
   type InputState,
   type SceneLayout,
@@ -36,19 +35,21 @@ const CATEGORIES = [
 ];
 
 export type Screen = { input: InputState; done: boolean };
-type Targets = { typing: CanvasPoint; input: CanvasArea; result: CanvasArea };
+type Targets = { typing: CanvasPoint };
 type Layout = SceneLayout<Targets>;
 
-/** Measured on app/dev/payments-measure under next dev in Chrome at 1280px and 375px viewports. */
+/**
+ * Measured on app/dev/payments-measure under next dev in Chrome at 1280px and 375px viewports.
+ * The window is 480 wide so the whole screen is drawn at 0.94 on a 678px stage: the embeds' 14px
+ * text shows at about 13px and the 12px category names at 11px without zooming in.
+ */
 const WIDE: Layout = {
-  w: LIST_W + 640,
+  w: LIST_W + 480,
   h: 720,
   left: LIST_W,
   list: true,
   at: {
-    typing: { x: 330, y: 682 },
-    input: { x: 0, y: 500, w: 640, h: 220 },
-    result: { x: 40, y: 160, w: 600, h: 490 },
+    typing: { x: 380, y: 682 },
   },
 };
 const NARROW: Layout = {
@@ -56,28 +57,24 @@ const NARROW: Layout = {
   h: 760,
   at: {
     typing: { x: 300, y: 722 },
-    input: { x: 0, y: 550, w: 400, h: 210 },
-    result: { x: 20, y: 190, w: 380, h: 500 },
   },
 };
 
 function timeline(l: Layout) {
-  const { steps, step, point, zoom } = stepper<Screen>(l, { input: { kind: "empty" }, done: false });
+  const { steps, step, point } = stepper<Screen>(l, { input: { kind: "empty" }, done: false });
   const typing = point(l.at.typing, { typing: true });
-  step(0, {}, { caption: "顧客說已經付款，頻道還在待付款", shot: { zoom: 1 }, cursor: { ...typing, hidden: true } });
-  step(2000, {}, { caption: "商家在訂單頻道輸入 /payment recheck", shot: zoom(1.8, l.at.input), cursor: typing });
+  step(0, {}, { caption: "顧客說已經付款，頻道還在待付款", cursor: { ...typing, hidden: true } });
+  step(2000, {}, { caption: "商家在訂單頻道輸入 /payment recheck", cursor: typing });
   step(2300, { input: { kind: "typing", typed: "/pay" } }, { cursor: { ...typing, click: true } });
   step(2700, { input: { kind: "typing", typed: "/payment rech" } });
   step(3100, { input: { kind: "typing", typed: "/payment recheck" } });
   step(3800, { input: { kind: "options", options: [] } }, { caption: "不填付款編號，查這個頻道最後一筆待付款訂單" });
   step(5000, { input: { kind: "empty" }, done: true }, {
     caption: "速買配回報已付款：付款完成通知貼到頻道，頻道改名、換分類",
-    // The whole screen, so the renamed channel in its new category is in view.
-    shot: { zoom: 1 },
     cursor: { ...typing, hidden: true },
   });
-  step(7800, {}, { shot: zoom(1.15, l.at.result) });
-  step(11500, {}, { shot: { zoom: 1 } });
+  // Holds on the result before the loop starts over.
+  step(11500, {});
   return steps;
 }
 
@@ -149,7 +146,7 @@ const PROGRESS = {
 } as const satisfies Record<string, SnapshotId>;
 
 export type AllScreen = { input: InputState; progress: null | keyof typeof PROGRESS; summary: boolean };
-type AllTargets = { typing: CanvasPoint; input: CanvasArea; reply: CanvasArea; summary: CanvasArea };
+type AllTargets = { typing: CanvasPoint };
 type AllLayout = SceneLayout<AllTargets>;
 
 const ALL_WIDE: AllLayout = {
@@ -157,9 +154,6 @@ const ALL_WIDE: AllLayout = {
   h: 520,
   at: {
     typing: { x: 610, y: 482 },
-    input: { x: 0, y: 330, w: 640, h: 190 },
-    reply: { x: 40, y: 330, w: 600, h: 130 },
-    summary: { x: 40, y: 180, w: 600, h: 280 },
   },
 };
 const ALL_NARROW: AllLayout = {
@@ -167,29 +161,26 @@ const ALL_NARROW: AllLayout = {
   h: 560,
   at: {
     typing: { x: 380, y: 522 },
-    input: { x: 0, y: 370, w: 400, h: 190 },
-    reply: { x: 20, y: 370, w: 380, h: 130 },
-    summary: { x: 20, y: 200, w: 380, h: 300 },
   },
 };
 
 function allTimeline(l: AllLayout) {
-  const { steps, step, point, zoom } = stepper<AllScreen>(l, { input: { kind: "empty" }, progress: null, summary: false });
+  const { steps, step, point } = stepper<AllScreen>(l, { input: { kind: "empty" }, progress: null, summary: false });
   const typing = point(l.at.typing, { typing: true });
-  step(0, {}, { caption: "商家輸入 /payment recheck", shot: zoom(1.6, l.at.input), cursor: typing });
+  step(0, {}, { caption: "商家輸入 /payment recheck", cursor: typing });
   step(300, { input: { kind: "typing", typed: "/pay" } }, { cursor: { ...typing, click: true } });
   step(700, { input: { kind: "typing", typed: "/payment rech" } });
   step(1100, { input: { kind: "typing", typed: "/payment recheck" } });
   step(1800, { input: { kind: "options", options: [SCAN_ALL] } }, { caption: `「${SCAN_ALL.name}」選「${SCAN_ALL.value}」` });
   step(3800, { input: { kind: "empty" }, progress: "started" }, {
     caption: "機器人列出要檢查幾筆，開始一筆一筆查",
-    shot: zoom(1.6, l.at.reply),
     cursor: { ...typing, hidden: true },
   });
   step(5800, { progress: "progress" }, { caption: "每查完 5 筆，同一則訊息更新一次進度" });
   step(7800, { progress: "done" }, { caption: "查完最後一筆，進度停在 12/12" });
-  step(9300, { summary: true }, { caption: "接著貼出總結：幾筆更新成功、幾筆還沒付款", shot: zoom(1.3, l.at.summary) });
-  step(12800, {}, { shot: { zoom: 1 } });
+  step(9300, { summary: true }, { caption: "接著貼出總結：幾筆更新成功、幾筆還沒付款" });
+  // Holds on the summary before the loop starts over.
+  step(12800, {});
   return steps;
 }
 

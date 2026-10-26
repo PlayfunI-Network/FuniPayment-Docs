@@ -11,7 +11,6 @@ import {
   SnapshotMessage,
   SnapshotTabs,
   stepper,
-  type CanvasArea,
   type CanvasPoint,
   type InputState,
   type SceneLayout,
@@ -25,7 +24,7 @@ const CMD = slashCommand("payment review");
 const CHANNEL = DEMO_CHANNELS.command.name;
 
 export type Screen = { input: InputState; replies: ("pending" | "complete")[] };
-type Targets = { typing: CanvasPoint; input: CanvasArea; reply: CanvasArea };
+type Targets = { typing: CanvasPoint };
 type Layout = SceneLayout<Targets>;
 
 /** Measured on app/dev/payments-measure under next dev in Chrome at 1280px and 375px viewports. */
@@ -34,8 +33,6 @@ const WIDE: Layout = {
   h: 640,
   at: {
     typing: { x: 330, y: 602 },
-    input: { x: 0, y: 430, w: 640, h: 210 },
-    reply: { x: 40, y: 150, w: 600, h: 420 },
   },
 };
 const NARROW: Layout = {
@@ -43,30 +40,28 @@ const NARROW: Layout = {
   h: 680,
   at: {
     typing: { x: 300, y: 642 },
-    input: { x: 0, y: 470, w: 400, h: 210 },
-    reply: { x: 20, y: 190, w: 380, h: 420 },
   },
 };
 
 function timeline(l: Layout) {
-  const { steps, step, point, zoom } = stepper<Screen>(l, { input: { kind: "empty" }, replies: [] });
+  const { steps, step, point } = stepper<Screen>(l, { input: { kind: "empty" }, replies: [] });
   const typing = point(l.at.typing, { typing: true });
   const ask = (at: number, replies: Screen["replies"], caption: string, reply: string) => {
-    step(at, {}, { caption, shot: zoom(1.8, l.at.input), cursor: typing });
+    step(at, {}, { caption, cursor: typing });
     step(at + 300, { input: { kind: "typing", typed: "/pay" } }, { cursor: { ...typing, click: true } });
     step(at + 700, { input: { kind: "typing", typed: "/payment re" } });
     step(at + 1100, { input: { kind: "typing", typed: "/payment review" } });
     step(at + 1700, { input: { kind: "options", options: [] } });
     step(at + 2300, { input: { kind: "empty" }, replies }, {
       caption: reply,
-      shot: zoom(1.3, l.at.reply),
       cursor: { ...typing, hidden: true },
     });
   };
-  step(0, {}, { shot: { zoom: 1 }, cursor: { ...typing, hidden: true } });
+  step(0, {}, { cursor: { ...typing, hidden: true } });
   ask(400, ["pending"], "顧客輸入 /payment review，不填付款編號", "查到自己最近一筆訂單：「付款進度：尚未付款／待入帳」");
   ask(6000, ["pending", "complete"], "付款之後再查一次", "變成「付款進度：已繳費」，附上付款時間");
-  step(11800, {}, { shot: { zoom: 1 } });
+  // Holds on the second answer before the loop starts over.
+  step(11800, {});
   return steps;
 }
 

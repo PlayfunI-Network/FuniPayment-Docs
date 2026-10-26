@@ -76,27 +76,32 @@ type Layout = FpLayout;
 /**
  * Points and areas inside the Discord window (x from the window's left edge, CSS px), measured
  * on app/dev/fp under next dev in Chrome at 1280px and 375px viewports; each point sits inside
- * its button at both (the kit's sm: paddings move things by up to 8px).
+ * its button at both (the kit's sm: paddings move things by up to 8px). The window is 480 wide
+ * so the whole screen is drawn at 0.94 on a 678px stage: the embeds' 14px text shows at about
+ * 13px and the 12px category names at 11px, readable without zooming in (a 640px window came
+ * out at 0.77: 11px and 9px).
  */
 const WIDE: Layout = {
-  w: LIST_W + 640,
-  h: 780,
+  w: LIST_W + 480,
+  h: 720,
   left: LIST_W,
   list: true,
   at: {
     // Right of the typed text, so the I-beam never covers it.
-    typing: { x: 420, y: 741 },
-    input: { x: 0, y: 580, w: 440, h: 200 },
-    reply: { x: 40, y: 470, w: 560, h: 250 },
-    select: { x: 230, y: 681 },
-    menu: { x: 40, y: 380, w: 520, h: 340 },
-    option: { x: 200, y: 462 },
-    confirmScreen: { x: 40, y: 390, w: 560, h: 330 },
-    aside: { x: 560, y: 600 },
-    next: { x: 251, y: 686 },
-    buyer: { x: 40, y: 370, w: 560, h: 350 },
-    confirm: { x: 377, y: 686 },
-    order: { x: 40, y: 100, w: 600, h: 620 },
+    typing: { x: 380, y: 681 },
+    input: { x: 0, y: 520, w: 480, h: 200 },
+    reply: { x: 40, y: 350, w: 440, h: 310 },
+    select: { x: 230, y: 621 },
+    menu: { x: 40, y: 320, w: 440, h: 340 },
+    option: { x: 200, y: 402 },
+    confirmScreen: { x: 40, y: 290, w: 440, h: 370 },
+    aside: { x: 470, y: 540 },
+    next: { x: 251, y: 626 },
+    buyer: { x: 40, y: 190, w: 440, h: 470 },
+    // With the sm: paddings the buttons wrap: 確認並獲取付款碼 is alone on the second row (below
+    // a 640px viewport, where the wide layout shows only for a 600–607px stage, they fit on one).
+    confirm: { x: 136, y: 626 },
+    order: { x: 40, y: 80, w: 440, h: 580 },
   },
 };
 /**

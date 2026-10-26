@@ -11,7 +11,6 @@ import {
   DiscordScene,
   SnapshotMessage,
   stepper,
-  type CanvasArea,
   type CanvasPoint,
   type InputState,
   type SceneLayout,
@@ -28,7 +27,7 @@ const OPTIONS = [optionPill(CMD, "method", SCENARIO.method), optionPill(CMD, "am
 
 type Bot = "none" | "buyer" | "confirming" | "order";
 export type Screen = { input: InputState; bot: Bot };
-type Targets = { typing: CanvasPoint; input: CanvasArea; buyer: CanvasArea; confirm: CanvasPoint; aside: CanvasPoint; order: CanvasArea };
+type Targets = { typing: CanvasPoint; confirm: CanvasPoint; aside: CanvasPoint };
 type Layout = SceneLayout<Targets>;
 
 /** Measured on app/dev/payments-measure under next dev in Chrome at 1280px and 375px viewports. */
@@ -37,32 +36,31 @@ const WIDE: Layout = {
   h: 720,
   at: {
     typing: { x: 420, y: 682 },
-    input: { x: 0, y: 500, w: 640, h: 220 },
-    buyer: { x: 40, y: 250, w: 600, h: 400 },
     confirm: { x: 390, y: 606 },
     aside: { x: 620, y: 520 },
-    order: { x: 40, y: 250, w: 600, h: 400 },
   },
 };
+/**
+ * 360 wide (not the usual 400): at a 343px stage it is drawn at 0.95, so 「只有你看得到這則訊息」
+ * (12px) shows at about 11.4px without zooming in (10.2px on a 400px canvas).
+ */
 const NARROW: Layout = {
-  w: 400,
+  w: 360,
   h: 760,
   at: {
-    typing: { x: 360, y: 722 },
-    input: { x: 0, y: 550, w: 400, h: 210 },
-    buyer: { x: 20, y: 215, w: 380, h: 475 },
+    // The two option pills wrap to a second line at this width; this stays right of the text.
+    typing: { x: 334, y: 722 },
     // The buttons wrap: 確認並獲取付款碼 is alone on the second row.
     confirm: { x: 136, y: 646 },
-    aside: { x: 390, y: 520 },
-    order: { x: 20, y: 280, w: 380, h: 410 },
+    aside: { x: 352, y: 520 },
   },
 };
 
 function timeline(l: Layout) {
-  const { steps, step, point, zoom } = stepper<Screen>(l, { input: { kind: "empty" }, bot: "none" });
+  const { steps, step, point } = stepper<Screen>(l, { input: { kind: "empty" }, bot: "none" });
   const typing = point(l.at.typing, { typing: true });
-  step(0, {}, { caption: "顧客在指令頻道輸入 /payment create", shot: { zoom: 1 }, cursor: { ...typing, hidden: true } });
-  step(600, {}, { shot: zoom(1.8, l.at.input), cursor: typing });
+  step(0, {}, { caption: "顧客在指令頻道輸入 /payment create", cursor: { ...typing, hidden: true } });
+  step(600, {}, { cursor: typing });
   step(900, { input: { kind: "typing", typed: "/pay" } }, { cursor: { ...typing, click: true } });
   step(1300, { input: { kind: "typing", typed: "/payment cr" } });
   step(1700, { input: { kind: "typing", typed: "/payment create" } });
@@ -72,7 +70,6 @@ function timeline(l: Layout) {
   step(3200, { input: { kind: "options", options: OPTIONS } });
   step(4100, { input: { kind: "empty" }, bot: "buyer" }, {
     caption: "購買人資訊只有顧客自己看得到，上次填過的會自動帶入",
-    shot: zoom(1.4, l.at.buyer),
     cursor: { ...point(l.at.aside), hidden: true },
   });
   step(6300, {}, { caption: "確認沒問題，按「確認並獲取付款碼」", cursor: point(l.at.confirm) });
@@ -80,10 +77,10 @@ function timeline(l: Layout) {
   step(7600, { bot: "confirming" }, { cursor: point(l.at.aside) });
   step(8700, { bot: "order" }, {
     caption: "訂單建立，銀行帳號和付款期限貼在頻道裡",
-    shot: zoom(1.15, l.at.order),
     cursor: { ...point(l.at.aside), hidden: true },
   });
-  step(11800, {}, { shot: { zoom: 1 } });
+  // Holds on the order before the loop starts over.
+  step(11800, {});
   return steps;
 }
 
