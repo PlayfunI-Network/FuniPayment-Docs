@@ -32,8 +32,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe.each(DEMOS)("$shot demo", ({ shot, steps: both, Demo }) => {
-  const steps = both.desktop;
+describe.each(DEMOS)("$shot demo", ({ shot, steps, Demo }) => {
 
   it("runs 6 to 15 seconds, in order", () => {
     const last = steps[steps.length - 1].at;
@@ -42,18 +41,18 @@ describe.each(DEMOS)("$shot demo", ({ shot, steps: both, Demo }) => {
     steps.forEach((s, i) => i > 0 && expect(s.at).toBeGreaterThan(steps[i - 1].at));
   });
 
-  it("plays the same steps on the phone, only zooming differently", () => {
-    const withoutZoom = (list: typeof steps) => list.map((s) => ({ ...s, zoom: undefined }));
-    expect(withoutZoom(both.phone)).toEqual(withoutZoom(steps));
-    expect(both.phone[both.phone.length - 1].zoom).toBe(1);
+  it("never zooms: the whole picture is readable", () => {
+    for (const layout of ["desktop", "mobile"] as const) {
+      for (const f of resolveSteps(dashboardPicture, shot, steps, layout)) expect(f.shot?.zoom ?? 1).toBe(1);
+    }
   });
 
   it("uses the phone pictures on a narrow stage", () => {
-    expect(chooseLayout(DASHBOARD_SHOTS, shot, both.phone, true)).toBe("mobile");
+    expect(chooseLayout(DASHBOARD_SHOTS, shot, steps, true)).toBe("mobile");
   });
 
   it.each(["desktop", "mobile"] as const)("aims inside the %s stage", (layout) => {
-    for (const f of resolveSteps(dashboardPicture, shot, layout === "mobile" ? both.phone : steps, layout)) {
+    for (const f of resolveSteps(dashboardPicture, shot, steps, layout)) {
       if (!f.cursor || f.cursor.hidden) continue;
       expect(f.cursor.x, `${f.at}`).toBeGreaterThan(0);
       expect(f.cursor.x, `${f.at}`).toBeLessThan(1);

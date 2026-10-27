@@ -128,7 +128,7 @@ import { FpDemo } from "@/components/demos/payments/fp-demo";
 
 ## 後台示範
 
-後台的示範不用自己量座標。`npm run capture` 已經把後台每個要用的畫面拍好（深淺色、桌面 1280 和手機 375 各一張），連同畫面上每個「目標」元素的位置一起存進 `content/dashboard-shots.generated.json`。`DashboardDemo` 用目標的名字指揮游標和鏡頭：
+後台的示範不用自己量座標。`npm run capture` 已經把後台每個要用的畫面拍好（深淺色、桌面 700 和手機 375 各一張；桌面用 700 寬的視窗拍，是後台在這個寬度真實的版面，放進約 680 px 的舞台字還有 11–12 px，所以後台示範不用放大），連同畫面上每個「目標」元素的位置一起存進 `content/dashboard-shots.generated.json`。`DashboardDemo` 用目標的名字指揮游標和鏡頭：
 
 ```tsx
 "use client";
@@ -137,13 +137,13 @@ import { DashboardDemo, type DashboardStep } from "@/components/demo";
 // 一樣要是模組層級的常數
 const STEPS: DashboardStep[] = [
   { at: 0, caption: "打開「付款方式與手續費」分頁", target: "tabPayment" },
-  { at: 1500, caption: "關掉「萊爾富超商代碼」", target: "hilife", zoom: 2 },
+  { at: 1500, caption: "關掉「萊爾富超商代碼」", target: "hilife" },
   { at: 2400, target: "hilife", click: true },
   { at: 2700, swapTo: "settings-payment-edited" },
-  { at: 4000, caption: "按「儲存變更」", target: "save", zoom: 1.6 },
+  { at: 4000, caption: "按「儲存變更」", target: "save" },
   { at: 4800, target: "save", click: true },
   { at: 5100, caption: "看到「已儲存」就完成了", swapTo: "settings-payment-saved", target: "saved" },
-  { at: 7500, zoom: 1, hideCursor: true },
+  { at: 7500, hideCursor: true },
 ];
 
 export function PaymentSaveDemo() {
