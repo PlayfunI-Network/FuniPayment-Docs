@@ -29,10 +29,17 @@ const OWN_SERVER = "222222222222222004"; // added by demo-data.mjs (DEMO_EXTRA_S
 const BASE = `/servers/${SERVER}`;
 const ORDER = "50000000001"; // the first fixture order (shown as 050000000001)
 
-/** The wizard's 900px window, as the welcome tour and /setup were taken in Task 6. */
-const WIZARD_VIEWPORT = { w: 900, h: 900 };
-/** The merchant pages: a desktop window with the sidebar (the dashboard's lg layout). */
-const DESKTOP = { w: 1280, h: 900 };
+/**
+ * The window of the "desktop" pictures. The docs show them on a stage about 680 px wide (the
+ * wizard's 635), so a 1280 px page came out at half size and its 11.5–13 px text at 6–7 px. At
+ * 700 px the dashboard is laid out for that width (below lg: the top bar instead of the sidebar,
+ * no md: rules on the merchant pages) and the same text shows at 11–12 px on the whole picture.
+ */
+const DESKTOP = { w: 700, h: 900 };
+/** The wizard: its column (max 760 px) fills the 700 px window. */
+const WIZARD_VIEWPORT = DESKTOP;
+/** The login page: at md (768 px) the card has its list of what the dashboard does beside it. */
+const LOGIN_VIEWPORT = { w: 768, h: 760 };
 export const MOBILE_VIEWPORT = { w: 375, h: 812 };
 
 const role = (kind, name) => `role=${kind}[name="${name}"s]`;
@@ -85,17 +92,6 @@ const toStep5 = [...toStep4, `click:${NEXT}`, `wait:${role("region", "設定摘�
 
 // ---- the merchant pages -----------------------------------------------------------------------
 
-const MAIN_NAV = role("navigation", "主要導覽");
-/** The sidebar (desktop only; phones open it from the menu button). */
-const SIDEBAR = {
-  serverSwitcher: role("button", "切換伺服器"),
-  navOverview: `${MAIN_NAV} >> ${role("link", "總覽")}`,
-  navOrders: `${MAIN_NAV} >> ${role("link", "訂單")}`,
-  navSettings: `${MAIN_NAV} >> ${role("link", "設定")}`,
-  navHistory: `${MAIN_NAV} >> ${role("link", "設定變更紀錄")}`,
-  navFeatures: `${MAIN_NAV} >> ${role("link", "功能說明")}`,
-  theme: role("radiogroup", "主題"),
-};
 
 const OVERVIEW_TARGETS = {
   checklist: role("region", "開始使用"),
@@ -120,7 +116,7 @@ const OVERVIEW_TARGETS = {
 };
 
 /** The period bar scrolls sideways on phones, with 自訂… out of view at first. */
-const OVERVIEW_DESKTOP = { ...SIDEBAR, periodCustom: role("button", "自訂…") };
+const OVERVIEW_DESKTOP = { periodCustom: role("button", "自訂…") };
 
 const ORDERS_TARGETS = {
   scope: "role=button[name=/^資料範圍/]",
@@ -135,10 +131,9 @@ const ORDERS_TARGETS = {
   dateFilter: role("button", "建立日期"),
   firstOrder: role("link", "訂單 050000000001"),
   pagination: role("navigation", "分頁"),
-  list: role("table", "訂單列表"),
+  // One card per order below lg (the table is for wider windows), on both pictures
+  list: role("list", "訂單列表（卡片）"),
 };
-/** The list is a table on the desktop and one card per order on phones. */
-const ORDERS_MOBILE = { list: role("list", "訂單列表（卡片）") };
 
 const SETTINGS_TABS = {
   tabs: role("navigation", "設定分頁"),
@@ -194,7 +189,7 @@ function settingsTab(tab, targets, edit, wideTargets = {}) {
   const all = { ...SETTINGS_TABS, ...targets };
   const wide = { ...SETTINGS_TABS_WIDE, ...wideTargets };
   return [
-    { id: `settings-${tab}`, identity: "owner", path, viewport: DESKTOP, targets: all, desktopTargets: { ...SIDEBAR, ...wide } },
+    { id: `settings-${tab}`, identity: "owner", path, viewport: DESKTOP, targets: all, desktopTargets: wide },
     { id: `settings-${tab}-edited`, identity: "owner", path, viewport: DESKTOP, actions: edit, targets: { ...all, ...SAVE_BAR }, desktopTargets: wide },
     { id: `settings-${tab}-saved`, identity: "owner", path, viewport: DESKTOP, actions: [...edit, ...save], targets: { ...all, ...SAVED }, desktopTargets: wide },
   ];
@@ -271,7 +266,7 @@ export const SHOTS = [
     id: "login",
     identity: "none",
     path: "/login",
-    viewport: DESKTOP,
+    viewport: LOGIN_VIEWPORT,
     targets: { login: role("link", "使用 Discord 登入") },
     // The list of what the dashboard does sits beside the login card on wide screens only
     desktopTargets: { highlights: "main ul" },
@@ -420,7 +415,7 @@ export const SHOTS = [
   },
 
   // ---- 訂單 ----
-  { id: "orders", identity: "owner", path: `${BASE}/orders`, viewport: DESKTOP, targets: ORDERS_TARGETS, desktopTargets: SIDEBAR, mobileTargets: ORDERS_MOBILE },
+  { id: "orders", identity: "owner", path: `${BASE}/orders`, viewport: DESKTOP, targets: ORDERS_TARGETS },
   // The 付款方式 filter's menu is not taken: it lists a method whose name the site must not show.
   {
     id: "orders-type-menu",
@@ -434,10 +429,9 @@ export const SHOTS = [
       typePayment: `role=dialog >> ${role("link", "一般訂單")}`,
       typeTopup: `role=dialog >> ${role("link", "儲值")}`,
     },
-    mobileTargets: ORDERS_MOBILE,
   },
-  { id: "orders-complete", identity: "owner", path: `${BASE}/orders?status=complete`, viewport: DESKTOP, targets: ORDERS_TARGETS, mobileTargets: ORDERS_MOBILE },
-  { id: "orders-search", identity: "owner", path: `${BASE}/orders?q=SHOP-001`, viewport: DESKTOP, targets: ORDERS_TARGETS, mobileTargets: ORDERS_MOBILE },
+  { id: "orders-complete", identity: "owner", path: `${BASE}/orders?status=complete`, viewport: DESKTOP, targets: ORDERS_TARGETS },
+  { id: "orders-search", identity: "owner", path: `${BASE}/orders?q=SHOP-001`, viewport: DESKTOP, targets: ORDERS_TARGETS },
   {
     id: "order-detail",
     identity: "owner",
@@ -453,7 +447,6 @@ export const SHOTS = [
       customer: role("region", "顧客"),
       invoice: role("region", "發票與備註"),
     },
-    desktopTargets: SIDEBAR,
   },
 
   // ---- 設定 ----
@@ -489,22 +482,14 @@ export const SHOTS = [
     viewport: DESKTOP,
     targets: {
       intro: "main p:has-text('都會記在這裡')",
-      list: role("table", "設定變更紀錄"),
-      webRow: "role=row[name=/管理員身分組 管理員 管理員、VIP$/]",
-      secretRow: "role=row[name=/SmilePay 檢查碼/]",
-      systemRow: "role=row[name=/萊爾富超商代碼 開啟 關閉$/]",
-      createdRow: "role=row[name=/建立設定/]",
-      pagination: role("navigation", "分頁"),
-    },
-    // Phones show one card per change instead of the table
-    mobileTargets: {
+      // One card per change below lg (the table is for wider windows), on both pictures
       list: role("list", "設定變更紀錄（卡片）"),
       webRow: 'li:has-text("管理員身分組")',
       secretRow: 'li:has-text("SmilePay 檢查碼")',
       systemRow: 'li:has-text("萊爾富超商代碼")',
       createdRow: 'li:has-text("建立設定")',
+      pagination: role("navigation", "分頁"),
     },
-    desktopTargets: SIDEBAR,
   },
   {
     id: "features",
@@ -518,7 +503,6 @@ export const SHOTS = [
       dynamicVcChannels: `${role("region", "動態語音頻道改名")} >> role=list`,
       variables: "main details",
     },
-    desktopTargets: SIDEBAR,
   },
   {
     id: "features-variables-open",
