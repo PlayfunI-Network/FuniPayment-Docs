@@ -2,7 +2,7 @@
 import { render, screen } from "@testing-library/react";
 import { DiscordScene, dashboardPicture } from "@/components/demo";
 import { BOT_UI } from "@/content/bot-ui.generated";
-import { PHONE_STEPS as SETTINGS_PHONE_STEPS, STEPS as SETTINGS_STEPS } from "./balance-settings-demo";
+import { STEPS as SETTINGS_STEPS } from "./balance-settings-demo";
 import * as add from "./balance-add-demo";
 import * as history from "./balance-history-demo";
 import * as pay from "./pay-with-balance-demo";
@@ -76,13 +76,7 @@ describe("balance demos", () => {
     expect(SETTINGS_STEPS[SETTINGS_STEPS.length - 1].at).toBeLessThanOrEqual(15000);
   });
 
-  it("keeps one zoom on the desktop pictures and none on the phone pictures, both ending on the whole picture", () => {
-    const zooms = SETTINGS_STEPS.flatMap((s) => (s.zoom === undefined ? [] : [s.zoom]));
-    expect(zooms.slice(0, -1).every((z) => z === zooms[0])).toBe(true);
-    expect(zooms.at(-1)).toBe(1);
-    expect(SETTINGS_PHONE_STEPS.every((s) => s.zoom === undefined || s.zoom === 1)).toBe(true);
-    // The phone steps are the desktop ones but for the zoom.
-    const withoutZoom = (s: object) => ({ ...s, zoom: undefined });
-    expect(SETTINGS_PHONE_STEPS.map(withoutZoom)).toEqual(SETTINGS_STEPS.map(withoutZoom));
+  it("never zooms the settings demo: the whole picture is readable", () => {
+    expect(SETTINGS_STEPS.every((s) => s.zoom === undefined && s.phoneZoom === undefined)).toBe(true);
   });
 });
