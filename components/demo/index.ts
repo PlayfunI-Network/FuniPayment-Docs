@@ -1,4 +1,4 @@
-export { DemoStage, frameAt, type DemoStep, type DemoFrame } from "./stage";
+export { DemoStage, frameAt, stageWidth, STAGE_MAX_H, STAGE_MAX_W, type DemoStep, type DemoFrame } from "./stage";
 export { Camera, CAMERA_MS } from "./camera";
 export { Cursor, CURSOR_MS, type CursorState } from "./cursor";
 export { Caption } from "./caption";
