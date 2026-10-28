@@ -105,6 +105,7 @@ bot 的字一律用 `SnapshotMessage` / `SnapshotEmbed` 畫，id 就是 ui.json 
 
 - 畫面畫在固定大小的畫布上，再縮放到舞台寬度，所以座標可以用畫布的 px 來算。共用的工具在 `components/demo`：`Canvas`（畫布）、`useWidth`（量寬度，用來選版面）、`canvasRect` / `canvasPoint`（畫布 px 換成鏡頭和游標要的比例）、`zoomTo`（放大）。
 - Discord 的示範不用自己寫外框。`DiscordDemo` 收寬版、窄版各一組 `{ layout, steps }`，舞台寬度小於 600 px 時換窄版並從頭播；`children(step, layout)` 用 `DiscordScene` 畫那一格。`DiscordScene` 是頻道列表（版面有 `list` 時）加上一或多個視窗（頻道或私訊，`grow` 分高度），訊息靠下、上方淡出。版面的型別是 `SceneLayout<座標>`，有頻道列表時 `left` 設成 `LIST_W`。
+- 舞台大小由 `DemoStage` 統一限制：最寬 720 px，最高 `min(600px, 100svh − 190px)`，高度超過時寬度跟著縮、置中，讓整段示範（含 caption）一個畫面就看得完。畫布做得越高，縮得越小，所以寬版畫布不要比 640×760 更瘦長；要放更多東西就把畫布做寬，不要做高。
 - 每種舞台寬度一個版面，各自量座標。fp 的寬版是 880×780，有頻道列表；舞台寬度小於 600 px 時換成窄版 400×760，沒有頻道列表，換版就重播。
 - 手機上的字要看得清楚：放大時文字換算後至少要有 11 px。窄版的畫布要做窄，不要把桌機的畫布直接縮小。fp 窄版在 343 px 的舞台上縮成 0.86 倍，embed 的 14 px 字約 12 px。
 - 座標要實際量，不要用猜的。開 `npm run dev`，到 `/dev/fp` 這類開發頁把每個畫面原尺寸畫出來，用 Playwright 讀元素的 `getBoundingClientRect`。1280 和 375 兩種寬度都要量：元件的 `sm:` 樣式在手機上會讓位置差到 8 px，點的位置要選在兩種寬度都還在按鈕裡的地方。

@@ -20,6 +20,23 @@ export type DemoFrame = {
   caption: { text: string; index: number; total: number } | null;
 };
 
+/**
+ * The tallest a stage gets: short enough that the stage and its caption fit on one screen under
+ * the docs header (100svh − 190px), and never taller than 600px on a big screen.
+ */
+export const STAGE_MAX_H = "min(600px, 100svh - 190px)";
+/** The widest a stage gets, even in a wider column (a 700px dashboard shot still reads at 11px+). */
+export const STAGE_MAX_W = "720px";
+
+/**
+ * The stage's width for `aspect` (CSS aspect-ratio, `w / h`): the column, but no wider than
+ * STAGE_MAX_W and no wider than keeps it within STAGE_MAX_H.
+ */
+export function stageWidth(aspect: string): string {
+  const [w, h = 1] = aspect.split("/").map((n) => Number(n.trim()));
+  return `min(100%, ${STAGE_MAX_W}, calc((${STAGE_MAX_H}) * ${w / h}))`;
+}
+
 const WIDE: Shot = { zoom: 1 };
 const NO_CURSOR: CursorState = { x: 0.5, y: 0.5, hidden: true };
 
@@ -42,7 +59,8 @@ export function frameAt(steps: DemoStep[], index: number): DemoFrame {
 
 /**
  * The frame every scripted demo plays in: a fixed-ratio screen (`aspect`, CSS aspect-ratio)
- * with a camera, a scripted cursor and optionally a caption line. To assistive tech it is one
+ * with a camera, a scripted cursor and optionally a caption line, centred and sized by
+ * stageWidth so the whole demo fits on one screen. To assistive tech it is one
  * image described by `label`; everything inside is hidden. The timeline plays once 30% of it
  * is visible, pauses off-screen, loops, and under reduced motion shows only the last step.
  * `children` draws the screen for a step, filling the stage. `steps` must keep its identity
@@ -68,7 +86,7 @@ export function DemoStage({
 
   return (
     <div ref={ref as RefObject<HTMLDivElement>} role="img" aria-label={label} className="not-prose my-6">
-      <div aria-hidden="true">
+      <div aria-hidden="true" className="mx-auto" style={{ width: stageWidth(aspect) }}>
         <div
           ref={viewportRef}
           className="relative overflow-hidden rounded-xl border border-[var(--line)] bg-[var(--card)]"
