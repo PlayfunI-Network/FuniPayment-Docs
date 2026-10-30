@@ -6,3 +6,8 @@ out/
 next-env.d.ts
 .wrangler/
 .env*.local
+
+# IDE / AI tool folders
+.idea/
+.claude/
+.superpowers/
