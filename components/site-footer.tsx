@@ -1,5 +1,6 @@
 // The footer under every docs page (spec §4.3): the official site, the terms and the privacy
 // policy (on the official site, not copied here), the Discord community and the contact address.
+import { EXTERNAL_LINK_PROPS } from "@/lib/external-link";
 import { CONTACT_EMAIL, FOOTER_LINKS } from "@/lib/layout.shared";
 
 export function SiteFooter() {
@@ -9,7 +10,7 @@ export function SiteFooter() {
         <ul className="flex flex-wrap gap-x-5 gap-y-2">
           {FOOTER_LINKS.map((link) => (
             <li key={link.url}>
-              <a href={link.url} className="transition-colors hover:text-fd-foreground">
+              <a href={link.url} {...EXTERNAL_LINK_PROPS} className="transition-colors hover:text-fd-foreground">
                 {link.text}
               </a>
             </li>

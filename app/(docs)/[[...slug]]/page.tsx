@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import type { ComponentProps } from "react";
 import { notFound } from "next/navigation";
 import { SiteFooter } from "@/components/site-footer";
+import { EXTERNAL_LINK_PROPS, isExternalHref } from "@/lib/external-link";
 import { getMDXComponents } from "@/mdx-components";
 import { source } from "@/lib/source";
 
@@ -17,8 +18,15 @@ export default async function Page(props: Props) {
   const MDX = page.data.body;
   const PageLink = createRelativeLink(source, page);
   // A link to a file (/demo/tutorials/hilife.png) is a plain <a>: Next's Link would prefetch it as a page.
+  // A link to another site (dashboard, official site, Discord) opens in a new tab.
   const Link = (props: ComponentProps<"a">) =>
-    /^\/[^?#]*\.[a-z0-9]+(?:[?#]|$)/i.test(props.href ?? "") ? <a {...props} /> : <PageLink {...props} />;
+    isExternalHref(props.href) ? (
+      <a {...props} {...EXTERNAL_LINK_PROPS} />
+    ) : /^\/[^?#]*\.[a-z0-9]+(?:[?#]|$)/i.test(props.href ?? "") ? (
+      <a {...props} />
+    ) : (
+      <PageLink {...props} />
+    );
   return (
     <DocsPage toc={page.data.toc} full={page.data.full} footer={{ children: <SiteFooter /> }}>
       <DocsTitle>{page.data.title}</DocsTitle>
