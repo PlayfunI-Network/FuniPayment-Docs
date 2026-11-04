@@ -214,3 +214,17 @@ h3 {
     animation-iteration-count: 1 !important;
   }
 }
+
+/*
+ * 示範舞台最高 100svh − --demo-fold（見 components/demo/stage.tsx 的 STAGE_MAX_H）。
+ * --demo-fold 是頁首、標題、說明到 demo 的距離加上 caption，所以每頁開頭的 demo 一進頁面就整段看得到；
+ * 很矮的視窗至少留 420px（見 STAGE_MAX_H），寧可捲一點也不要縮到看不清楚。
+ */
+:root {
+  --demo-fold: 330px;
+}
+@media (min-width: 768px) {
+  :root {
+    --demo-fold: 280px;
+  }
+}
