@@ -28,9 +28,14 @@ export default async function Page(props: Props) {
       <PageLink {...props} />
     );
   return (
-    <DocsPage toc={page.data.toc} full={page.data.full} footer={{ children: <SiteFooter /> }}>
-      <DocsTitle>{page.data.title}</DocsTitle>
-      <DocsDescription>{page.data.description}</DocsDescription>
+    <DocsPage
+      toc={page.data.toc}
+      full={page.data.full}
+      footer={{ children: <SiteFooter /> }}
+      breadcrumb={{ className: "max-md:hidden" }}
+    >
+      <DocsTitle className="max-md:text-[1.5em] max-md:leading-snug">{page.data.title}</DocsTitle>
+      <DocsDescription className="mb-2 max-md:text-base">{page.data.description}</DocsDescription>
       <DocsBody>
         <MDX components={getMDXComponents({ a: Link })} />
       </DocsBody>

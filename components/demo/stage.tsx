@@ -22,9 +22,12 @@ export type DemoFrame = {
 
 /**
  * The tallest a stage gets: short enough that the stage and its caption fit on one screen under
- * the docs header (100svh − 190px), and never taller than 600px on a big screen.
+ * what sits above it (`--demo-fold` in globals.css: the docs header, or on a wide screen the page
+ * title and description, so a page's opening demo is whole on arrival), but at least 420px on a
+ * very short screen (better to scroll a little than to shrink past reading), and never taller
+ * than 600px on a big screen.
  */
-export const STAGE_MAX_H = "min(600px, 100svh - 190px)";
+export const STAGE_MAX_H = "min(600px, max(420px, 100svh - var(--demo-fold, 190px)))";
 /** The widest a stage gets, even in a wider column (a 700px dashboard shot still reads at 11px+). */
 export const STAGE_MAX_W = "720px";
 
@@ -85,7 +88,7 @@ export function DemoStage({
   const frame = frameAt(steps, index);
 
   return (
-    <div ref={ref as RefObject<HTMLDivElement>} role="img" aria-label={label} className="not-prose my-6">
+    <div ref={ref as RefObject<HTMLDivElement>} role="img" aria-label={label} className="not-prose my-6 first:mt-0">
       <div aria-hidden="true" className="mx-auto" style={{ width: stageWidth(aspect) }}>
         <div
           ref={viewportRef}
