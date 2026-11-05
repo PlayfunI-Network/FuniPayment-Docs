@@ -1,49 +1,55 @@
-# FunI 付款系統 說明文件（docs.funipay.net）
+# FunI 付款系統說明文件
 
-FunI 付款系統（Discord 收款機器人）的使用說明。用 [Fumadocs](https://fumadocs.dev) 與 Next.js 16 做成純靜態網站（`output: "export"`），沒有後端，建置後只有 `out/` 資料夾的靜態檔案。內容只有繁體中文。
+[FunI 付款系統](https://funipay.net)（Discord 收款機器人）的官方使用說明，網站位於 **[docs.funipay.net](https://docs.funipay.net)**。
 
-## 指令
+本網站以 [Fumadocs](https://fumadocs.dev) 與 Next.js 建置為純靜態網站，內容以繁體中文撰寫。
+
+## 開發環境
+
+需求：Node.js 22.12 以上。
 
 ```bash
 npm install
 npm run dev         # 開發伺服器 http://localhost:3000
-npm run build       # 建置，輸出到 out/（含搜尋索引 out/api/search）
+npm run build       # 建置靜態網站，輸出至 out/
 npm test            # 單元測試（Vitest）
-npm run lint
-npm run typecheck
+npm run lint        # 程式碼檢查（ESLint）
+npm run typecheck   # 型別檢查（TypeScript）
 ```
 
 其他指令：
 
-- `npm run check:export`：建置後檢查 `out/`（必要檔案、禁用字詞、大小上限）。
-- `npm run sync:bot`：從機器人專案同步 bot 上的文字，產生 `bot-ui.generated.ts`。
-- `npm run capture`：重新擷取後台截圖。
+| 指令 | 說明 |
+| --- | --- |
+| `npm run check:export` | 建置後檢查 `out/`：必要檔案、禁用字詞與檔案大小上限 |
+| `npm run sync:bot` | 從機器人專案同步介面文字，產生 `content/bot-ui.generated.ts` |
+| `npm run capture` | 重新擷取網頁後台截圖 |
+| `npm run list:materials` | 列出示範可使用的機器人畫面與後台截圖 |
 
-## 內容怎麼改
+`sync:bot`、`capture` 以及部分測試需要機器人專案的原始碼，請以環境變數 `FUNIPAY_BOT_DIR` 指定其路徑。
 
-- 頁面都在 `content/docs/`，一頁一個 `.mdx`，網址就是檔案路徑（`content/docs/payments/fp.mdx` 是 `/payments/fp`），文件放在根路徑，不帶 `/docs`。
-- 每個資料夾的 `meta.json` 決定側邊欄的標題與順序。
-- 站名、導覽列連結在 `lib/layout.shared.tsx`；顏色與字型在 `app/globals.css`，色彩 token 與官網（funipay.net）一致，深色為預設，可切淺色。
-- 搜尋是建置時產生的靜態索引，瀏覽器自己下載後搜尋。中文用 `lib/search.ts` 的 `tokenizeZh` 斷詞（單字加相鄰雙字），伺服器端建索引與瀏覽器端查詢共用同一個。
+## 目錄結構
 
-## 部署到 Cloudflare
+| 路徑 | 內容 |
+| --- | --- |
+| `content/docs/` | 文件頁面（MDX）。網址即檔案路徑，例如 `content/docs/payments/fp.mdx` 對應 `/payments/fp` |
+| `content/docs/**/meta.json` | 側邊欄的標題與排列順序 |
+| `components/` | 互動示範與 Discord 介面元件 |
+| `lib/` | 共用邏輯（搜尋斷詞、手續費計算、示範情境等） |
+| `app/` | Next.js 路由與版面 |
+| `public/` | 圖片等靜態資源 |
+| `scripts/` | 建置、檢查與素材同步腳本 |
 
-設定檔是 `wrangler.jsonc`（Workers 靜態資源，目錄 `./out`，找不到頁面時回傳 `404.html`）。
+站名與導覽列設定位於 `lib/layout.shared.tsx`，色彩與字型位於 `app/globals.css`。
 
-### 手動部署
+## 搜尋
 
-```bash
-npx wrangler login        # 第一次，瀏覽器登入 Cloudflare
-npm run build
-npx wrangler deploy
-```
+搜尋索引於建置時產生為靜態檔案，由瀏覽器下載後在本機搜尋。中文斷詞由 `lib/search.ts` 處理，建立索引與查詢時共用同一套規則。
 
-第一次部署後，到 Cloudflare 控制台 Workers & Pages → `funipay-docs` → Settings → Domains & Routes，新增自訂網域 `docs.funipay.net`。
+## 部署
 
-### 或：連接 Git（Workers Builds）
+網站部署於 Cloudflare Workers（靜態資源），設定檔為 `wrangler.jsonc`。推送至 `main` 分支後會自動建置（`npm run build`）並部署 `out/` 的內容。
 
-在 Workers & Pages → `funipay-docs` → Settings → Builds 連接 Git 儲存庫，Build command 填 `npm run build`，Deploy command 填 `npx wrangler deploy`。之後每次推送到指定分支自動部署。
+## 授權
 
-### 關於 Vercel
-
-Vercel 的 Hobby 方案禁止商業用途，要用就得升級 Pro（每月 US$20）。這個網站有商業性質，所以預設用 Cloudflare。
+本專案以 [MIT License](LICENSE) 授權。
