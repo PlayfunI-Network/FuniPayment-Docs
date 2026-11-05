@@ -8,7 +8,7 @@
   "type": "module",
   "scripts": {
     "dev": "next dev --webpack",
-    "build": "next build && node scripts/flatten-segments.mjs",
+    "build": "node scripts/ensure-full-history.mjs && next build && node scripts/flatten-segments.mjs && node scripts/publish-markdown.mjs",
     "test": "vitest run",
     "check:export": "node scripts/check-export.mjs",
     "sync:bot": "node scripts/sync-bot-ui.mjs",

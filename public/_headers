@@ -1,0 +1,15 @@
+# A static host guesses these files' charset; the text is Chinese, so state it.
+# The Markdown copies stay readable to any crawler but out of search results (the HTML page is
+# the one to rank); so does the search index.
+/*.md
+  Content-Type: text/markdown; charset=utf-8
+  X-Robots-Tag: noindex
+
+/llms.txt
+  Content-Type: text/plain; charset=utf-8
+
+/llms-full.txt
+  Content-Type: text/plain; charset=utf-8
+
+/api/*
+  X-Robots-Tag: noindex
