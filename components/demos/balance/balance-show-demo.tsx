@@ -2,16 +2,17 @@
 // /balance show: the customer asks for their balance in the commands channel and the bot answers
 // in the channel with the blue balance embed (mode 公開顯示).
 import {
+  type CanvasPoint,
   ChatMessage,
   CommandInput,
   DiscordDemo,
   DiscordScene,
-  SnapshotMessage,
-  stepper,
-  type CanvasPoint,
   type InputState,
+  newestIn,
   type Pane,
   type SceneLayout,
+  SnapshotMessage,
+  stepper,
 } from "@/components/demo";
 import { optionPill, slashCommand } from "@/lib/commands";
 import { DEMO_CHANNELS } from "@/lib/scenario";
@@ -78,9 +79,9 @@ function timeline(l: Layout) {
   });
   step(4200, { panes: channel({ kind: "empty" }, true) }, {
     caption: "機器人在頻道貼出顧客目前的點數",
-    cursor: { ...typing, hidden: true },
+    highlight: newestIn("channel"),
   });
-  step(7000, {}, {});
+  step(6400, {}, {});
   return steps;
 }
 

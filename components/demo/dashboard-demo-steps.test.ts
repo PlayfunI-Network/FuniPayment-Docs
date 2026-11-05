@@ -5,6 +5,7 @@ import {
   panoramaSpan,
   closeShot,
   resolveSteps,
+  showsOnly,
   shotsUsed,
   stageRatio,
   wholePlacement,
@@ -24,15 +25,34 @@ const SHOTS: Record<string, DashboardShotData> = {
 const picture: PictureOf = (id, layout) => (layout === "mobile" ? SHOTS[id].mobile! : SHOTS[id]);
 
 describe("resolveSteps", () => {
-  test("目標換算成舞台上的位置，游標在中心；一開始是全景", () => {
+  test("目標換算成舞台上的位置，按的時候游標在中心；一開始是全景", () => {
     const steps: DashboardStep[] = [
-      { at: 0, caption: "看標題", target: "title" },
+      { at: 0, caption: "移到儲存", target: "save" },
       { at: 900, target: "save", click: true },
     ];
     const [a, b] = resolveSteps(picture, "short", steps, "desktop");
     // The short picture fits: stage ratio 0.5, placed as is
-    expect(a).toMatchObject({ at: 0, caption: "看標題", shotId: "short", view: "whole", shot: { zoom: 1 }, cursor: { x: expect.closeTo(0.3), y: expect.closeTo(0.15), hidden: false } });
+    expect(a).toMatchObject({ at: 0, caption: "移到儲存", shotId: "short", view: "whole", shot: { zoom: 1 }, cursor: { x: expect.closeTo(0.85), y: expect.closeTo(0.85), hidden: false } });
+    expect(a.highlight).toBeUndefined();
     expect(b.cursor).toMatchObject({ x: expect.closeTo(0.85), y: expect.closeTo(0.85), click: true });
+  });
+
+  test("只是給人看的目標（沒按也沒打字）框紅框，游標停在框的右下角", () => {
+    const steps: DashboardStep[] = [
+      { at: 0, caption: "看標題", target: "title" },
+      { at: 900, view: "close" },
+      { at: 1800, target: "save", click: true },
+      { at: 2100, swapTo: "tall", target: "top" },
+    ];
+    expect(steps.map((_, i) => showsOnly(steps, i))).toEqual([true, false, false, true]);
+    const [a, b, c] = resolveSteps(picture, "short", steps, "desktop");
+    expect(a.highlight).toEqual({ x: 0.1, y: expect.closeTo(0.1), w: 0.4, h: expect.closeTo(0.1) });
+    expect(a.cursor).toMatchObject({ x: expect.closeTo(0.5 - 0.012), y: expect.closeTo(0.2 - 0.01) });
+    // A step that only moves the camera keeps the frame; pressing elsewhere ends it
+    expect(b.highlight).toBeUndefined();
+    expect(c.cursor?.click).toBe(true);
+    // The page a press opened, with the cursor still on the button, is not framed
+    expect(showsOnly([{ at: 0, target: "save", click: true }, { at: 300, swapTo: "tall", target: "save" }], 1)).toBe(false);
   });
 
   test("長截圖縮窄放進舞台；close 把它放大到跟舞台一樣寬，對準目標", () => {
@@ -51,8 +71,8 @@ describe("resolveSteps", () => {
     // The close camera follows a new target: lower on the page
     expect(c.shot!.focus!.y).toBeGreaterThan(b.shot!.focus!.y);
     expect(d).toMatchObject({ view: "whole", shot: { zoom: 1 } });
-    // The cursor is on the narrowed picture
-    expect(a.cursor!.x).toBeCloseTo(at.x + 0.2 * at.w);
+    // The frame is on the narrowed picture
+    expect((a.highlight as { x: number }).x).toBeCloseTo(at.x + 0.1 * at.w);
   });
 
   test("close 的鏡頭：比舞台看得到的還高的目標對準上緣；已經跟舞台一樣寬的截圖不放大", () => {
@@ -154,7 +174,7 @@ describe("whole", () => {
   });
 
   test("整張顯示，游標照放好的位置指到目標；close 也不放大第一張", () => {
-    const [a, b] = resolveSteps(whole, "page", steps, "desktop", true);
+    const [a, b] = resolveSteps(whole, "page", steps.map((s) => ({ ...s, click: true })), "desktop", true);
     expect(a.shot).toEqual({ zoom: 1 });
     expect(resolveSteps(whole, "page", [{ at: 0, target: "button", view: "close" }], "desktop", true)[0].shot).toEqual({ zoom: 1 });
     expect(a.cursor).toMatchObject({ x: expect.closeTo(0.6), y: expect.closeTo(0.525) });

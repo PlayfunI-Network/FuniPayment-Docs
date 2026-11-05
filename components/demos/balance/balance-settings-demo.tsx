@@ -30,7 +30,7 @@ export const STEPS: DashboardStep[] = [
   { at: 10600, caption: "按「儲存變更」", target: "save", view: "whole" },
   { at: 11700, target: "save", click: true },
   { at: 12000, caption: "看到「已儲存」就生效了", swapTo: "settings-balance-roles-saved", target: "saved" },
-  { at: 14400, hideCursor: true },
+  { at: 14000, hideCursor: true },
 ];
 
 export function BalanceSettingsDemo() {

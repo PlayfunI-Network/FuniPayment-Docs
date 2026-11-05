@@ -3,13 +3,14 @@
 // AUTO_REPLY_TRIGGERS) thinking it is a person, and the bot answers that it is a bot and to ask
 // the shop's staff. The customer's words are illustrative; the reply comes from the snapshot.
 import {
+  type CanvasPoint,
   ChatMessage,
   DiscordDemo,
   DiscordScene,
+  newestIn,
+  type SceneLayout,
   SnapshotMessage,
   stepper,
-  type CanvasPoint,
-  type SceneLayout,
 } from "@/components/demo";
 import { ChatInput } from "@/components/discord";
 import { DEMO_BOT } from "@/lib/scenario";
@@ -46,9 +47,9 @@ function timeline(l: Layout) {
   step(1400, { typed: "在嗎？" });
   step(1800, { typed: "在嗎？我剛剛" });
   step(2200, { typed: TYPED });
-  step(3100, { typed: "", sent: true }, { caption: "訊息裡有觸發的字詞，這裡是在嗎", cursor: { ...typing, hidden: true } });
-  step(4300, { reply: true }, { caption: "機器人自動回覆：它不是真人，訂單問題請找客服" });
-  step(9500, {}, {});
+  step(3100, { typed: "", sent: true }, { caption: "訊息裡有觸發的字詞，這裡是在嗎", highlight: newestIn("dm") });
+  step(5100, { reply: true }, { caption: "機器人自動回覆：它不是真人，訂單問題請找客服", highlight: newestIn("dm") });
+  step(7600, {}, {});
   return steps;
 }
 

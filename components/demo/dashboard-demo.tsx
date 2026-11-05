@@ -5,7 +5,6 @@
 // Under reduced motion it shows the panorama instead: the part of each shot the steps use, with a
 // numbered marker on each caption's target and the captions listed below (Task 4 ruling).
 import { useMemo, useRef, useSyncExternalStore } from "react";
-import type { Rect } from "@/lib/camera";
 import {
   chooseLayout,
   demoRatio,
@@ -21,14 +20,13 @@ import {
 import { DASHBOARD_SHOTS, DashboardShot, dashboardPicture, type DashboardLayout } from "./dashboard-shot";
 import { useWidth } from "./canvas";
 import { HeroFrame } from "./hero";
+import { HighlightFrame } from "./highlight";
 import { DemoStage } from "./stage";
 
 export type { DashboardStep } from "./dashboard-demo-steps";
 
 const REDUCED_MOTION = "(prefers-reduced-motion: reduce)";
 
-/** A Rect (fractions of the picture) as an absolutely positioned box over it. */
-const rectStyle = (r: Rect) => ({ left: `${r.x * 100}%`, top: `${r.y * 100}%`, width: `${r.w * 100}%`, height: `${r.h * 100}%` });
 
 function subscribeReduced(onChange: () => void) {
   if (typeof window.matchMedia !== "function") return () => {};
@@ -135,7 +133,7 @@ function PanoramaPicture({ id, layout, ratio, markers }: { id: string; layout: D
       <div className="absolute inset-x-0 top-0" style={{ transform: `translateY(${(-span.top / tall) * 100}%)` }}>
         <DashboardShot id={id} layout={layout} />
         {markers.map((m) => (
-          <div key={m.number} data-marker={m.number} className="absolute rounded-md outline-2 outline-[var(--brand)] outline" style={rectStyle(m.rect!)} />
+          <HighlightFrame key={m.number} marker={m.number} rect={m.rect!} />
         ))}
         {/* The numbers sit on each target's top-left corner, kept inside the picture; a number
             that would cover an earlier one (targets sharing a corner) moves right */}

@@ -3,16 +3,17 @@
 // customer sees, the click on 確認並轉帳, the success embed in its place, then the DM each side
 // gets (views/balance.py: confirm_callback sends both after the log channel's copy).
 import {
+  type CanvasPoint,
   ChatMessage,
   CommandInput,
   DiscordDemo,
   DiscordScene,
-  SnapshotMessage,
-  stepper,
-  type CanvasPoint,
   type InputState,
+  newestIn,
   type Pane,
   type SceneLayout,
+  SnapshotMessage,
+  stepper,
 } from "@/components/demo";
 import { Ephemeral } from "@/components/discord";
 import { optionPill, slashCommand } from "@/lib/commands";
@@ -129,12 +130,12 @@ function timeline(l: Layout) {
   });
   step(4500, {}, { cursor: point(l.at.confirm) });
   step(5500, {}, { cursor: point(l.at.confirm, { click: true }) });
-  step(5800, { panes: channel({ kind: "empty" }, "done") }, { caption: "轉帳完成，確認畫面換成「轉帳成功」", cursor: point(l.at.aside) });
+  step(5800, { panes: channel({ kind: "empty" }, "done") }, { caption: "轉帳完成，確認畫面換成「轉帳成功」", highlight: newestIn("channel") });
   step(7800, { panes: DMS }, {
     caption: `${DEMO_PEOPLE.buyer.name}和${SCENARIO.recipient}各收到一則私訊，寫著轉帳前後的餘額`,
-    cursor: { ...point(l.at.aside), hidden: true },
+    highlight: `${newestIn("sender")}, ${newestIn("receiver")}`,
   });
-  step(11500, {}, {});
+  step(10200, {}, {});
   return steps;
 }
 

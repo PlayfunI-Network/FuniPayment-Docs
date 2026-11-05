@@ -5,15 +5,16 @@
 // order lands in the channel. The channel is a command channel outside the ticket categories,
 // so nothing is renamed (illustrative name).
 import {
+  type CanvasPoint,
   ChatMessage,
   CommandInput,
   DiscordDemo,
   DiscordScene,
+  type InputState,
+  newestIn,
+  type SceneLayout,
   SnapshotMessage,
   stepper,
-  type CanvasPoint,
-  type InputState,
-  type SceneLayout,
 } from "@/components/demo";
 import { Ephemeral } from "@/components/discord";
 import { optionPill, slashCommand } from "@/lib/commands";
@@ -70,17 +71,17 @@ function timeline(l: Layout) {
   step(3200, { input: { kind: "options", options: OPTIONS } });
   step(4100, { input: { kind: "empty" }, bot: "buyer" }, {
     caption: "購買人資訊只有顧客自己看得到，上次填過的會自動帶入",
-    cursor: { ...point(l.at.aside), hidden: true },
+    highlight: newestIn("channel"),
   });
-  step(6300, {}, { caption: "確認沒問題，按「確認並獲取付款碼」", cursor: point(l.at.confirm) });
-  step(7300, {}, { cursor: point(l.at.confirm, { click: true }) });
-  step(7600, { bot: "confirming" }, { cursor: point(l.at.aside) });
-  step(8700, { bot: "order" }, {
+  step(6200, {}, { caption: "確認沒問題，按「確認並獲取付款碼」", cursor: point(l.at.confirm) });
+  step(7200, {}, { cursor: point(l.at.confirm, { click: true }) });
+  step(7500, { bot: "confirming" }, { cursor: point(l.at.aside) });
+  step(8600, { bot: "order" }, {
     caption: "訂單建立，銀行帳號和付款期限貼在頻道裡",
-    cursor: { ...point(l.at.aside), hidden: true },
+    highlight: newestIn("channel"),
   });
   // Holds on the order before the loop starts over.
-  step(11800, {});
+  step(10800, {});
   return steps;
 }
 

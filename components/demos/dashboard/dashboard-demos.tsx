@@ -16,10 +16,10 @@ export const OVERVIEW: DashboardStep[] = [
   { at: 1000, view: "close" },
   { at: 2200, target: "period7d", click: true },
   { at: 2500, swapTo: "overview-7d", target: "period7d" },
-  { at: 3600, caption: "四張卡是這段期間的主要指標，下面寫著比前一期多或少", target: "kpis" },
-  { at: 6400, caption: "「熱門時段」看顧客通常在星期幾、幾點付款", target: "heatmap" },
-  { at: 9200, caption: "「最近訂單」裡顧客的名字只露出第一個字", target: "recentOrders" },
-  { at: 12000, view: "whole", hideCursor: true },
+  { at: 3400, caption: "四張卡是這段期間的主要指標，下面寫著比前一期多或少", target: "kpis" },
+  { at: 5600, caption: "「熱門時段」看顧客通常在星期幾、幾點付款", target: "heatmap" },
+  { at: 7800, caption: "「最近訂單」裡顧客的名字只露出第一個字", target: "recentOrders" },
+  { at: 10000, view: "whole", hideCursor: true },
 ];
 
 /** Orders: search, open the order, read the buyer data only the detail shows. */
@@ -30,9 +30,9 @@ export const ORDERS: DashboardStep[] = [
   { at: 3400, caption: "列表只剩這一筆，點它打開明細", target: "firstOrder", view: "whole" },
   { at: 4600, target: "firstOrder", click: true },
   { at: 4900, caption: "明細才看得到買家完整的姓名、Email 和電話", swapTo: "order-detail", target: "customer" },
-  { at: 5900, view: "close" },
-  { at: 8200, caption: "時間軸列出建立訂單、完成付款和付款期限", target: "timeline" },
-  { at: 11000, view: "whole", hideCursor: true },
+  { at: 5800, view: "close" },
+  { at: 7400, caption: "時間軸列出建立訂單、完成付款和付款期限", target: "timeline" },
+  { at: 9600, view: "whole", hideCursor: true },
 ];
 
 /** 基本: pick a commands channel, save. */
@@ -41,10 +41,10 @@ export const BASIC: DashboardStep[] = [
   { at: 1000, view: "close" },
   { at: 2200, target: "commandChannels", click: true },
   { at: 2500, caption: "下方出現未儲存的變更", swapTo: "settings-basic-edited", target: "changes" },
-  { at: 4800, caption: "按「儲存變更」", target: "save", view: "whole" },
-  { at: 5900, target: "save", click: true },
-  { at: 6200, caption: "看到「已儲存」就完成了", swapTo: "settings-basic-saved", target: "saved" },
-  { at: 8900, hideCursor: true },
+  { at: 4700, caption: "按「儲存變更」", target: "save", view: "whole" },
+  { at: 5800, target: "save", click: true },
+  { at: 6100, caption: "看到「已儲存」就完成了", swapTo: "settings-basic-saved", target: "saved" },
+  { at: 8300, hideCursor: true },
 ];
 
 /** SmilePay: type the merchant verification parameter, save. */
@@ -55,8 +55,8 @@ export const SMILEPAY: DashboardStep[] = [
   { at: 3600, caption: "按「儲存變更」", target: "save", view: "whole" },
   { at: 4700, target: "save", click: true },
   { at: 5000, caption: "存好後欄位清空，下面還是寫「目前：已設定」", swapTo: "settings-smilepay-saved", target: "midParam" },
-  { at: 6000, view: "close" },
-  { at: 8600, view: "whole", hideCursor: true },
+  { at: 5800, view: "close" },
+  { at: 7600, view: "whole", hideCursor: true },
 ];
 
 /** 付款方式與手續費: turn one method off, change a fee, save. */
@@ -70,7 +70,7 @@ export const PAYMENT: DashboardStep[] = [
   { at: 6600, caption: "按「儲存變更」", target: "save", view: "whole" },
   { at: 7700, target: "save", click: true },
   { at: 8000, caption: "看到「已儲存」就完成了", swapTo: "settings-payment-fee-saved", target: "saved" },
-  { at: 10700, hideCursor: true },
+  { at: 10200, hideCursor: true },
 ];
 
 /** 訂單頻道流程: turn on the rename for expired orders with a name, save. */
@@ -82,7 +82,7 @@ export const CHANNELS: DashboardStep[] = [
   { at: 5000, caption: "按「儲存變更」", target: "save", view: "whole" },
   { at: 6100, target: "save", click: true },
   { at: 6400, caption: "看到「已儲存」就完成了", swapTo: "settings-channels-saved", target: "saved" },
-  { at: 9100, hideCursor: true },
+  { at: 8600, hideCursor: true },
 ];
 
 /** 點數系統: turn on top-ups, save. */
@@ -94,28 +94,28 @@ export const BALANCE: DashboardStep[] = [
   { at: 3600, caption: "按「儲存變更」", target: "save", view: "whole" },
   { at: 4700, target: "save", click: true },
   { at: 5000, caption: "看到「已儲存」就完成了", swapTo: "settings-balance-saved", target: "saved" },
-  { at: 7700, hideCursor: true },
+  { at: 7200, hideCursor: true },
 ];
 
 /** 設定變更紀錄: the four kinds of rows. */
 export const HISTORY: DashboardStep[] = [
   { at: 0, caption: "在網頁上改的設定：原本是什麼、改成什麼都看得到", target: "webRow" },
   { at: 1000, view: "close" },
-  { at: 3600, caption: "檢查碼這類秘密欄位只寫「已變更（不顯示內容）」", target: "secretRow" },
-  { at: 6200, caption: "系統自動關掉的付款方式，來源寫「系統」", target: "systemRow" },
-  { at: 8800, caption: "第一筆是「建立設定」", target: "createdRow" },
-  { at: 11400, view: "whole", hideCursor: true },
+  { at: 2800, caption: "檢查碼這類秘密欄位只寫「已變更（不顯示內容）」", target: "secretRow" },
+  { at: 5000, caption: "系統自動關掉的付款方式，來源寫「系統」", target: "systemRow" },
+  { at: 7200, caption: "第一筆是「建立設定」", target: "createdRow" },
+  { at: 9400, view: "whole", hideCursor: true },
 ];
 
 /** 功能說明: the two features, then the template variables. */
 export const FEATURES: DashboardStep[] = [
   { at: 0, caption: "「自動發佈公告」列出目前啟用的頻道", target: "autoPublish" },
   { at: 1000, view: "close" },
-  { at: 3400, caption: "「動態語音頻道改名」列出頻道和它的範本", target: "dynamicVc" },
-  { at: 6000, caption: "打開「可用的範本變數」", target: "variables" },
-  { at: 7200, target: "variables", click: true },
-  { at: 7500, caption: "每個變數後面寫著它代表什麼", swapTo: "features-variables-open", target: "varServerMembers" },
-  { at: 10400, view: "whole", hideCursor: true },
+  { at: 2800, caption: "「動態語音頻道改名」列出頻道和它的範本", target: "dynamicVc" },
+  { at: 5000, caption: "打開「可用的範本變數」", target: "variables" },
+  { at: 6200, target: "variables", click: true },
+  { at: 6500, caption: "每個變數後面寫著它代表什麼", swapTo: "features-variables-open", target: "varServerMembers" },
+  { at: 8700, view: "whole", hideCursor: true },
 ];
 
 export function OverviewDemo() {

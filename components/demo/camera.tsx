@@ -28,7 +28,7 @@ export function Camera({
     "--camera-scale": scale,
   } as CSSProperties;
   return (
-    <div className="absolute inset-0" style={style}>
+    <div data-camera="" className="absolute inset-0" style={style}>
       {children}
     </div>
   );

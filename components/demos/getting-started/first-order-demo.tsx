@@ -6,7 +6,7 @@
 //
 // The camera stays at full view: the shared screens are sized so the embeds' 14px text shows at
 // 12px or more on both layouts.
-import { DiscordDemo, stepper, type InputState } from "@/components/demo";
+import { DiscordDemo, type InputState, newestIn, stepper } from "@/components/demo";
 import { FpScreen, LAYOUTS, type Screen } from "../shared/fp-screen";
 import { optionPill, slashCommand } from "@/lib/commands";
 import { SCENARIOS } from "../scenarios";
@@ -35,7 +35,7 @@ function timeline(l: Layout) {
   step(2800, { input: amount(String(SCENARIO.amount)) });
   step(3500, { input: { kind: "empty" }, bot: "select", channel: "selecting" }, {
     caption: "機器人貼出付款方式選單，接下來換顧客操作",
-    cursor: { ...typing, hidden: true },
+    highlight: newestIn("channel"),
   });
   step(5400, {}, { caption: "顧客打開選單，選一種付款方式", cursor: point(at.select) });
   step(6200, {}, { cursor: point(at.select, { click: true }) });
@@ -44,9 +44,9 @@ function timeline(l: Layout) {
   step(7900, { bot: "menuPick" }, { cursor: point(at.option, { click: true }) });
   step(8200, { bot: "confirm" }, {
     caption: "顧客確認金額和手續費，再填購買人資訊，就會拿到付款資訊",
-    cursor: point(at.aside),
+    highlight: newestIn("channel"),
   });
-  step(11000, {}, { shot: { zoom: 1 }, cursor: { ...point(at.aside), hidden: true } });
+  step(10400, {}, { shot: { zoom: 1 }, cursor: { ...point(at.aside), hidden: true } });
   return steps;
 }
 

@@ -27,6 +27,11 @@ export type Timeline = {
   step: number;
   /** Whether it moves by itself: false under reduced motion, without IntersectionObserver, and before mount. */
   animates: boolean;
+  /**
+   * Whether the step on screen is the timeline's own: false while an animating timeline still
+   * shows the server's last step before rewinding (on its first look at the screen).
+   */
+  settled: boolean;
   /** Whether it plays on by itself (autoplay); false once the reader picks a step or pauses. */
   playing: boolean;
   /**
@@ -60,6 +65,7 @@ export function useTimeline(
   const last = steps.length - 1;
   const [step, setStep] = useState(last);
   const [animates, setAnimates] = useState(false);
+  const [primedState, setPrimed] = useState(false);
   const [playing, setPlaying] = useState(true);
   const restartTo = useRef<((at: number) => void) | null>(null);
   const controls = useRef<Controls | null>(null);
@@ -145,6 +151,7 @@ export function useTimeline(
         const visible = entry.intersectionRatio >= VISIBLE - 0.001;
         if (!primed) {
           primed = true;
+          setPrimed(true);
           // Rewind while nobody is looking, so the demo plays from its first frame.
           if (!visible && stopAt === null) show(0);
         }
@@ -233,5 +240,5 @@ export function useTimeline(
     controls.current?.pause();
   }, []);
 
-  return { ref, step, animates, playing: animates && playing, seek, resume, pause };
+  return { ref, step, animates, settled: !animates || primedState, playing: animates && playing, seek, resume, pause };
 }

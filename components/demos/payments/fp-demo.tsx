@@ -3,7 +3,7 @@
 // 四大超商條碼 in the menu, confirms the method and the buyer information, and the order with
 // its barcode lands in the channel. The screens and measured points are in
 // components/demos/shared/fp-screen.tsx; this file holds the timeline.
-import { DiscordDemo, stepper, type InputState } from "@/components/demo";
+import { DiscordDemo, type InputState, newestIn, stepper } from "@/components/demo";
 import { optionPill, slashCommand } from "@/lib/commands";
 import { SCENARIOS } from "../scenarios";
 import { FpScreen, LAYOUTS, type FpLayout as Layout, type Screen } from "../shared/fp-screen";
@@ -36,7 +36,7 @@ function timeline(l: Layout) {
   step(2800, { input: amount(String(SCENARIO.amount)) });
   step(3500, { input: { kind: "empty" }, bot: "select", channel: "selecting" }, {
     caption: "機器人回覆付款方式選單，頻道也跟著改名、換分類",
-    cursor: { ...typing, hidden: true },
+    highlight: newestIn("channel"),
   });
   step(4900, {}, { caption: "顧客打開選單，選「四大超商條碼」", cursor: point(at.select) });
   step(5800, {}, { cursor: point(at.select, { click: true }) });
@@ -51,7 +51,7 @@ function timeline(l: Layout) {
   step(11100, {}, { cursor: point(at.confirm, { click: true }) });
   step(11500, { bot: "order", channel: "pending" }, {
     caption: "訂單成立，條碼貼在頻道裡，頻道再換到待付款的分類",
-    cursor: { ...point(at.confirm), hidden: true },
+    highlight: newestIn("channel"),
   });
   // Holds on the order before the loop starts over.
   step(13300, {});

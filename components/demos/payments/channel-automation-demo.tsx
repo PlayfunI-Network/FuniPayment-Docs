@@ -2,7 +2,7 @@
 // One ticket channel through an order: /fp (selecting), order created (pending), paid
 // (complete). The screens are in components/demos/shared/channel-automation-screen.tsx; this file
 // holds the timeline.
-import { DiscordDemo, type SceneStep } from "@/components/demo";
+import { CURRENT_CHANNEL, DiscordDemo, type SceneStep } from "@/components/demo";
 import { ChannelAutomationScreen, LAYOUTS, type Screen } from "../shared/channel-automation-screen";
 
 const { wide: WIDE, narrow: NARROW } = LAYOUTS;
@@ -12,12 +12,12 @@ const { wide: WIDE, narrow: NARROW } = LAYOUTS;
  * happens (the channel list wide, the window header narrow).
  */
 const STEPS: SceneStep<Screen>[] = [
-  { at: 0, screen: { stage: "open" }, caption: "訂單頻道剛開，還在開單分類" },
-  { at: 2600, screen: { stage: "selecting" }, caption: "/fp 送出：換成「選擇付款方式時」的名稱和分類" },
-  { at: 5600, screen: { stage: "pending" }, caption: "訂單建立：換成「待付款時」的名稱和分類" },
-  { at: 8600, screen: { stage: "complete" }, caption: "付款完成：換成「付款完成時」的名稱和分類" },
+  { at: 0, screen: { stage: "open" }, caption: "訂單頻道剛開，還在開單分類", highlight: CURRENT_CHANNEL },
+  { at: 2400, screen: { stage: "selecting" }, caption: "/fp 送出：換成「選擇付款方式時」的名稱和分類", highlight: CURRENT_CHANNEL },
+  { at: 4800, screen: { stage: "pending" }, caption: "訂單建立：換成「待付款時」的名稱和分類", highlight: CURRENT_CHANNEL },
+  { at: 7200, screen: { stage: "complete" }, caption: "付款完成：換成「付款完成時」的名稱和分類", highlight: CURRENT_CHANNEL },
   // Holds on the last stage before the loop starts over.
-  { at: 11500, screen: { stage: "complete" } },
+  { at: 9600, screen: { stage: "complete" } },
 ];
 
 export const WIDE_STEPS = STEPS;

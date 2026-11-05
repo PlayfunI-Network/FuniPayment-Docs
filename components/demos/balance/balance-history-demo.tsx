@@ -3,16 +3,17 @@
 // 統計表 (page 0) and 伺服器排行榜 (page -1, the server allows the leaderboard). The same message
 // is edited each time; the screens are one fixture's seven records (91 points in all).
 import {
+  type CanvasPoint,
   ChatMessage,
   CommandInput,
   DiscordDemo,
   DiscordScene,
-  SnapshotMessage,
-  stepper,
-  type CanvasPoint,
   type InputState,
+  newestIn,
   type Pane,
   type SceneLayout,
+  SnapshotMessage,
+  stepper,
 } from "@/components/demo";
 import { optionPill, slashCommand } from "@/lib/commands";
 import { DEMO_CHANNELS, type SnapshotId } from "@/lib/scenario";
@@ -92,7 +93,7 @@ function timeline(l: Layout) {
   const empty: InputState = { kind: "empty" };
   const press = (at: number, where: CanvasPoint, page: Page) => {
     step(at + 800, {}, { cursor: point(where, { click: true }) });
-    step(at + 1100, { panes: channel(empty, page) }, { cursor: point(l.at.aside) });
+    step(at + 1100, { panes: channel(empty, page) }, { highlight: newestIn("channel") });
   };
 
   step(0, { panes: channel(empty, null) }, {
@@ -106,7 +107,7 @@ function timeline(l: Layout) {
   step(1500, { panes: channel({ kind: "options", options: [MODE] }, null) });
   step(2400, { panes: channel(empty, 1) }, {
     caption: "第 1 頁列出最近的點數異動，一頁 5 筆",
-    cursor: { ...point(l.at.aside), hidden: true },
+    highlight: newestIn("channel"),
   });
   step(4000, {}, { caption: "按「▶️」翻到第 2 頁，看比較早的紀錄", cursor: point(l.at.next) });
   press(4000, l.at.next, 2);

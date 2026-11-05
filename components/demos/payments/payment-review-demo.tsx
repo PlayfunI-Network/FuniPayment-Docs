@@ -3,17 +3,18 @@
 // it looks up the customer's own latest order): first while the order is waiting for payment,
 // then again after paying. ReviewStates shows the three answers side by side behind tabs.
 import {
+  type CanvasPoint,
   ChatMessage,
   CommandInput,
   DiscordDemo,
   DiscordScene,
+  type InputState,
   MessageWindow,
+  newestIn,
+  type SceneLayout,
   SnapshotMessage,
   SnapshotTabs,
   stepper,
-  type CanvasPoint,
-  type InputState,
-  type SceneLayout,
 } from "@/components/demo";
 import { slashCommand } from "@/lib/commands";
 import { DEMO_CHANNELS, type SnapshotId } from "@/lib/scenario";
@@ -54,14 +55,14 @@ function timeline(l: Layout) {
     step(at + 1700, { input: { kind: "options", options: [] } });
     step(at + 2300, { input: { kind: "empty" }, replies }, {
       caption: reply,
-      cursor: { ...typing, hidden: true },
+      highlight: newestIn("channel"),
     });
   };
   step(0, {}, { cursor: { ...typing, hidden: true } });
   ask(400, ["pending"], "顧客輸入 /payment review，不填付款編號", "查到自己最近一筆訂單：「付款進度：尚未付款／待入帳」");
-  ask(6000, ["pending", "complete"], "付款之後再查一次", "變成「付款進度：已繳費」，附上付款時間");
+  ask(5000, ["pending", "complete"], "付款之後再查一次", "變成「付款進度：已繳費」，附上付款時間");
   // Holds on the second answer before the loop starts over.
-  step(11800, {});
+  step(9600, {});
   return steps;
 }
 

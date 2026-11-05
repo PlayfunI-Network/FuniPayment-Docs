@@ -6,17 +6,18 @@
 // category above it, so the rename stays in view on a phone. Channel names before the rename
 // and the later count are illustrative.
 import {
+  type CanvasPoint,
   ChatMessage,
   CommandInput,
   DiscordDemo,
   DiscordScene,
-  LIST_W,
-  SnapshotMessage,
-  stepper,
-  type CanvasPoint,
   type InputState,
+  LIST_W,
+  newestIn,
   type Pane,
   type SceneLayout,
+  SnapshotMessage,
+  stepper,
 } from "@/components/demo";
 import { ChannelList } from "@/components/discord";
 import { optionPill, slashCommand } from "@/lib/commands";
@@ -88,6 +89,9 @@ function channelPane(screen: Screen): Pane {
   };
 }
 
+/** The voice channel's row in the channel list. */
+const VOICE_ROW = `[data-kind="voice"][data-selected]`;
+
 const START: Screen = { input: { kind: "empty" }, reply: false, voice: "before" };
 
 function timeline(l: Layout) {
@@ -111,10 +115,10 @@ function timeline(l: Layout) {
   step(4600, { input: options(TEMPLATE) });
   step(5600, { input: { kind: "empty" }, reply: true, voice: "after" }, {
     caption: "機器人回覆設定成功，語音頻道名稱換成目前的訂單數",
-    cursor: { ...typing, hidden: true },
+    highlight: newestIn("channel"),
   });
-  step(9400, { voice: "later" }, { caption: "之後每 10 分鐘，名稱跟著最新的數字更新" });
-  step(13000, {}, {});
+  step(7800, { voice: "later" }, { caption: "之後每 10 分鐘，名稱跟著最新的數字更新", highlight: VOICE_ROW });
+  step(10200, {}, {});
   return steps;
 }
 

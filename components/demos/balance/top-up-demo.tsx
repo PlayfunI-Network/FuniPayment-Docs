@@ -3,17 +3,18 @@
 // creates the order. The order reaches the customer's DM (send_to_dm_and_log); once it is paid,
 // the DM gets the payment notice and 「成功儲值」 with the new balance (notifier.topup_completed).
 import {
+  type CanvasPoint,
   ChatMessage,
   CommandInput,
   DiscordDemo,
   DiscordScene,
+  type InputState,
+  newestIn,
+  type Pane,
+  type SceneLayout,
   SnapshotEmbed,
   SnapshotMessage,
   stepper,
-  type CanvasPoint,
-  type InputState,
-  type Pane,
-  type SceneLayout,
 } from "@/components/demo";
 import { Ephemeral } from "@/components/discord";
 import { optionPill, slashCommand } from "@/lib/commands";
@@ -155,9 +156,9 @@ function timeline(l: Layout) {
   step(6100, {}, { cursor: point(l.at.confirm) });
   step(6900, {}, { cursor: point(l.at.confirm, { click: true }) });
   step(7200, { panes: channel(empty, "done") }, { cursor: { ...point(l.at.aside), hidden: true } });
-  step(8600, { panes: dm(false) }, { caption: "付款資訊私訊給顧客，照著去 7-11 付款" });
-  step(11000, { panes: dm(true) }, { caption: "付款完成後，點數自動入帳，私訊寫著新的餘額" });
-  step(14000, {}, {});
+  step(8400, { panes: dm(false) }, { caption: "付款資訊私訊給顧客，照著去 7-11 付款", highlight: newestIn("dm") });
+  step(10600, { panes: dm(true) }, { caption: "付款完成後，點數自動入帳，私訊寫著新的餘額", highlight: newestIn("dm") });
+  step(12800, {}, {});
   return steps;
 }
 

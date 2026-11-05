@@ -1,6 +1,7 @@
 export { DemoStage, captionSpans, frameAt, stageWidth, STAGE_AVAIL, STAGE_MAX_H, STAGE_MAX_W, type DemoStep, type DemoFrame } from "./stage";
 export { DemoHero, HeroFrame } from "./hero";
 export { ControlBar, StepList, type DemoControls } from "./controls";
+export { CURRENT_CHANNEL, newestIn, type Highlight } from "./highlight";
 export { Camera, CAMERA_MS } from "./camera";
 export { Cursor, CURSOR_MS, type CursorState } from "./cursor";
 export { Caption } from "./caption";

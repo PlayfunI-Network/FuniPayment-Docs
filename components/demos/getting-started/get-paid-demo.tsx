@@ -8,13 +8,15 @@
 // the embeds' 14px text shows at 12.9px and the categories' 12px headings at 11px.
 import {
   ChatMessage,
+  CURRENT_CHANNEL,
   DiscordDemo,
   DiscordScene,
   LIST_W,
-  SnapshotMessage,
+  newestIn,
   type Pane,
   type SceneLayout,
   type SceneStep,
+  SnapshotMessage,
 } from "@/components/demo";
 import { STAGES } from "../shared/channel-automation-screen";
 import { TicketCategories } from "../shared/ticket-categories";
@@ -37,12 +39,12 @@ const NARROW: Layout = { w: 400, h: 720, at: {} };
 
 const STEPS: SceneStep<Screen>[] = [
   { at: 0, screen: { paid: false, show: "channel" }, caption: "顧客拿著條碼到超商付款", shot: { zoom: 1 } },
-  { at: 2200, screen: { paid: true, show: "channel" }, caption: "速買配通知付款完成，訂單頻道收到付款完成通知" },
-  { at: 5000, screen: { paid: true, show: "channel" }, caption: "訂單頻道換成「付款完成時」的名稱和分類" },
-  { at: 7400, screen: { paid: true, show: "dm" }, caption: "付款者的私訊也收到同一則通知" },
-  { at: 9800, screen: { paid: true, show: "log" }, caption: "日誌頻道也收到一份" },
-  { at: 12200, screen: { paid: true, show: "channel" }, caption: "訂單頻道、付款者的私訊、日誌頻道都收到了" },
-  { at: 14200, screen: { paid: true, show: "channel" } },
+  { at: 2000, screen: { paid: true, show: "channel" }, caption: "速買配通知付款完成，訂單頻道收到付款完成通知", highlight: newestIn("channel") },
+  { at: 4200, screen: { paid: true, show: "channel" }, caption: "訂單頻道換成「付款完成時」的名稱和分類", highlight: CURRENT_CHANNEL },
+  { at: 6400, screen: { paid: true, show: "dm" }, caption: "付款者的私訊也收到同一則通知", highlight: newestIn("dm") },
+  { at: 8600, screen: { paid: true, show: "log" }, caption: "日誌頻道也收到一份", highlight: newestIn("log") },
+  { at: 10800, screen: { paid: true, show: "channel" }, caption: "訂單頻道、付款者的私訊、日誌頻道都收到了", highlight: null },
+  { at: 12800, screen: { paid: true, show: "channel" } },
 ];
 
 export const LAYOUTS = { wide: WIDE, narrow: NARROW };

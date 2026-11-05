@@ -3,14 +3,15 @@
 // customer picks the balance option (only listed when 用點數付款 is on, +0元), confirms, the
 // message becomes the green 消費通知 and the customer gets a DM (views/fp.py: confirm_callback).
 import {
+  type CanvasPoint,
   ChatMessage,
   DiscordDemo,
   DiscordScene,
-  SnapshotMessage,
-  stepper,
-  type CanvasPoint,
+  newestIn,
   type Pane,
   type SceneLayout,
+  SnapshotMessage,
+  stepper,
 } from "@/components/demo";
 import { ChatInput } from "@/components/discord";
 import { DEMO_BOT, DEMO_CHANNELS, DEMO_PEOPLE } from "@/lib/scenario";
@@ -108,12 +109,12 @@ function timeline(l: Layout) {
   });
   step(4500, {}, { cursor: point(l.at.confirm) });
   step(5400, {}, { cursor: point(l.at.confirm, { click: true }) });
-  step(5700, { panes: [channel("paid")] }, { caption: "訊息換成綠色的「商城點數消費通知」，訂單完成", cursor: point(l.at.aside) });
-  step(7600, { panes: [channel("paid"), DM] }, {
+  step(5700, { panes: [channel("paid")] }, { caption: "訊息換成綠色的「商城點數消費通知」，訂單完成", highlight: newestIn("channel") });
+  step(7900, { panes: [channel("paid"), DM] }, {
     caption: `${DEMO_PEOPLE.buyer.name}也收到消費通知私訊`,
-    cursor: { ...point(l.at.aside), hidden: true },
+    highlight: newestIn("dm"),
   });
-  step(11000, {}, {});
+  step(10100, {}, {});
   return steps;
 }
 
