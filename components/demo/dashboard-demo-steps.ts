@@ -5,9 +5,12 @@
 // views: "whole", the full picture, and "close", the picture as wide as the stage around the
 // target (as the page reads in a browser). A demo starts whole, goes close for the fields and
 // pulls back whole before a button that sends or moves on, so the reader sees what is pressed.
+// A step that only shows its target (the cursor goes there and nothing is pressed or typed: see
+// showsOnly) frames it in red, with the cursor on the frame's corner.
 import type { Rect, Shot } from "@/lib/camera";
 import type { CursorState } from "./cursor";
 import type { DashboardLayout, DashboardPicture, DashboardShotData } from "./dashboard-shot";
+import { pointAtFrame } from "./highlight";
 import type { DemoStep } from "./stage";
 
 /** The camera's two views: the whole picture, or the picture as wide as the stage around the target. */
@@ -123,6 +126,24 @@ export function closeShot(target: Rect, at: { x: number; w: number }): Shot {
   return { zoom, focus: { x: at.x, w: at.w, y: target.y - room, h }, exact: true };
 }
 
+/** The steps that do something: name a target, press, type or hide the cursor. */
+const acts = (s: DashboardStep) => Boolean(s.target || s.click || s.typing || s.hideCursor);
+
+/**
+ * Whether step `i` only shows its target: it names one, presses and types nothing, the next step
+ * that does something does not press or type on it either, and it is not the page a press on the
+ * same target just opened (that step shows what the press did, with the cursor where it was).
+ */
+export function showsOnly(steps: readonly DashboardStep[], i: number): boolean {
+  const s = steps[i];
+  if (!s.target || s.click || s.typing) return false;
+  const next = steps.slice(i + 1).find(acts);
+  if (next && (next.click || next.typing) && (next.target ?? s.target) === s.target) return false;
+  const before = steps.slice(0, i).reverse().find(acts);
+  if (before && before.click && (before.target === s.target || !before.target) && s.swapTo) return false;
+  return true;
+}
+
 /** Where the cursor points on a target: its centre, or right of the text for typing. */
 function pointOn(r: Rect, extra: Partial<CursorState>): CursorState {
   const x = extra.typing ? r.x + r.w * 0.8 : r.x + r.w / 2;
@@ -161,7 +182,10 @@ export function resolveSteps(picture: PictureOf, shot: string, steps: readonly D
     const out: DashboardFrame = { at: s.at, shotId, view };
     if (s.caption) out.caption = s.caption;
     out.shot = view === "close" && onStage ? closeShot(onStage, wholePlacement(tall, ratio)) : { zoom: 1 };
-    if (onStage && (s.target || s.click || s.typing || s.hideCursor || shotId !== before)) {
+    if (onStage && showsOnly(steps, i)) {
+      out.highlight = onStage;
+      out.cursor = { ...pointAtFrame(onStage), hidden };
+    } else if (onStage && (s.target || s.click || s.typing || s.hideCursor || shotId !== before)) {
       out.cursor = pointOn(onStage, { click: s.click, typing: s.typing, hidden });
     } else if (s.hideCursor) {
       out.cursor = { x: 0.5, y: 0.5, hidden: true };

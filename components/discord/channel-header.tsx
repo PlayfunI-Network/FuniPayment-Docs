@@ -22,6 +22,7 @@ export function ChannelHeader({
   const icon = compact ? 18 : 24;
   return (
     <div
+      data-channel-title=""
       className={`flex min-w-0 items-center border-b border-[#1f2023] bg-[#2b2d31] ${compact ? "h-10 gap-1.5 px-3" : "h-12 gap-2 px-4"} shadow-[0_1px_0_rgb(4_4_5/0.2),0_1.5px_0_rgb(6_6_7/0.05),0_2px_0_rgb(4_4_5/0.05)]`}
     >
       {kind === "channel" ? (

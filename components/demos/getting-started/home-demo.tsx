@@ -5,7 +5,7 @@
 // channel, names and messages) with captions about the order instead of the renaming. The whole
 // story plays at full view: the wide canvas has a 500px window (not the shared 640px one), so at a
 // 680px stage the embeds' 14px text shows at 12.9px and the camera never has to move.
-import { DiscordDemo, LIST_W, type SceneStep } from "@/components/demo";
+import { DiscordDemo, LIST_W, newestIn, type SceneStep } from "@/components/demo";
 import {
   ChannelAutomationScreen,
   LAYOUTS as SHARED,
@@ -22,11 +22,11 @@ const WIDE: ChannelAutomationLayout = {
 };
 
 const STEPS: SceneStep<Screen>[] = [
-  { at: 0, screen: { stage: "open" }, caption: "商家在訂單頻道跟顧客談好價錢", shot: { zoom: 1 } },
-  { at: 1800, screen: { stage: "selecting" }, caption: "商家輸入 /fp 和金額，機器人貼出付款方式選單" },
-  { at: 5200, screen: { stage: "pending" }, caption: "顧客選好付款方式，拿到超商條碼" },
-  { at: 8800, screen: { stage: "complete" }, caption: "顧客付款後，機器人送出付款完成通知" },
-  { at: 12800, screen: { stage: "complete" } },
+  { at: 0, screen: { stage: "open" }, caption: "商家在訂單頻道跟顧客談好價錢", shot: { zoom: 1 }, highlight: newestIn("channel") },
+  { at: 2400, screen: { stage: "selecting" }, caption: "商家輸入 /fp 和金額，機器人貼出付款方式選單", highlight: newestIn("channel") },
+  { at: 5000, screen: { stage: "pending" }, caption: "顧客選好付款方式，拿到超商條碼", highlight: newestIn("channel") },
+  { at: 7600, screen: { stage: "complete" }, caption: "顧客付款後，機器人送出付款完成通知", highlight: newestIn("channel") },
+  { at: 10200, screen: { stage: "complete" } },
 ];
 
 export const LAYOUTS = { wide: WIDE, narrow: SHARED.narrow };

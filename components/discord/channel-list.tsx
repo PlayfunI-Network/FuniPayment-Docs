@@ -13,6 +13,7 @@ export function ChannelRow({
   return (
     <div
       data-kind={kind}
+      data-selected={highlight || undefined}
       className={`mx-2 my-px flex h-8 min-w-0 items-center gap-1.5 rounded px-2 transition-colors duration-200 ${highlight ? "bg-[#404249]" : ""}`}
     >
       {kind === "text" ? (

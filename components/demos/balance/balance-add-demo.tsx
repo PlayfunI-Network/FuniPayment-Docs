@@ -3,16 +3,17 @@
 // result embed goes to the channel (and the log channel), and the customer gets a DM without the
 // reason or who did it (views/balance.py: BalanceAddMessage.create_dm_embed).
 import {
+  type CanvasPoint,
   ChatMessage,
   CommandInput,
   DiscordDemo,
   DiscordScene,
-  SnapshotMessage,
-  stepper,
-  type CanvasPoint,
   type InputState,
+  newestIn,
   type Pane,
   type SceneLayout,
+  SnapshotMessage,
+  stepper,
 } from "@/components/demo";
 import { optionPill, slashCommand } from "@/lib/commands";
 import { DEMO_BOT, DEMO_CHANNELS, DEMO_PEOPLE } from "@/lib/scenario";
@@ -94,12 +95,13 @@ function timeline(l: Layout) {
   step(1600, { panes: [channel(OPTIONS, false)] });
   step(3000, { panes: [channel(empty, true)] }, {
     caption: "機器人在頻道貼出「餘額增加成功」，寫著理由和執行者",
-    cursor: { ...typing, hidden: true },
+    highlight: newestIn("channel"),
   });
-  step(6200, { panes: [channel(empty, true), DM] }, {
+  step(5400, { panes: [channel(empty, true), DM] }, {
     caption: `${DEMO_PEOPLE.buyer.name}收到「餘額異動通知」私訊，裡面沒有理由和執行者`,
+    highlight: newestIn("dm"),
   });
-  step(10000, {}, {});
+  step(7800, {}, {});
   return steps;
 }
 

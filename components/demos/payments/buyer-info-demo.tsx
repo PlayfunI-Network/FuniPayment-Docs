@@ -3,13 +3,14 @@
 // 「確認並獲取付款碼」 greyed out; the customer opens 「✏️ 填寫/修改資訊」, types the three fields
 // and submits, and the screen shows the values with the confirm button enabled.
 import {
+  type CanvasPoint,
   ChatMessage,
   DiscordDemo,
   DiscordScene,
+  newestIn,
+  type SceneLayout,
   SnapshotMessage,
   stepper,
-  type CanvasPoint,
-  type SceneLayout,
 } from "@/components/demo";
 import { Ephemeral, Modal } from "@/components/discord";
 import { BOT_UI } from "@/content/bot-ui.generated";
@@ -72,7 +73,7 @@ function timeline(l: Layout) {
   };
   step(0, {}, {
     caption: "還沒填資料，「確認並獲取付款碼」按不下去",
-    cursor: { ...point(l.at.aside), hidden: true },
+    highlight: newestIn("channel"),
   });
   step(1800, {}, { caption: "按「✏️ 填寫/修改資訊」", cursor: point(l.at.edit) });
   step(2600, {}, { cursor: point(l.at.edit, { click: true }) });
@@ -83,10 +84,9 @@ function timeline(l: Layout) {
   step(7700, {}, { cursor: point(l.at.submit, { click: true }) });
   step(8000, { modal: null, filled: true }, {
     caption: "資料填進畫面，「確認並獲取付款碼」可以按了",
-    cursor: point(l.at.aside),
+    highlight: newestIn("channel"),
   });
-  step(9000, {}, { cursor: point(l.at.confirm) });
-  step(11500, {}, { cursor: { ...point(l.at.confirm), hidden: true } });
+  step(10200, {}, { cursor: { ...point(l.at.aside), hidden: true } });
   return steps;
 }
 

@@ -49,7 +49,9 @@ export function shotTarget(id: string, name: string, layout: DashboardLayout = "
 /**
  * The screenshot as an image in the page's flow (full width, its own height). `alt` is empty by
  * default: inside a demo the stage describes the whole picture; a screenshot shown on its own in a
- * page needs an `alt`. `eager` loads it right away (a demo that swaps to it later).
+ * page needs an `alt`. `eager` loads it right away and decodes it before it is painted (a demo
+ * that swaps to it later): a hidden picture is not decoded ahead, and with async decoding the
+ * swap showed one blank frame (the stage behind it) before the new picture appeared.
  */
 export function DashboardShot({
   id,
@@ -65,7 +67,7 @@ export function DashboardShot({
   eager?: boolean;
 }) {
   const picture = dashboardPicture(id, layout);
-  const common = { width: picture.width, height: picture.height, draggable: false, loading: eager ? "eager" : "lazy", decoding: "async" } as const;
+  const common = { width: picture.width, height: picture.height, draggable: false, loading: eager ? "eager" : "lazy", decoding: eager ? "sync" : "async" } as const;
   return (
     <span className={`block ${className ?? ""}`}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
