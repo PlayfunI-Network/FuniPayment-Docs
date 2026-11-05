@@ -2,6 +2,7 @@
 // dashboard screenshot into DemoStage steps (camera shots and cursor positions as fractions of
 // the stage), and works out the reduced-motion markers. A screenshot taller than the stage is
 // scrolled like a page: `scroll` says how far, so a target is always in view when it is used.
+// A `whole` demo shows every picture whole instead (wholePlacement), and never scrolls.
 import type { Rect, Shot } from "@/lib/camera";
 import type { CursorState } from "./cursor";
 import type { DashboardLayout, DashboardPicture, DashboardShotData } from "./dashboard-shot";
@@ -75,6 +76,38 @@ export function stageRatio(picture: DashboardPicture, layout: DashboardLayout): 
   return Math.min(picture.height / picture.width, MAX_RATIO[layout]);
 }
 
+/**
+ * Whether a `whole` demo shows its pictures whole on this layout: only the desktop pictures,
+ * since the phone ones are drawn at phone height (two screens and more) and would shrink past
+ * reading; there the demo scrolls as usual.
+ */
+export const showsWhole = (whole: boolean, layout: DashboardLayout) => whole && layout === "desktop";
+
+/**
+ * The stage's height ÷ width for a demo: as stageRatio, or for a `whole` demo (see showsWhole)
+ * the first picture's own, so it fills the stage without scrolling (wholePlacement fits the rest).
+ */
+export function demoRatio(picture: PictureOf, shot: string, layout: DashboardLayout, whole = false): number {
+  const pic = picture(shot, layout);
+  return showsWhole(whole, layout) ? pic.height / pic.width : stageRatio(pic, layout);
+}
+
+/**
+ * Where a `whole` demo draws a picture `tall` widths high on a stage `ratio` widths high: the
+ * whole of it, as wide as the stage or (when it is taller than the stage) narrowed to fit,
+ * centred. `x` and `w` are fractions of the stage width, `y` is in stage widths.
+ */
+export function wholePlacement(tall: number, ratio: number): { x: number; y: number; w: number } {
+  const w = Math.min(1, ratio / tall);
+  return { x: (1 - w) / 2, y: (ratio - tall * w) / 2, w };
+}
+
+/** `rect` (fractions of the picture) as fractions of the stage, for a picture placed by wholePlacement. */
+export function wholeRect(rect: Rect, tall: number, ratio: number): Rect {
+  const at = wholePlacement(tall, ratio);
+  return { x: at.x + rect.x * at.w, y: (at.y + rect.y * tall * at.w) / ratio, w: rect.w * at.w, h: (rect.h * tall * at.w) / ratio };
+}
+
 const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
 
 /** How far a picture of height `tall` (in widths) can scroll in a stage of height `ratio`. */
@@ -117,8 +150,9 @@ function zoomOn(r: Rect, zoom: number, layout: DashboardLayout): Shot {
  * (after scrolling the picture so it is in view), for the camera and the cursor. Throws, naming
  * the step, when a target is not on the shot that is on screen there.
  */
-export function resolveSteps(picture: PictureOf, shot: string, steps: readonly DashboardStep[], layout: DashboardLayout): DashboardFrame[] {
-  const ratio = stageRatio(picture(shot, layout), layout);
+export function resolveSteps(picture: PictureOf, shot: string, steps: readonly DashboardStep[], layout: DashboardLayout, whole = false): DashboardFrame[] {
+  const ratio = demoRatio(picture, shot, layout, whole);
+  const fixed = showsWhole(whole, layout);
   let shotId = shot;
   let scroll = 0;
   let target: string | undefined;
@@ -140,12 +174,15 @@ export function resolveSteps(picture: PictureOf, shot: string, steps: readonly D
     const rect = target ? pic.targets[target] : undefined;
     // A target named on an earlier shot may be gone after a swap
     if (target && !rect) throw new Error(`第 ${i + 1} 步：換成「${shotId}」後，前面用的目標「${target}」不在這張截圖上，請重新指定 target`);
-    scroll = Math.min(scroll, maxScroll(tall, ratio));
-    if (rect && (s.target || setZoom !== undefined)) scroll = scrollFor(rect, tall, ratio, scroll);
+    // A whole demo never scrolls: its pictures are placed by wholePlacement
+    if (!fixed) {
+      scroll = Math.min(scroll, maxScroll(tall, ratio));
+      if (rect && (s.target || setZoom !== undefined)) scroll = scrollFor(rect, tall, ratio, scroll);
+    }
 
     const out: DashboardFrame = { at: s.at, shotId, scroll };
     if (s.caption) out.caption = s.caption;
-    const onStage = rect ? stageRect(rect, tall, ratio, scroll) : undefined;
+    const onStage = rect ? (fixed ? wholeRect(rect, tall, ratio) : stageRect(rect, tall, ratio, scroll)) : undefined;
     if (setZoom !== undefined || (zoom > 1 && (s.target || scroll !== before.scroll))) out.shot = onStage ? zoomOn(onStage, zoom, layout) : { zoom: 1 };
     const moved = scroll !== before.scroll || shotId !== before.shotId;
     if (onStage && (s.target || s.click || s.typing || s.hideCursor || moved)) {

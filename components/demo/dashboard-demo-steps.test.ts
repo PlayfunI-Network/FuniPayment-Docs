@@ -1,4 +1,16 @@
-import { chooseLayout, markersFor, panoramaSpan, resolveSteps, scrollFor, shotsUsed, stageRatio, type DashboardStep, type PictureOf } from "./dashboard-demo-steps";
+import {
+  chooseLayout,
+  demoRatio,
+  markersFor,
+  panoramaSpan,
+  resolveSteps,
+  scrollFor,
+  shotsUsed,
+  stageRatio,
+  wholePlacement,
+  type DashboardStep,
+  type PictureOf,
+} from "./dashboard-demo-steps";
 import type { DashboardPicture, DashboardShotData } from "./dashboard-shot";
 
 // A short page (fits the stage) and a tall one (scrolls): 1000 px wide pictures
@@ -108,5 +120,43 @@ describe("減少動態的標號", () => {
     expect(one.height).toBeCloseTo(0.72);
     expect(one.top + one.height).toBeLessThanOrEqual(2);
     expect(panoramaSpan([], 2, 0.72)).toEqual({ top: 0, height: 0.72 });
+  });
+});
+
+describe("whole", () => {
+  // A page about as tall as wide, then a taller card: the login demo's shape
+  const PAGE = pic(1000, { button: { x: 0.5, y: 0.5, w: 0.2, h: 0.05 } });
+  const CARD = pic(1200, { skip: { x: 0.8, y: 0.1, w: 0.1, h: 0.05 } });
+  const whole: PictureOf = (id, layout) => {
+    const p = id === "page" ? PAGE : CARD;
+    return layout === "mobile" ? { ...p, height: p.height * 2 } : p;
+  };
+  const steps: DashboardStep[] = [
+    { at: 0, caption: "按按鈕", target: "button" },
+    { at: 900, swapTo: "card", target: "skip" },
+  ];
+
+  test("舞台是第一張的比例，較高的一張縮窄置中，整張放得下", () => {
+    expect(demoRatio(whole, "page", "desktop", true)).toBe(1);
+    expect(demoRatio(whole, "page", "desktop")).toBe(0.72);
+    expect(wholePlacement(1, 1)).toEqual({ x: 0, y: 0, w: 1 });
+    const card = wholePlacement(1.2, 1);
+    expect(card.w).toBeCloseTo(1 / 1.2);
+    expect(card.x).toBeCloseTo((1 - 1 / 1.2) / 2);
+    expect(card.y).toBeCloseTo(0);
+  });
+
+  test("不捲動，游標照放好的位置指到目標", () => {
+    const [a, b] = resolveSteps(whole, "page", steps, "desktop", true);
+    expect(a.scroll).toBe(0);
+    expect(b.scroll).toBe(0);
+    expect(a.cursor).toMatchObject({ x: expect.closeTo(0.6), y: expect.closeTo(0.525) });
+    // skip's centre (0.85, 0.125) on the card narrowed to 1/1.2 of the stage width
+    const at = wholePlacement(1.2, 1);
+    expect(b.cursor).toMatchObject({ x: expect.closeTo(at.x + 0.85 * at.w), y: expect.closeTo(0.125 * 1.2 * at.w) });
+  });
+
+  test("手機版的截圖太高，照常捲動", () => {
+    expect(demoRatio(whole, "page", "mobile", true)).toBe(stageRatio(whole("page", "mobile"), "mobile"));
   });
 });

@@ -5,7 +5,6 @@ export const SITE_URL = "https://docs.funipay.net";
 export const CONTACT_EMAIL = "contact@funipay.net";
 
 const OFFICIAL = { text: "官網", url: "https://funipay.net" };
-const DASHBOARD = { text: "後台", url: "https://dashboard.funipay.net" };
 const COMMUNITY = { text: "社群", url: "https://go.funipay.net/discord" };
 
 /** The page footer's links; the contact address follows them. */
@@ -28,6 +27,5 @@ export function baseOptions(): BaseLayoutProps {
       ),
       url: "/",
     },
-    links: [OFFICIAL, DASHBOARD, COMMUNITY].map((link) => ({ ...link, external: true })),
   };
 }
