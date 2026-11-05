@@ -105,12 +105,12 @@ function timeline(l: Layout) {
   step(2700, { input: { kind: "options", options: [] } }, { caption: "這個指令沒有參數，直接送出" });
   step(3700, { input: { kind: "empty" }, reply: true }, {
     caption: "機器人回覆這個頻道已設定為自動發佈",
-    highlight: newestIn("news"),
+    pointAt: newestIn("news"),
   });
-  step(5900, { posted: true }, { caption: "之後商家在這裡發的訊息……", highlight: newestIn("news") });
+  step(5900, { posted: true }, { caption: "之後商家在這裡發的訊息……", pointAt: newestIn("news") });
   step(7300, { published: true }, {
     caption: "機器人會立刻發佈，追蹤這個頻道的伺服器馬上收到",
-    highlight: newestIn("follower"),
+    pointAt: newestIn("follower"),
   });
   step(9700, {}, {});
   return steps;

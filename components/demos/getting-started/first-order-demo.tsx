@@ -35,7 +35,7 @@ function timeline(l: Layout) {
   step(2800, { input: amount(String(SCENARIO.amount)) });
   step(3500, { input: { kind: "empty" }, bot: "select", channel: "selecting" }, {
     caption: "機器人貼出付款方式選單，接下來換顧客操作",
-    highlight: newestIn("channel"),
+    pointAt: newestIn("channel"),
   });
   step(5400, {}, { caption: "顧客打開選單，選一種付款方式", cursor: point(at.select) });
   step(6200, {}, { cursor: point(at.select, { click: true }) });
@@ -44,7 +44,7 @@ function timeline(l: Layout) {
   step(7900, { bot: "menuPick" }, { cursor: point(at.option, { click: true }) });
   step(8200, { bot: "confirm" }, {
     caption: "顧客確認金額和手續費，再填購買人資訊，就會拿到付款資訊",
-    highlight: newestIn("channel"),
+    pointAt: newestIn("channel"),
   });
   step(10400, {}, { shot: { zoom: 1 }, cursor: { ...point(at.aside), hidden: true } });
   return steps;

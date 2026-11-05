@@ -156,8 +156,8 @@ function timeline(l: Layout) {
   step(6100, {}, { cursor: point(l.at.confirm) });
   step(6900, {}, { cursor: point(l.at.confirm, { click: true }) });
   step(7200, { panes: channel(empty, "done") }, { cursor: { ...point(l.at.aside), hidden: true } });
-  step(8400, { panes: dm(false) }, { caption: "付款資訊私訊給顧客，照著去 7-11 付款", highlight: newestIn("dm") });
-  step(10600, { panes: dm(true) }, { caption: "付款完成後，點數自動入帳，私訊寫著新的餘額", highlight: newestIn("dm") });
+  step(8400, { panes: dm(false) }, { caption: "付款資訊私訊給顧客，照著去 7-11 付款", pointAt: newestIn("dm") });
+  step(10600, { panes: dm(true) }, { caption: "付款完成後，點數自動入帳，私訊寫著新的餘額", pointAt: newestIn("dm") });
   step(12800, {}, {});
   return steps;
 }

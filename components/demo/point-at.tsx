@@ -1,15 +1,11 @@
 "use client";
-// The red frame a demo draws around what a step shows without clicking it ("look here"): a
-// DemoStep's `highlight`, either a Rect of the stage or a CSS selector of elements on it
-// (measured on screen, e.g. the newest message of a pane: newestIn). In a selector, "a || b"
-// frames what `a` finds, or else what `b` finds; a selector list "a, b" frames all it finds
-// together.
+// Where the cursor goes for a step that only shows something (no click): a DemoStep's `pointAt`,
+// a CSS selector of elements on the stage, measured on screen (e.g. the newest message of a
+// pane: newestIn). In a selector, "a || b" points at what `a` finds, or else what `b` finds; a
+// selector list "a, b" takes all it finds together.
 import { useLayoutEffect, useState, type RefObject } from "react";
 import type { Rect } from "@/lib/camera";
 import type { CursorState } from "./cursor";
-
-/** What a step frames: a Rect of the stage (fractions), or a selector of an element on it. */
-export type Highlight = Rect | string;
 
 /** The newest message group in the pane `paneId` of a DiscordScene. */
 export const newestIn = (paneId: string) => `[data-pane="${paneId}"] > :first-child > :last-child`;
@@ -17,18 +13,17 @@ export const newestIn = (paneId: string) => `[data-pane="${paneId}"] > :first-ch
 /** The demo's own text channel: its row in the channel list, or the window's title when there is no list. */
 export const CURRENT_CHANNEL = `[data-kind="text"][data-selected] || [data-channel-title]`;
 
-/** How long after a step starts its framed element is measured again (entrances take 450ms). */
+/** How long after a step starts its element is measured again (entrances take 450ms). */
 const SETTLE_MS = 520;
 
 /**
- * Where `highlight` is on the stage, as fractions of `viewport` (the stage element). A selector
- * is looked up inside the viewport and measured through the camera's transform at each new
- * `step` (the element may have moved), again once the entrances on the stage have settled; until
- * then the last place found for the same selector stands. Null until found.
+ * Where `selector` is on the stage, as fractions of `viewport` (the stage element): looked up
+ * inside the viewport and measured through the camera's transform at each new `step` (the
+ * element may have moved), again once the entrances on the stage have settled; until then the
+ * last place found for the same selector stands. Null until found (and for a null selector).
  */
-export function useHighlightRect(highlight: Highlight | null | undefined, viewport: RefObject<HTMLElement | null>, step: number): Rect | null {
+export function usePointAtRect(selector: string | null, viewport: RefObject<HTMLElement | null>, step: number): Rect | null {
   const [measured, setMeasured] = useState<{ key: string; rect: Rect } | null>(null);
-  const selector = typeof highlight === "string" ? highlight : null;
   useLayoutEffect(() => {
     if (!selector) return;
     let live = true;
@@ -63,9 +58,8 @@ export function useHighlightRect(highlight: Highlight | null | undefined, viewpo
       clearTimeout(timer);
     };
   }, [selector, viewport, step]);
-  if (!highlight) return null;
-  if (typeof highlight !== "string") return highlight;
-  return measured && measured.key === highlight ? measured.rect : null;
+  if (!selector) return null;
+  return measured && measured.key === selector ? measured.rect : null;
 }
 
 type Box = { left: number; top: number; right: number; bottom: number };
@@ -117,26 +111,7 @@ function findAll(root: Element, selector: string): Element[] {
 const sameRect = (a: Rect, b: Rect) =>
   Math.abs(a.x - b.x) < 1e-4 && Math.abs(a.y - b.y) < 1e-4 && Math.abs(a.w - b.w) < 1e-4 && Math.abs(a.h - b.h) < 1e-4;
 
-/** The pointer resting on a framed element's bottom-right corner, just inside it: pointing, not pressing. */
-export function pointAtFrame(r: Rect): CursorState {
-  return { x: Math.min(r.x + r.w - 0.012, 0.97), y: Math.min(r.y + r.h - 0.01, 0.97) };
-}
-
-/**
- * The red frame around `rect` (fractions of the stage), a few pixels outside it so it never
- * covers what it frames. Inside the Camera: its line keeps the same width at any zoom. `marker`
- * numbers a reduced-motion panorama's frame (dashboard-demo.tsx).
- */
-export function HighlightFrame({ rect, marker }: { rect: Rect; marker?: number }) {
-  // A few px outside the target, but never past the stage's edge (it would be cut off there)
-  const side = (fraction: number) => `max(calc(${fraction * 100}% - var(--hl-pad)), var(--hl-edge))`;
-  return (
-    <div
-      data-highlight=""
-      data-marker={marker}
-      aria-hidden="true"
-      className="demo-highlight"
-      style={{ left: side(rect.x), top: side(rect.y), right: side(1 - rect.x - rect.w), bottom: side(1 - rect.y - rect.h) }}
-    />
-  );
+/** The pointer resting at the right end of what it points at, halfway down: pointing, not pressing. */
+export function pointAtRect(r: Rect): CursorState {
+  return { x: Math.min(r.x + r.w - 0.02, 0.97), y: Math.min(r.y + r.h / 2, 0.97) };
 }

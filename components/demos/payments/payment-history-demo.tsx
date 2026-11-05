@@ -70,14 +70,14 @@ function timeline(l: Layout) {
   step(1800, { input: { kind: "options", options: [MODE] } }, { caption: `顯示模式選「${MODE.value}」後送出` });
   step(2900, { input: { kind: "empty" }, page: 1 }, {
     caption: "列出已完成的付款，每頁 3 筆",
-    highlight: newestIn("channel"),
+    pointAt: newestIn("channel"),
   });
   step(4800, {}, { caption: "按「▶️」翻到第 2 頁，看第 4 筆", cursor: point(l.at.next) });
   step(5600, {}, { cursor: point(l.at.next, { click: true }) });
-  step(5900, { page: 2 }, { highlight: newestIn("channel") });
+  step(5900, { page: 2 }, { pointAt: newestIn("channel") });
   step(7300, {}, { caption: "按「統計表」", cursor: point(l.at.stats) });
   step(8100, {}, { cursor: point(l.at.stats, { click: true }) });
-  step(8400, { page: 0 }, { caption: "同一則訊息換成統計數據", highlight: newestIn("channel") });
+  step(8400, { page: 0 }, { caption: "同一則訊息換成統計數據", pointAt: newestIn("channel") });
   step(10800, {}, { cursor: { ...point(l.at.aside), hidden: true } });
   return steps;
 }

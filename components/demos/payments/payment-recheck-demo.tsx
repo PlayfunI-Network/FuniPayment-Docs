@@ -65,7 +65,7 @@ const NARROW: Layout = {
 function timeline(l: Layout) {
   const { steps, step, point } = stepper<Screen>(l, { input: { kind: "empty" }, done: false });
   const typing = point(l.at.typing, { typing: true });
-  step(0, {}, { caption: "顧客說已經付款，頻道還在待付款", highlight: CURRENT_CHANNEL });
+  step(0, {}, { caption: "顧客說已經付款，頻道還在待付款", pointAt: CURRENT_CHANNEL });
   step(2000, {}, { caption: "商家在訂單頻道輸入 /payment recheck", cursor: typing });
   step(2300, { input: { kind: "typing", typed: "/pay" } }, { cursor: { ...typing, click: true } });
   step(2700, { input: { kind: "typing", typed: "/payment rech" } });
@@ -73,7 +73,7 @@ function timeline(l: Layout) {
   step(3800, { input: { kind: "options", options: [] } }, { caption: "不填付款編號，查這個頻道最後一筆待付款訂單" });
   step(5000, { input: { kind: "empty" }, done: true }, {
     caption: "速買配回報已付款：付款完成通知貼到頻道，頻道改名、換分類",
-    highlight: newestIn("channel"),
+    pointAt: newestIn("channel"),
   });
   // Holds on the result before the loop starts over.
   step(7600, {});
@@ -176,11 +176,11 @@ function allTimeline(l: AllLayout) {
   step(1800, { input: { kind: "options", options: [SCAN_ALL] } }, { caption: `「${SCAN_ALL.name}」選「${SCAN_ALL.value}」` });
   step(3800, { input: { kind: "empty" }, progress: "started" }, {
     caption: "機器人列出要檢查幾筆，開始一筆一筆查",
-    highlight: newestIn("channel"),
+    pointAt: newestIn("channel"),
   });
-  step(5800, { progress: "progress" }, { caption: "每查完 5 筆，同一則訊息更新一次進度", highlight: newestIn("channel") });
-  step(7600, { progress: "done" }, { caption: "查完最後一筆，進度停在 12/12", highlight: newestIn("channel") });
-  step(9400, { summary: true }, { caption: "接著貼出總結：幾筆更新成功、幾筆還沒付款", highlight: newestIn("channel") });
+  step(5800, { progress: "progress" }, { caption: "每查完 5 筆，同一則訊息更新一次進度", pointAt: newestIn("channel") });
+  step(7600, { progress: "done" }, { caption: "查完最後一筆，進度停在 12/12", pointAt: newestIn("channel") });
+  step(9400, { summary: true }, { caption: "接著貼出總結：幾筆更新成功、幾筆還沒付款", pointAt: newestIn("channel") });
   // Holds on the summary before the loop starts over.
   step(11600, {});
   return steps;

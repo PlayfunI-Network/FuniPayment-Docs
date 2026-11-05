@@ -8,25 +8,23 @@ import { Caption } from "./caption";
 import { Cursor, type CursorState } from "./cursor";
 import { ControlBar, type DemoControls } from "./controls";
 import { HeroFrame } from "./hero";
-import { HighlightFrame, pointAtFrame, useHighlightRect, type Highlight } from "./highlight";
+import { pointAtRect, usePointAtRect } from "./point-at";
 
 /**
  * One moment of a demo, `at` ms after it starts. `shot` and `cursor` carry over to later steps
  * until a step sets them again (a carried-over cursor does not click again); `caption` is the
- * line shown under the stage from this step on. `highlight` frames in red what the step shows
- * without clicking it (a Rect of the stage, or a selector: see highlight.tsx); it stays until a
- * step shows the cursor somewhere (a hidden cursor keeps it) or sets another `highlight` (null
- * clears it). A step with a highlight and no cursor points the cursor at the frame.
+ * line shown under the stage from this step on. `pointAt` (a selector: see point-at.tsx) sends
+ * the cursor to what a step only shows, measured on screen, when the step sets no `cursor`; it
+ * holds there until a step shows the cursor somewhere else or points at something else.
  */
-export type DemoStep = { at: number; caption?: string; shot?: Shot; cursor?: CursorState; highlight?: Highlight | null };
+export type DemoStep = { at: number; caption?: string; shot?: Shot; cursor?: CursorState; pointAt?: string };
 
 export type DemoFrame = {
   shot: Shot;
   cursor: CursorState;
   caption: { text: string; index: number; total: number } | null;
-  /** What is framed in red, and whether the cursor points at it (its step set no cursor). */
-  highlight: Highlight | null;
-  pointAtHighlight: boolean;
+  /** What the cursor points at (a selector), when a step's `pointAt` placed it. */
+  pointAt: string | null;
 };
 
 /**
@@ -63,8 +61,7 @@ export function frameAt(steps: DemoStep[], index: number): DemoFrame {
   let shot = WIDE;
   let cursor = NO_CURSOR;
   let caption: DemoFrame["caption"] = null;
-  let highlight: Highlight | null = null;
-  let pointAtHighlight = false;
+  let pointAt: string | null = null;
   const total = steps.filter((s) => s.caption).length;
   let captions = 0;
   steps.forEach((s, i) => {
@@ -72,16 +69,11 @@ export function frameAt(steps: DemoStep[], index: number): DemoFrame {
     if (i > index) return;
     if (s.shot) shot = s.shot;
     if (s.cursor) cursor = i === index ? s.cursor : { ...s.cursor, click: false };
-    if (s.highlight !== undefined) {
-      highlight = s.highlight;
-      pointAtHighlight = s.highlight !== null && !s.cursor;
-    } else if (s.cursor && !s.cursor.hidden) {
-      highlight = null;
-      pointAtHighlight = false;
-    }
+    if (s.pointAt && !s.cursor) pointAt = s.pointAt;
+    else if (s.cursor && !s.cursor.hidden) pointAt = null;
     if (s.caption) caption = { text: s.caption, index: captions - 1, total };
   });
-  return { shot, cursor, caption, highlight, pointAtHighlight };
+  return { shot, cursor, caption, pointAt };
 }
 
 /**
@@ -115,9 +107,9 @@ export function DemoStage({
   const viewportRef = useRef<HTMLDivElement>(null);
   const viewport = useSize(viewportRef);
   const frame = frameAt(steps, index);
-  // No frame on the server's last step before the timeline rewinds: it would flash there
-  const framed = useHighlightRect(timeline.settled ? frame.highlight : null, viewportRef, index);
-  const cursor = frame.pointAtHighlight && framed ? pointAtFrame(framed) : frame.cursor;
+  // Not measured on the server's last step before the timeline rewinds: the cursor would jump there
+  const pointed = usePointAtRect(timeline.settled ? frame.pointAt : null, viewportRef, index);
+  const cursor = frame.pointAt && pointed ? pointAtRect(pointed) : frame.cursor;
   const controls = caption ? demoControls(steps, frame, timeline) : undefined;
 
   return (
@@ -134,7 +126,6 @@ export function DemoStage({
               >
                 <Camera shot={frame.shot} viewport={viewport}>
                   {children(steps[index], index)}
-                  {framed && <HighlightFrame key={JSON.stringify(frame.highlight)} rect={framed} />}
                   <Cursor state={cursor} pressId={index} />
                 </Camera>
               </div>

@@ -79,7 +79,7 @@ function timeline(l: Layout) {
   });
   step(4200, { panes: channel({ kind: "empty" }, true) }, {
     caption: "機器人在頻道貼出顧客目前的點數",
-    highlight: newestIn("channel"),
+    pointAt: newestIn("channel"),
   });
   step(6400, {}, {});
   return steps;

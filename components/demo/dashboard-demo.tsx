@@ -19,11 +19,14 @@ import {
 } from "./dashboard-demo-steps";
 import { DASHBOARD_SHOTS, DashboardShot, dashboardPicture, type DashboardLayout } from "./dashboard-shot";
 import { useWidth } from "./canvas";
+import type { Rect } from "@/lib/camera";
 import { HeroFrame } from "./hero";
-import { HighlightFrame } from "./highlight";
 import { DemoStage } from "./stage";
 
 export type { DashboardStep } from "./dashboard-demo-steps";
+
+/** A Rect (fractions of the picture) as an absolutely positioned box over it. */
+const rectStyle = (r: Rect) => ({ left: `${r.x * 100}%`, top: `${r.y * 100}%`, width: `${r.w * 100}%`, height: `${r.h * 100}%` });
 
 const REDUCED_MOTION = "(prefers-reduced-motion: reduce)";
 
@@ -133,7 +136,7 @@ function PanoramaPicture({ id, layout, ratio, markers }: { id: string; layout: D
       <div className="absolute inset-x-0 top-0" style={{ transform: `translateY(${(-span.top / tall) * 100}%)` }}>
         <DashboardShot id={id} layout={layout} />
         {markers.map((m) => (
-          <HighlightFrame key={m.number} marker={m.number} rect={m.rect!} />
+          <div key={m.number} data-marker={m.number} className="absolute rounded-md outline-2 outline-[var(--brand)] outline" style={rectStyle(m.rect!)} />
         ))}
         {/* The numbers sit on each target's top-left corner, kept inside the picture; a number
             that would cover an earlier one (targets sharing a corner) moves right */}

@@ -6,7 +6,7 @@ import { STEPS as BALANCE_SETTINGS } from "./balance/balance-settings-demo";
 import * as DASH from "./dashboard/dashboard-demos";
 import * as START from "./getting-started/dashboard-demos";
 
-/** How long a step that only shows something (framed in red) may hold. */
+/** How long a step that only shows something (no click, nothing typed) may hold. */
 const SHOW_MS = 2600;
 
 // Every exported step list of the chat demos (WIDE_STEPS, NARROW_STEPS, ALL_WIDE_STEPS, …)
@@ -37,16 +37,34 @@ const DASHBOARD: { name: string; shot: string; steps: DashboardStep[]; whole?: b
   { name: "setup-5", shot: "setup-5", steps: START.SETUP_5_STEPS },
 ];
 
+/** The steps that do something: name a target, press, type or hide the cursor. */
+const acts = (s: DashboardStep) => Boolean(s.target || s.click || s.typing || s.hideCursor);
+
 /**
- * How long each framed step holds still: until the next step that moves the cursor, frames
- * something else or ends, less the camera's move when the camera comes close meanwhile (the
- * frame is on screen then too, but the picture is moving).
+ * Whether step `i` only shows its target: it names one, presses and types nothing, the next step
+ * that does something does not press or type on it either, and it is not the page a press on the
+ * same target just opened (that step shows what the press did, with the cursor where it was).
  */
-function framedHolds(steps: (DemoStep & { view?: string })[]): { at: number; ms: number }[] {
+function showsOnly(steps: readonly DashboardStep[], i: number): boolean {
+  const s = steps[i];
+  if (!s.target || s.click || s.typing) return false;
+  const next = steps.slice(i + 1).find(acts);
+  if (next && (next.click || next.typing) && (next.target ?? s.target) === s.target) return false;
+  const before = steps.slice(0, i).reverse().find(acts);
+  if (before && before.click && (before.target === s.target || !before.target) && s.swapTo) return false;
+  return true;
+}
+
+/**
+ * How long each step that only shows something holds still: until the next step that moves the
+ * cursor, points at something else or brings a caption, less the camera's move when the camera
+ * comes close meanwhile (the picture is moving then).
+ */
+function showHolds<S extends DemoStep & { view?: string }>(steps: S[], shows: (i: number) => boolean): { at: number; ms: number }[] {
   const holds: { at: number; ms: number }[] = [];
   steps.forEach((s, i) => {
-    if (!s.highlight) return;
-    const j = steps.findIndex((n, k) => k > i && (n.cursor || n.highlight !== undefined || n.caption));
+    if (!shows(i)) return;
+    const j = steps.findIndex((n, k) => k > i && (n.cursor || n.pointAt || n.caption));
     const end = j === -1 ? steps.length - 1 : j;
     const moves = steps.slice(i + 1, end).some((n, k) => n.view !== undefined && n.view !== steps[i + k].view);
     holds.push({ at: s.at, ms: steps[end].at - s.at - (moves ? CAMERA_MS : 0) });
@@ -59,23 +77,22 @@ it("finds the chat demos' step lists", () => {
 });
 
 describe.each(CHAT)("$name", ({ steps }) => {
-  it("frames something it only shows, and does not hold it long", () => {
-    for (const h of framedHolds(steps)) expect(h.ms, `${h.at} ms`).toBeLessThanOrEqual(SHOW_MS);
+  it("does not hold long on what it only shows", () => {
+    for (const h of showHolds(steps, (i) => Boolean(steps[i].pointAt))) expect(h.ms, `${h.at} ms`).toBeLessThanOrEqual(SHOW_MS);
   });
 });
 
 describe.each(DASHBOARD)("$name dashboard demo", ({ shot, steps, whole }) => {
   for (const layout of ["desktop", "mobile"] as const) {
     const frames = resolveSteps(dashboardPicture, shot, steps, layout, whole);
-    it(`${layout}: frames each target it only shows, inside the stage, and does not hold it long`, () => {
-      for (const f of frames.filter((f) => f.highlight)) {
-        const r = f.highlight as { x: number; y: number; w: number; h: number };
-        expect(r.x, `${f.at} ms`).toBeGreaterThanOrEqual(0);
-        expect(r.y + r.h, `${f.at} ms`).toBeLessThanOrEqual(1.0001);
-        // The cursor rests on the frame's corner, pressing nothing
-        expect(f.cursor?.click, `${f.at} ms`).toBeFalsy();
-      }
-      for (const h of framedHolds(frames)) expect(h.ms, `${h.at} ms`).toBeLessThanOrEqual(SHOW_MS);
+    it(`${layout}: moves the cursor to each target it only shows, presses nothing there, and does not hold it long`, () => {
+      steps.forEach((_, i) => {
+        if (!showsOnly(steps, i)) return;
+        // Visible, unless the step hides it on purpose (setup-5 shows the whole summary)
+        expect(frames[i].cursor?.hidden, `${steps[i].at} ms`).toBe(Boolean(steps[i].hideCursor));
+        expect(frames[i].cursor?.click, `${steps[i].at} ms`).toBeFalsy();
+      });
+      for (const h of showHolds(frames, (i) => showsOnly(steps, i))) expect(h.ms, `${h.at} ms`).toBeLessThanOrEqual(SHOW_MS);
     });
   }
 });

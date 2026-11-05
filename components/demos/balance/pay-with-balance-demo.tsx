@@ -109,10 +109,10 @@ function timeline(l: Layout) {
   });
   step(4500, {}, { cursor: point(l.at.confirm) });
   step(5400, {}, { cursor: point(l.at.confirm, { click: true }) });
-  step(5700, { panes: [channel("paid")] }, { caption: "訊息換成綠色的「商城點數消費通知」，訂單完成", highlight: newestIn("channel") });
+  step(5700, { panes: [channel("paid")] }, { caption: "訊息換成綠色的「商城點數消費通知」，訂單完成", pointAt: newestIn("channel") });
   step(7900, { panes: [channel("paid"), DM] }, {
     caption: `${DEMO_PEOPLE.buyer.name}也收到消費通知私訊`,
-    highlight: newestIn("dm"),
+    pointAt: newestIn("dm"),
   });
   step(10100, {}, {});
   return steps;

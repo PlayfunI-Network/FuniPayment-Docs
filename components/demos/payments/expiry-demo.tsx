@@ -43,9 +43,9 @@ const NARROW: Layout = { w: 400, h: 500, at: {} };
 
 /** The same on both layouts: the whole screen, with nothing to zoom in on. */
 const STEPS: SceneStep<Screen>[] = [
-  { at: 0, screen: { expired: false }, caption: "商家送出 /fp，顧客一直沒有選付款方式", highlight: newestIn("channel") },
-  { at: 2400, screen: { expired: false }, caption: "24 小時後……", highlight: null },
-  { at: 3600, screen: { expired: true }, caption: "選單變成過期訊息，頻道換成「訂單過期時」的名稱和分類", highlight: `${newestIn("channel")} || ${CURRENT_CHANNEL}` },
+  { at: 0, screen: { expired: false }, caption: "商家送出 /fp，顧客一直沒有選付款方式", pointAt: newestIn("channel") },
+  { at: 2400, screen: { expired: false }, caption: "24 小時後……" },
+  { at: 3600, screen: { expired: true }, caption: "選單變成過期訊息，頻道換成「訂單過期時」的名稱和分類", pointAt: `${newestIn("channel")} || ${CURRENT_CHANNEL}` },
   // Holds on the expired message before the loop starts over.
   { at: 6200, screen: { expired: true } },
 ];
