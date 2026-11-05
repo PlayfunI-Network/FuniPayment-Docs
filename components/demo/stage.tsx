@@ -6,6 +6,7 @@ import { useTimeline } from "@/lib/use-timeline";
 import { Camera } from "./camera";
 import { Caption } from "./caption";
 import { Cursor, type CursorState } from "./cursor";
+import { HeroFrame } from "./hero";
 
 /**
  * One moment of a demo, `at` ms after it starts. `shot` and `cursor` carry over to later steps
@@ -32,12 +33,18 @@ export const STAGE_MAX_H = "min(600px, max(420px, 100svh - var(--demo-fold, 190p
 export const STAGE_MAX_W = "720px";
 
 /**
- * The stage's width for `aspect` (CSS aspect-ratio, `w / h`): the column, but no wider than
+ * The width a stage may take: the column (`--demo-avail`, set beside a DemoHero's text in
+ * globals.css, else 100%).
+ */
+export const STAGE_AVAIL = "var(--demo-avail, 100%)";
+
+/**
+ * The stage's width for `aspect` (CSS aspect-ratio, `w / h`): STAGE_AVAIL, but no wider than
  * STAGE_MAX_W and no wider than keeps it within STAGE_MAX_H.
  */
 export function stageWidth(aspect: string): string {
   const [w, h = 1] = aspect.split("/").map((n) => Number(n.trim()));
-  return `min(100%, ${STAGE_MAX_W}, calc((${STAGE_MAX_H}) * ${w / h}))`;
+  return `min(${STAGE_AVAIL}, ${STAGE_MAX_W}, calc((${STAGE_MAX_H}) * ${w / h}))`;
 }
 
 const WIDE: Shot = { zoom: 1 };
@@ -66,6 +73,7 @@ export function frameAt(steps: DemoStep[], index: number): DemoFrame {
  * stageWidth so the whole demo fits on one screen. To assistive tech it is one
  * image described by `label`; everything inside is hidden. The timeline plays once 30% of it
  * is visible, pauses off-screen, loops, and under reduced motion shows only the last step.
+ * Inside a DemoHero it sits beside (or above) the hero's text, which lists its captions.
  * `children` draws the screen for a step, filling the stage. `steps` must keep its identity
  * between renders (define it at module level).
  */
@@ -86,28 +94,38 @@ export function DemoStage({
   const viewportRef = useRef<HTMLDivElement>(null);
   const viewport = useSize(viewportRef);
   const frame = frameAt(steps, index);
+  const captions = caption ? steps.flatMap((s) => (s.caption ? [s.caption] : [])) : [];
 
   return (
-    <div ref={ref as RefObject<HTMLDivElement>} role="img" aria-label={label} className="not-prose my-6 first:mt-0">
-      <div aria-hidden="true" className="mx-auto" style={{ width: stageWidth(aspect) }}>
-        <div
-          ref={viewportRef}
-          className="relative overflow-hidden rounded-xl border border-[var(--line)] bg-[var(--card)]"
-          style={{ aspectRatio: aspect }}
-        >
-          <Camera shot={frame.shot} viewport={viewport}>
-            {children(steps[index], index)}
-            <Cursor state={frame.cursor} pressId={index} />
-          </Camera>
+    <HeroFrame
+      steps={{ captions, index: frame.caption?.index ?? -1 }}
+      stage={(className) => (
+        <div ref={ref as RefObject<HTMLDivElement>} role="img" aria-label={label} className={className}>
+          <div aria-hidden="true" className="mx-auto" style={{ width: stageWidth(aspect) }}>
+            <div
+              ref={viewportRef}
+              className="relative overflow-hidden rounded-xl border border-[var(--line)] bg-[var(--card)]"
+              style={{ aspectRatio: aspect }}
+            >
+              <Camera shot={frame.shot} viewport={viewport}>
+                {children(steps[index], index)}
+                <Cursor state={frame.cursor} pressId={index} />
+              </Camera>
+            </div>
+            {caption && (
+              // Hidden beside a hero's text, which lists every caption instead
+              <div className="demo-hero-caption">
+                {frame.caption ? (
+                  <Caption text={frame.caption.text} index={frame.caption.index} total={frame.caption.total} />
+                ) : (
+                  <div className="mt-3 min-h-7" />
+                )}
+              </div>
+            )}
+          </div>
         </div>
-        {caption &&
-          (frame.caption ? (
-            <Caption text={frame.caption.text} index={frame.caption.index} total={frame.caption.total} />
-          ) : (
-            <div className="mt-3 min-h-7" />
-          ))}
-      </div>
-    </div>
+      )}
+    />
   );
 }
 

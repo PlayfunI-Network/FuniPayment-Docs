@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
-import { DemoStage, frameAt, stageWidth, STAGE_MAX_H, STAGE_MAX_W, type DemoStep } from "./index";
+import { DemoStage, frameAt, stageWidth, STAGE_AVAIL, STAGE_MAX_H, STAGE_MAX_W, type DemoStep } from "./index";
 
 const STEPS: DemoStep[] = [
   { at: 0, caption: "移到按鈕", cursor: { x: 0.2, y: 0.2 } },
@@ -65,6 +65,6 @@ test("外層是有 aria-label 的 img，內容對輔助技術隱藏", () => {
 });
 
 test("舞台寬度不超過欄寬、STAGE_MAX_W，也不會高過 STAGE_MAX_H", () => {
-  expect(stageWidth("880 / 780")).toBe(`min(100%, ${STAGE_MAX_W}, calc((${STAGE_MAX_H}) * ${880 / 780}))`);
-  expect(stageWidth("1 / 0.5")).toBe(`min(100%, ${STAGE_MAX_W}, calc((${STAGE_MAX_H}) * 2))`);
+  expect(stageWidth("880 / 780")).toBe(`min(${STAGE_AVAIL}, ${STAGE_MAX_W}, calc((${STAGE_MAX_H}) * ${880 / 780}))`);
+  expect(stageWidth("1 / 0.5")).toBe(`min(${STAGE_AVAIL}, ${STAGE_MAX_W}, calc((${STAGE_MAX_H}) * 2))`);
 });

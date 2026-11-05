@@ -8,17 +8,20 @@ import { useMemo, useRef, useSyncExternalStore } from "react";
 import type { Rect } from "@/lib/camera";
 import {
   chooseLayout,
+  demoRatio,
   markersFor,
+  showsWhole,
+  wholePlacement,
   NARROW_BELOW,
   panoramaSpan,
   resolveSteps,
   shotsUsed,
-  stageRatio,
   type DashboardStep,
   type Marker,
 } from "./dashboard-demo-steps";
 import { DASHBOARD_SHOTS, DashboardShot, dashboardPicture, type DashboardLayout } from "./dashboard-shot";
 import { useWidth } from "./canvas";
+import { HeroFrame } from "./hero";
 import { DemoStage } from "./stage";
 
 export type { DashboardStep } from "./dashboard-demo-steps";
@@ -43,26 +46,29 @@ export function useReducedMotion(): boolean {
 
 /**
  * The demo. `shot` is the shot on screen first; `steps` must keep its identity between renders
- * (define it at module level). `label` describes the whole demo to assistive tech.
+ * (define it at module level). `label` describes the whole demo to assistive tech. `whole` shows
+ * every picture whole on a stage as tall as the tallest, without scrolling (desktop pictures only:
+ * see showsWhole); use it when the pictures read at that size, so the camera has nothing to do.
  */
-export function DashboardDemo({ shot, steps, label }: { shot: string; steps: readonly DashboardStep[]; label: string }) {
+export function DashboardDemo({ shot, steps, label, whole = false }: { shot: string; steps: readonly DashboardStep[]; label: string; whole?: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
   const width = useWidth(ref);
   const reduced = useReducedMotion();
   const layout = chooseLayout(DASHBOARD_SHOTS, shot, steps, width > 0 && width < NARROW_BELOW);
   return (
     <div ref={ref} data-dashboard-demo={shot} data-layout={layout}>
-      {reduced ? <Panorama shot={shot} steps={steps} label={label} layout={layout} /> : <Animated shot={shot} steps={steps} label={label} layout={layout} />}
+      {reduced ? <Panorama shot={shot} steps={steps} label={label} layout={layout} whole={whole} /> : <Animated shot={shot} steps={steps} label={label} layout={layout} whole={whole} />}
     </div>
   );
 }
 
-type Props = { shot: string; steps: readonly DashboardStep[]; label: string; layout: DashboardLayout };
+type Props = { shot: string; steps: readonly DashboardStep[]; label: string; layout: DashboardLayout; whole: boolean };
 
-function Animated({ shot, steps, label, layout }: Props) {
-  const frames = useMemo(() => resolveSteps(dashboardPicture, shot, steps, layout), [shot, steps, layout]);
-  const ratio = stageRatio(dashboardPicture(shot, layout), layout);
+function Animated({ shot, steps, label, layout, whole }: Props) {
+  const frames = useMemo(() => resolveSteps(dashboardPicture, shot, steps, layout, whole), [shot, steps, layout, whole]);
+  const ratio = demoRatio(dashboardPicture, shot, layout, whole);
   const ids = useMemo(() => shotsUsed(shot, steps), [shot, steps]);
+  const fixed = showsWhole(whole, layout);
   return (
     <DemoStage label={label} aspect={`1 / ${ratio}`} steps={frames} caption={steps.some((s) => s.caption)}>
       {(_, index) => {
@@ -70,6 +76,20 @@ function Animated({ shot, steps, label, layout }: Props) {
         return ids.map((id) => {
           const pic = dashboardPicture(id, layout);
           const tall = pic.height / pic.width;
+          const visibility = id === frame.shotId ? undefined : ("hidden" as const);
+          if (fixed) {
+            const at = wholePlacement(tall, ratio);
+            return (
+              <div
+                key={id}
+                data-shot={id}
+                className="absolute"
+                style={{ left: `${at.x * 100}%`, top: `${(at.y / ratio) * 100}%`, width: `${at.w * 100}%`, visibility }}
+              >
+                <DashboardShot id={id} layout={layout} eager />
+              </div>
+            );
+          }
           return (
             <div
               key={id}
@@ -77,7 +97,7 @@ function Animated({ shot, steps, label, layout }: Props) {
               className="absolute inset-x-0 top-0 transition-transform duration-700 ease-in-out"
               style={{
                 transform: `translateY(${(-frame.scroll / tall) * 100}%)`,
-                visibility: id === frame.shotId ? undefined : "hidden",
+                visibility,
               }}
             >
               <DashboardShot id={id} layout={layout} eager />
@@ -89,30 +109,34 @@ function Animated({ shot, steps, label, layout }: Props) {
   );
 }
 
-function Panorama({ shot, steps, label, layout }: Props) {
+function Panorama({ shot, steps, label, layout, whole }: Props) {
   const markers = useMemo(() => markersFor(dashboardPicture, shot, steps, layout), [shot, steps, layout]);
-  const ratio = stageRatio(dashboardPicture(shot, layout), layout);
+  const ratio = demoRatio(dashboardPicture, shot, layout, whole);
   // One picture per shot that has a marker (the first shot when none has)
   const ids = shotsUsed(shot, steps).filter((id) => markers.some((m) => m.shotId === id && m.rect));
   if (ids.length === 0) ids.push(shot);
   return (
-    <div role="img" aria-label={label} className="not-prose my-6" data-panorama>
-      <div aria-hidden="true" className="space-y-3">
-        {ids.map((id) => (
-          <PanoramaPicture key={id} id={id} layout={layout} ratio={ratio} markers={markers.filter((m) => m.shotId === id && m.rect)} />
-        ))}
-        {markers.length > 0 && (
-          <ol className="space-y-1.5 text-sm text-[var(--fg)]">
-            {markers.map((m) => (
-              <li key={m.number} className="flex items-start gap-2.5">
-                <MarkerDot number={m.number} />
-                <span className="min-w-0 flex-1 pt-0.5">{m.caption}</span>
-              </li>
+    <HeroFrame
+      stage={(className) => (
+        <div role="img" aria-label={label} className={className} data-panorama>
+          <div aria-hidden="true" className="space-y-3">
+            {ids.map((id) => (
+              <PanoramaPicture key={id} id={id} layout={layout} ratio={ratio} markers={markers.filter((m) => m.shotId === id && m.rect)} />
             ))}
-          </ol>
-        )}
-      </div>
-    </div>
+            {markers.length > 0 && (
+              <ol className="space-y-1.5 text-sm text-[var(--fg)]">
+                {markers.map((m) => (
+                  <li key={m.number} className="flex items-start gap-2.5">
+                    <MarkerDot number={m.number} />
+                    <span className="min-w-0 flex-1 pt-0.5">{m.caption}</span>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </div>
+        </div>
+      )}
+    />
   );
 }
 

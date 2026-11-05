@@ -16,6 +16,9 @@ export default async function Page(props: Props) {
   if (!page) notFound();
 
   const MDX = page.data.body;
+  // A page that opens with <DemoHero> gets the full width, so the demo and its text fit side by
+  // side; its table of contents moves from the right column to the bar at the top (as on a phone).
+  const hero = (await page.data.getText("raw")).includes("<DemoHero>");
   const PageLink = createRelativeLink(source, page);
   // A link to a file (/demo/tutorials/hilife.png) is a plain <a>: Next's Link would prefetch it as a page.
   // A link to another site (dashboard, official site, Discord) opens in a new tab.
@@ -30,7 +33,8 @@ export default async function Page(props: Props) {
   return (
     <DocsPage
       toc={page.data.toc}
-      full={page.data.full}
+      full={page.data.full || hero}
+      tableOfContentPopover={hero ? { container: { className: "xl:block" } } : undefined}
       footer={{ children: <SiteFooter /> }}
       breadcrumb={{ className: "max-md:hidden" }}
     >

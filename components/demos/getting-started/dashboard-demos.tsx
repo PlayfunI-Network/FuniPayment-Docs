@@ -10,7 +10,10 @@ import { DashboardDemo, type DashboardStep } from "@/components/demo";
 // welcome tour cut to its card), so their text already shows at about 11–13 px on the whole
 // picture, on the 635 px wizard stage too.
 
-/** Log in with Discord, then the first card of the welcome tour. */
+/**
+ * Log in with Discord, then the first card of the welcome tour. Both pictures read whole, so the
+ * demo is `whole`: no scrolling, the login page fills the stage and the tour card fits beside.
+ */
 export const LOGIN_STEPS: DashboardStep[] = [
   { at: 0, caption: "打開後台，按「使用 Discord 登入」", target: "login" },
   { at: 1600, target: "login", click: true },
@@ -77,6 +80,7 @@ export function LoginDemo() {
     <DashboardDemo
       shot="login"
       steps={LOGIN_STEPS}
+      whole
       label="示範：在後台登入頁按「使用 Discord 登入」，授權後第一次登入看到導覽，按「下一張」往下看，或按「跳過」"
     />
   );

@@ -225,6 +225,90 @@ h3 {
 }
 @media (min-width: 768px) {
   :root {
-    --demo-fold: 280px;
+    --demo-fold: 296px;
   }
+}
+
+/*
+ * DemoHero（components/demo/hero.tsx）：頁面開頭的 demo 和介紹它的文字。
+ * 夠寬時左右排：demo 在左，右邊是文字和 demo 的步驟清單（目前這一步亮起），demo 下方的 caption 收起來；
+ * 不夠寬時上下排：demo、caption、文字。用 container query 判斷，靜態 HTML 就是對的版面。
+ */
+.demo-hero {
+  container-type: inline-size;
+}
+.demo-hero-steps {
+  display: none;
+}
+.demo-hero-text {
+  margin-top: 1.25rem;
+}
+.demo-hero-text > :first-child {
+  margin-top: 0;
+}
+@container (min-width: 860px) {
+  .demo-hero-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 2rem;
+    /* 文字欄至少 18rem，其餘給 demo */
+    --demo-avail: calc(100cqw - 20rem);
+    /* 沒有 caption（在右邊的清單裡），但上方多了目錄列 */
+    --demo-fold: 270px;
+  }
+  .demo-hero-stage {
+    flex: none;
+  }
+  .demo-hero-stage:has([data-panorama]) {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+  .demo-hero-text {
+    margin-top: 0;
+    flex: 1 1 18rem;
+    min-width: 0;
+    max-width: 28rem;
+  }
+  .demo-hero-caption {
+    display: none;
+  }
+  .demo-hero-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 0.625rem;
+    margin-top: 1.5rem;
+    padding: 0;
+    list-style: none;
+  }
+}
+.demo-hero-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+  font-size: 0.875rem;
+  line-height: 1.5rem;
+  color: var(--muted);
+  transition: color 0.3s;
+}
+.demo-hero-step[data-on] {
+  color: var(--fg);
+}
+.demo-hero-step-number {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 9999px;
+  background: var(--line);
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  transition: background-color 0.3s, color 0.3s;
+}
+.demo-hero-step[data-on] .demo-hero-step-number {
+  background: var(--brand);
+  color: #0a0a0a;
 }
