@@ -47,8 +47,8 @@ function timeline(l: Layout) {
   step(1400, { typed: "在嗎？" });
   step(1800, { typed: "在嗎？我剛剛" });
   step(2200, { typed: TYPED });
-  step(3100, { typed: "", sent: true }, { caption: "訊息裡有觸發的字詞，這裡是在嗎", highlight: newestIn("dm") });
-  step(5100, { reply: true }, { caption: "機器人自動回覆：它不是真人，訂單問題請找客服", highlight: newestIn("dm") });
+  step(3100, { typed: "", sent: true }, { caption: "訊息裡有觸發的字詞，這裡是在嗎", pointAt: newestIn("dm") });
+  step(5100, { reply: true }, { caption: "機器人自動回覆：它不是真人，訂單問題請找客服", pointAt: newestIn("dm") });
   step(7600, {}, {});
   return steps;
 }

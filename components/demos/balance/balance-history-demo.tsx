@@ -93,7 +93,7 @@ function timeline(l: Layout) {
   const empty: InputState = { kind: "empty" };
   const press = (at: number, where: CanvasPoint, page: Page) => {
     step(at + 800, {}, { cursor: point(where, { click: true }) });
-    step(at + 1100, { panes: channel(empty, page) }, { highlight: newestIn("channel") });
+    step(at + 1100, { panes: channel(empty, page) }, { pointAt: newestIn("channel") });
   };
 
   step(0, { panes: channel(empty, null) }, {
@@ -107,7 +107,7 @@ function timeline(l: Layout) {
   step(1500, { panes: channel({ kind: "options", options: [MODE] }, null) });
   step(2400, { panes: channel(empty, 1) }, {
     caption: "第 1 頁列出最近的點數異動，一頁 5 筆",
-    highlight: newestIn("channel"),
+    pointAt: newestIn("channel"),
   });
   step(4000, {}, { caption: "按「▶️」翻到第 2 頁，看比較早的紀錄", cursor: point(l.at.next) });
   press(4000, l.at.next, 2);

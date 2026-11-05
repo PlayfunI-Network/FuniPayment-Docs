@@ -95,11 +95,11 @@ function timeline(l: Layout) {
   step(1600, { panes: [channel(OPTIONS, false)] });
   step(3000, { panes: [channel(empty, true)] }, {
     caption: "機器人在頻道貼出「餘額增加成功」，寫著理由和執行者",
-    highlight: newestIn("channel"),
+    pointAt: newestIn("channel"),
   });
   step(5400, { panes: [channel(empty, true), DM] }, {
     caption: `${DEMO_PEOPLE.buyer.name}收到「餘額異動通知」私訊，裡面沒有理由和執行者`,
-    highlight: newestIn("dm"),
+    pointAt: newestIn("dm"),
   });
   step(7800, {}, {});
   return steps;

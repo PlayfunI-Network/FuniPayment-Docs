@@ -32,9 +32,9 @@ const NARROW: Layout = {
 
 // Both layouts show the whole DM: the order and the notice read without zooming.
 const STEPS: SceneStep<Screen>[] = [
-  { at: 0, screen: { paid: false }, caption: "開單時，機器人把訂單私訊給你", shot: { zoom: 1 }, highlight: newestIn("dm") },
-  { at: 2400, screen: { paid: false }, caption: "你到 7-11 付款", highlight: null },
-  { at: 3800, screen: { paid: true }, caption: "速買配通知付款完成後，私訊多了一則付款完成通知", highlight: newestIn("dm") },
+  { at: 0, screen: { paid: false }, caption: "開單時，機器人把訂單私訊給你", shot: { zoom: 1 }, pointAt: newestIn("dm") },
+  { at: 2400, screen: { paid: false }, caption: "你到 7-11 付款" },
+  { at: 3800, screen: { paid: true }, caption: "速買配通知付款完成後，私訊多了一則付款完成通知", pointAt: newestIn("dm") },
   { at: 6400, screen: { paid: true } },
 ];
 

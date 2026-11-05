@@ -12,10 +12,10 @@ const { wide: WIDE, narrow: NARROW } = LAYOUTS;
  * happens (the channel list wide, the window header narrow).
  */
 const STEPS: SceneStep<Screen>[] = [
-  { at: 0, screen: { stage: "open" }, caption: "訂單頻道剛開，還在開單分類", highlight: CURRENT_CHANNEL },
-  { at: 2400, screen: { stage: "selecting" }, caption: "/fp 送出：換成「選擇付款方式時」的名稱和分類", highlight: CURRENT_CHANNEL },
-  { at: 4800, screen: { stage: "pending" }, caption: "訂單建立：換成「待付款時」的名稱和分類", highlight: CURRENT_CHANNEL },
-  { at: 7200, screen: { stage: "complete" }, caption: "付款完成：換成「付款完成時」的名稱和分類", highlight: CURRENT_CHANNEL },
+  { at: 0, screen: { stage: "open" }, caption: "訂單頻道剛開，還在開單分類", pointAt: CURRENT_CHANNEL },
+  { at: 2400, screen: { stage: "selecting" }, caption: "/fp 送出：換成「選擇付款方式時」的名稱和分類", pointAt: CURRENT_CHANNEL },
+  { at: 4800, screen: { stage: "pending" }, caption: "訂單建立：換成「待付款時」的名稱和分類", pointAt: CURRENT_CHANNEL },
+  { at: 7200, screen: { stage: "complete" }, caption: "付款完成：換成「付款完成時」的名稱和分類", pointAt: CURRENT_CHANNEL },
   // Holds on the last stage before the loop starts over.
   { at: 9600, screen: { stage: "complete" } },
 ];

@@ -36,7 +36,7 @@ function timeline(l: Layout) {
   step(2800, { input: amount(String(SCENARIO.amount)) });
   step(3500, { input: { kind: "empty" }, bot: "select", channel: "selecting" }, {
     caption: "機器人回覆付款方式選單，頻道也跟著改名、換分類",
-    highlight: newestIn("channel"),
+    pointAt: newestIn("channel"),
   });
   step(4900, {}, { caption: "顧客打開選單，選「四大超商條碼」", cursor: point(at.select) });
   step(5800, {}, { cursor: point(at.select, { click: true }) });
@@ -51,7 +51,7 @@ function timeline(l: Layout) {
   step(11100, {}, { cursor: point(at.confirm, { click: true }) });
   step(11500, { bot: "order", channel: "pending" }, {
     caption: "訂單成立，條碼貼在頻道裡，頻道再換到待付款的分類",
-    highlight: newestIn("channel"),
+    pointAt: newestIn("channel"),
   });
   // Holds on the order before the loop starts over.
   step(13300, {});

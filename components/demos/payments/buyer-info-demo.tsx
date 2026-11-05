@@ -73,7 +73,7 @@ function timeline(l: Layout) {
   };
   step(0, {}, {
     caption: "還沒填資料，「確認並獲取付款碼」按不下去",
-    highlight: newestIn("channel"),
+    pointAt: newestIn("channel"),
   });
   step(1800, {}, { caption: "按「✏️ 填寫/修改資訊」", cursor: point(l.at.edit) });
   step(2600, {}, { cursor: point(l.at.edit, { click: true }) });
@@ -84,7 +84,7 @@ function timeline(l: Layout) {
   step(7700, {}, { cursor: point(l.at.submit, { click: true }) });
   step(8000, { modal: null, filled: true }, {
     caption: "資料填進畫面，「確認並獲取付款碼」可以按了",
-    highlight: newestIn("channel"),
+    pointAt: newestIn("channel"),
   });
   step(10200, {}, { cursor: { ...point(l.at.aside), hidden: true } });
   return steps;

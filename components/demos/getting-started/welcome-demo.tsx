@@ -53,8 +53,8 @@ function timeline(l: Layout) {
   const { steps, step, point } = stepper<Screen>(l, START);
   const at = l.at;
   step(0, {}, { caption: "機器人剛加入伺服器", shot: { zoom: 1 }, cursor: { ...point(at.aside), hidden: true } });
-  step(1200, { channel: true }, { caption: "系統訊息頻道收到「感謝邀請 FunI 付款系統！」", highlight: '[data-msg="channel-welcome"]' });
-  step(3600, { dm: true, show: "dm" }, { caption: "伺服器擁有者也收到私訊，開頭寫著是哪個伺服器加了機器人", highlight: '[data-msg="dm-welcome"]' });
+  step(1200, { channel: true }, { caption: "系統訊息頻道收到「感謝邀請 FunI 付款系統！」", pointAt: '[data-msg="channel-welcome"]' });
+  step(3600, { dm: true, show: "dm" }, { caption: "伺服器擁有者也收到私訊，開頭寫著是哪個伺服器加了機器人", pointAt: '[data-msg="dm-welcome"]' });
   step(6000, {}, { caption: "按「開始設定」打開後台的設定精靈", cursor: point(at.start) });
   step(7200, {}, { cursor: point(at.start, { click: true }) });
   step(7600, {}, { cursor: point(at.aside) });

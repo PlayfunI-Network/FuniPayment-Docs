@@ -22,10 +22,10 @@ const WIDE: ChannelAutomationLayout = {
 };
 
 const STEPS: SceneStep<Screen>[] = [
-  { at: 0, screen: { stage: "open" }, caption: "商家在訂單頻道跟顧客談好價錢", shot: { zoom: 1 }, highlight: newestIn("channel") },
-  { at: 2400, screen: { stage: "selecting" }, caption: "商家輸入 /fp 和金額，機器人貼出付款方式選單", highlight: newestIn("channel") },
-  { at: 5000, screen: { stage: "pending" }, caption: "顧客選好付款方式，拿到超商條碼", highlight: newestIn("channel") },
-  { at: 7600, screen: { stage: "complete" }, caption: "顧客付款後，機器人送出付款完成通知", highlight: newestIn("channel") },
+  { at: 0, screen: { stage: "open" }, caption: "商家在訂單頻道跟顧客談好價錢", shot: { zoom: 1 }, pointAt: newestIn("channel") },
+  { at: 2400, screen: { stage: "selecting" }, caption: "商家輸入 /fp 和金額，機器人貼出付款方式選單", pointAt: newestIn("channel") },
+  { at: 5000, screen: { stage: "pending" }, caption: "顧客選好付款方式，拿到超商條碼", pointAt: newestIn("channel") },
+  { at: 7600, screen: { stage: "complete" }, caption: "顧客付款後，機器人送出付款完成通知", pointAt: newestIn("channel") },
   { at: 10200, screen: { stage: "complete" } },
 ];
 

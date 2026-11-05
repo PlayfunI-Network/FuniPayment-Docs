@@ -130,10 +130,10 @@ function timeline(l: Layout) {
   });
   step(4500, {}, { cursor: point(l.at.confirm) });
   step(5500, {}, { cursor: point(l.at.confirm, { click: true }) });
-  step(5800, { panes: channel({ kind: "empty" }, "done") }, { caption: "轉帳完成，確認畫面換成「轉帳成功」", highlight: newestIn("channel") });
+  step(5800, { panes: channel({ kind: "empty" }, "done") }, { caption: "轉帳完成，確認畫面換成「轉帳成功」", pointAt: newestIn("channel") });
   step(7800, { panes: DMS }, {
     caption: `${DEMO_PEOPLE.buyer.name}和${SCENARIO.recipient}各收到一則私訊，寫著轉帳前後的餘額`,
-    highlight: `${newestIn("sender")}, ${newestIn("receiver")}`,
+    pointAt: `${newestIn("sender")}, ${newestIn("receiver")}`,
   });
   step(10200, {}, {});
   return steps;

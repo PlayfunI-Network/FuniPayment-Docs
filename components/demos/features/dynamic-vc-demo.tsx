@@ -115,9 +115,9 @@ function timeline(l: Layout) {
   step(4600, { input: options(TEMPLATE) });
   step(5600, { input: { kind: "empty" }, reply: true, voice: "after" }, {
     caption: "機器人回覆設定成功，語音頻道名稱換成目前的訂單數",
-    highlight: newestIn("channel"),
+    pointAt: newestIn("channel"),
   });
-  step(7800, { voice: "later" }, { caption: "之後每 10 分鐘，名稱跟著最新的數字更新", highlight: VOICE_ROW });
+  step(7800, { voice: "later" }, { caption: "之後每 10 分鐘，名稱跟著最新的數字更新", pointAt: VOICE_ROW });
   step(10200, {}, {});
   return steps;
 }

@@ -39,11 +39,11 @@ const NARROW: Layout = { w: 400, h: 720, at: {} };
 
 const STEPS: SceneStep<Screen>[] = [
   { at: 0, screen: { paid: false, show: "channel" }, caption: "顧客拿著條碼到超商付款", shot: { zoom: 1 } },
-  { at: 2000, screen: { paid: true, show: "channel" }, caption: "速買配通知付款完成，訂單頻道收到付款完成通知", highlight: newestIn("channel") },
-  { at: 4200, screen: { paid: true, show: "channel" }, caption: "訂單頻道換成「付款完成時」的名稱和分類", highlight: CURRENT_CHANNEL },
-  { at: 6400, screen: { paid: true, show: "dm" }, caption: "付款者的私訊也收到同一則通知", highlight: newestIn("dm") },
-  { at: 8600, screen: { paid: true, show: "log" }, caption: "日誌頻道也收到一份", highlight: newestIn("log") },
-  { at: 10800, screen: { paid: true, show: "channel" }, caption: "訂單頻道、付款者的私訊、日誌頻道都收到了", highlight: null },
+  { at: 2000, screen: { paid: true, show: "channel" }, caption: "速買配通知付款完成，訂單頻道收到付款完成通知", pointAt: newestIn("channel") },
+  { at: 4200, screen: { paid: true, show: "channel" }, caption: "訂單頻道換成「付款完成時」的名稱和分類", pointAt: CURRENT_CHANNEL },
+  { at: 6400, screen: { paid: true, show: "dm" }, caption: "付款者的私訊也收到同一則通知", pointAt: newestIn("dm") },
+  { at: 8600, screen: { paid: true, show: "log" }, caption: "日誌頻道也收到一份", pointAt: newestIn("log") },
+  { at: 10800, screen: { paid: true, show: "channel" }, caption: "訂單頻道、付款者的私訊、日誌頻道都收到了" },
   { at: 12800, screen: { paid: true, show: "channel" } },
 ];
 

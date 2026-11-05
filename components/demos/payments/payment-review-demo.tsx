@@ -55,7 +55,7 @@ function timeline(l: Layout) {
     step(at + 1700, { input: { kind: "options", options: [] } });
     step(at + 2300, { input: { kind: "empty" }, replies }, {
       caption: reply,
-      highlight: newestIn("channel"),
+      pointAt: newestIn("channel"),
     });
   };
   step(0, {}, { cursor: { ...typing, hidden: true } });

@@ -71,14 +71,14 @@ function timeline(l: Layout) {
   step(3200, { input: { kind: "options", options: OPTIONS } });
   step(4100, { input: { kind: "empty" }, bot: "buyer" }, {
     caption: "購買人資訊只有顧客自己看得到，上次填過的會自動帶入",
-    highlight: newestIn("channel"),
+    pointAt: newestIn("channel"),
   });
   step(6200, {}, { caption: "確認沒問題，按「確認並獲取付款碼」", cursor: point(l.at.confirm) });
   step(7200, {}, { cursor: point(l.at.confirm, { click: true }) });
   step(7500, { bot: "confirming" }, { cursor: point(l.at.aside) });
   step(8600, { bot: "order" }, {
     caption: "訂單建立，銀行帳號和付款期限貼在頻道裡",
-    highlight: newestIn("channel"),
+    pointAt: newestIn("channel"),
   });
   // Holds on the order before the loop starts over.
   step(10800, {});
