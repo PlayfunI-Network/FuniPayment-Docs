@@ -168,4 +168,68 @@ describe("useTimeline", () => {
     rerender({ restart: { key: 2, at: 0 } });
     expect(result.current.step).toBe(0);
   });
+
+  describe("the reader's controls", () => {
+    const steps = [{ at: 0 }, { at: 1000 }, { at: 2000 }, { at: 3000 }];
+
+    it("seek plays the picked part and holds on its end, with autoplay off", () => {
+      mockMatchMedia(false);
+      vi.stubGlobal("IntersectionObserver", FakeObserver);
+      const { result } = renderTimeline(steps, { loopPause: 1000 });
+      act(() => FakeObserver.last!.show(0.5));
+      expect(result.current.playing).toBe(true);
+
+      act(() => result.current.seek(1, 2));
+      expect(result.current.step).toBe(1);
+      expect(result.current.playing).toBe(false);
+      act(() => vi.advanceTimersByTime(1000));
+      expect(result.current.step).toBe(2);
+      // Held: no further steps, no loop
+      act(() => vi.advanceTimersByTime(10000));
+      expect(result.current.step).toBe(2);
+      expect(vi.getTimerCount()).toBe(0);
+    });
+
+    it("resume plays on from the step on screen; pause holds it", () => {
+      mockMatchMedia(false);
+      vi.stubGlobal("IntersectionObserver", FakeObserver);
+      const { result } = renderTimeline(steps, { loopPause: 1000 });
+      act(() => FakeObserver.last!.show(0.5));
+      act(() => result.current.seek(1, 1));
+      expect(result.current.step).toBe(1);
+      act(() => vi.advanceTimersByTime(5000));
+      expect(result.current.step).toBe(1);
+
+      act(() => result.current.resume());
+      expect(result.current.playing).toBe(true);
+      act(() => vi.advanceTimersByTime(1000));
+      expect(result.current.step).toBe(2);
+
+      act(() => result.current.pause());
+      expect(result.current.playing).toBe(false);
+      act(() => vi.advanceTimersByTime(5000));
+      expect(result.current.step).toBe(2);
+    });
+
+    it("resume after the last step starts over", () => {
+      mockMatchMedia(false);
+      vi.stubGlobal("IntersectionObserver", FakeObserver);
+      const { result } = renderTimeline(steps, { loopPause: 1000 });
+      act(() => FakeObserver.last!.show(0.5));
+      act(() => result.current.seek(3, 3));
+      act(() => result.current.resume());
+      expect(result.current.step).toBe(0);
+    });
+
+    it("under reduced motion a seek shows the end of the part at once and nothing plays", () => {
+      mockMatchMedia(true);
+      vi.stubGlobal("IntersectionObserver", FakeObserver);
+      const { result } = renderTimeline(steps);
+      expect(result.current.animates).toBe(false);
+      expect(result.current.playing).toBe(false);
+      act(() => result.current.seek(0, 1));
+      expect(result.current.step).toBe(1);
+      expect(vi.getTimerCount()).toBe(0);
+    });
+  });
 });

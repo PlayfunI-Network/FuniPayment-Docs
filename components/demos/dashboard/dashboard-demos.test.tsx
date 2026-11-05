@@ -41,12 +41,6 @@ describe.each(DEMOS)("$shot demo", ({ shot, steps, Demo }) => {
     steps.forEach((s, i) => i > 0 && expect(s.at).toBeGreaterThan(steps[i - 1].at));
   });
 
-  it("never zooms: the whole picture is readable", () => {
-    for (const layout of ["desktop", "mobile"] as const) {
-      for (const f of resolveSteps(dashboardPicture, shot, steps, layout)) expect(f.shot?.zoom ?? 1).toBe(1);
-    }
-  });
-
   it("uses the phone pictures on a narrow stage", () => {
     expect(chooseLayout(DASHBOARD_SHOTS, shot, steps, true)).toBe("mobile");
   });

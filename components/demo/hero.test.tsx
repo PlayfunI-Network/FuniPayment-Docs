@@ -50,7 +50,9 @@ test("DemoHero 把介紹文字放在 demo 旁邊，並列出每一步的 caption
 
 test("不在 DemoHero 裡的 demo 照舊：沒有旁邊的文字和清單", () => {
   const { container } = render(<Demo />);
-  expect(screen.getByRole("img", { name: "示範：開單" }).className).toContain("my-6");
+  expect(screen.getByRole("img", { name: "示範：開單" }).parentElement!.className).toContain("my-6");
   expect(container.querySelector(".demo-hero")).toBeNull();
   expect(container.querySelector(".demo-hero-step")).toBeNull();
+  // The controls are under the stage
+  expect(screen.getByRole("button", { name: "下一步" })).toBeTruthy();
 });

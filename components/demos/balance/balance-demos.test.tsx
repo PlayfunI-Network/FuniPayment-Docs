@@ -76,7 +76,10 @@ describe("balance demos", () => {
     expect(SETTINGS_STEPS[SETTINGS_STEPS.length - 1].at).toBeLessThanOrEqual(15000);
   });
 
-  it("never zooms the settings demo: the whole picture is readable", () => {
-    expect(SETTINGS_STEPS.every((s) => s.zoom === undefined && s.phoneZoom === undefined)).toBe(true);
+  it("starts on the whole page and pulls back to it before 儲存變更", () => {
+    expect(SETTINGS_STEPS[0].view).toBeUndefined();
+    const save = SETTINGS_STEPS.findIndex((s) => s.target === "save");
+    expect(SETTINGS_STEPS[save].view).toBe("whole");
+    expect(SETTINGS_STEPS.slice(save).every((s) => s.view !== "close")).toBe(true);
   });
 });

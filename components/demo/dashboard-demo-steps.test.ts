@@ -3,8 +3,8 @@ import {
   demoRatio,
   markersFor,
   panoramaSpan,
+  closeShot,
   resolveSteps,
-  scrollFor,
   shotsUsed,
   stageRatio,
   wholePlacement,
@@ -13,7 +13,7 @@ import {
 } from "./dashboard-demo-steps";
 import type { DashboardPicture, DashboardShotData } from "./dashboard-shot";
 
-// A short page (fits the stage) and a tall one (scrolls): 1000 px wide pictures
+// A short page (fits the stage) and a tall one (narrowed to fit, close up as wide as the stage): 1000 px wide pictures
 const pic = (height: number, targets: DashboardPicture["targets"]): DashboardPicture => ({ dark: "d", light: "l", width: 1000, height, targets });
 const SHORT = pic(500, { save: { x: 0.8, y: 0.8, w: 0.1, h: 0.1 }, title: { x: 0.1, y: 0.1, w: 0.4, h: 0.1 } });
 const TALL = pic(2000, { top: { x: 0.1, y: 0.02, w: 0.2, h: 0.02 }, bottom: { x: 0.5, y: 0.9, w: 0.2, h: 0.05 } });
@@ -24,32 +24,52 @@ const SHOTS: Record<string, DashboardShotData> = {
 const picture: PictureOf = (id, layout) => (layout === "mobile" ? SHOTS[id].mobile! : SHOTS[id]);
 
 describe("resolveSteps", () => {
-  test("目標換算成舞台上的位置：游標在中心，放大時鏡頭對準它", () => {
+  test("目標換算成舞台上的位置，游標在中心；一開始是全景", () => {
     const steps: DashboardStep[] = [
       { at: 0, caption: "看標題", target: "title" },
-      { at: 900, target: "save", zoom: 2, click: true },
+      { at: 900, target: "save", click: true },
     ];
     const [a, b] = resolveSteps(picture, "short", steps, "desktop");
-    // The short picture fits: stage ratio 0.5, no scroll, rects unchanged
-    expect(a).toMatchObject({ at: 0, caption: "看標題", shotId: "short", scroll: 0, cursor: { x: expect.closeTo(0.3), y: expect.closeTo(0.15), hidden: false } });
+    // The short picture fits: stage ratio 0.5, placed as is
+    expect(a).toMatchObject({ at: 0, caption: "看標題", shotId: "short", view: "whole", shot: { zoom: 1 }, cursor: { x: expect.closeTo(0.3), y: expect.closeTo(0.15), hidden: false } });
     expect(b.cursor).toMatchObject({ x: expect.closeTo(0.85), y: expect.closeTo(0.85), click: true });
-    expect(b.shot).toEqual({ zoom: 2, focus: { x: 0.8, y: expect.closeTo(0.8), w: 0.1, h: expect.closeTo(0.1) } });
   });
 
-  test("長截圖會捲動，讓下面的目標進到畫面裡", () => {
+  test("長截圖縮窄放進舞台；close 把它放大到跟舞台一樣寬，對準目標", () => {
     const steps: DashboardStep[] = [
       { at: 0, target: "top" },
-      { at: 900, target: "bottom" },
+      { at: 900, view: "close" },
+      { at: 1800, target: "bottom" },
+      { at: 2700, view: "whole" },
     ];
-    const ratio = stageRatio(TALL, "desktop");
-    expect(ratio).toBe(0.72);
-    const [a, b] = resolveSteps(picture, "tall", steps, "desktop");
-    expect(a.scroll).toBe(0);
-    expect(b.scroll).toBeGreaterThan(0);
-    // The target is inside the stage after scrolling
-    const y = b.cursor!.y;
-    expect(y).toBeGreaterThan(0);
-    expect(y).toBeLessThan(1);
+    expect(stageRatio(TALL, "desktop")).toBe(0.72);
+    const at = wholePlacement(2, 0.72);
+    expect(at.w).toBeCloseTo(0.36);
+    const [a, b, c, d] = resolveSteps(picture, "tall", steps, "desktop");
+    expect(a.shot).toEqual({ zoom: 1 });
+    expect(b.shot).toMatchObject({ zoom: expect.closeTo(1 / 0.36), focus: { x: expect.closeTo(at.x), w: expect.closeTo(0.36) }, exact: true });
+    // The close camera follows a new target: lower on the page
+    expect(c.shot!.focus!.y).toBeGreaterThan(b.shot!.focus!.y);
+    expect(d).toMatchObject({ view: "whole", shot: { zoom: 1 } });
+    // The cursor is on the narrowed picture
+    expect(a.cursor!.x).toBeCloseTo(at.x + 0.2 * at.w);
+  });
+
+  test("close 的鏡頭：比舞台看得到的還高的目標對準上緣；已經跟舞台一樣寬的截圖不放大", () => {
+    const at = { x: 0.3, w: 0.4 };
+    const small = closeShot({ x: 0.4, y: 0.5, w: 0.1, h: 0.05 }, at);
+    expect(small.zoom).toBeCloseTo(2.5);
+    // Centred on the target: the focus is the target with room above and below
+    expect(small.focus!.y + small.focus!.h / 2).toBeCloseTo(0.525);
+    const tall = closeShot({ x: 0.4, y: 0.2, w: 0.1, h: 0.6 }, at);
+    expect(tall.focus!.h).toBeCloseTo(0.4);
+    expect(tall.focus!.y).toBeLessThan(0.2);
+    expect(closeShot({ x: 0.4, y: 0.5, w: 0.1, h: 0.05 }, { x: 0, w: 1 })).toEqual({ zoom: 1 });
+  });
+
+  test("每一格都帶著自己的鏡頭，跳到任一步都是對的畫面", () => {
+    const frames = resolveSteps(picture, "tall", [{ at: 0, target: "top" }, { at: 900, view: "close" }, { at: 1800, target: "bottom" }], "desktop");
+    expect(frames.every((f) => f.shot)).toBe(true);
   });
 
   test("swapTo 換截圖；目標不在畫面上的截圖時直接報錯", () => {
@@ -59,30 +79,17 @@ describe("resolveSteps", () => {
     expect(() => resolveSteps(picture, "short", [{ at: 0, target: "save" }, { at: 900, swapTo: "tall" }], "desktop")).toThrow("save");
   });
 
-  test("放大時換目標，鏡頭跟著移過去", () => {
-    const frames = resolveSteps(picture, "short", [{ at: 0, target: "title", zoom: 1.5 }, { at: 900, target: "save" }], "desktop");
-    expect(frames[1].shot).toMatchObject({ zoom: 1.5, focus: { x: 0.8 } });
-  });
-
-  test("手機版截圖只照 phoneZoom 放大，沒寫就是全景，而且不加成", () => {
-    const plain = resolveSteps(picture, "short", [{ at: 0, target: "save", zoom: 2 }], "mobile");
-    expect(plain[0].shot).toEqual({ zoom: 1 });
-    const phone = resolveSteps(picture, "short", [{ at: 0, target: "save", zoom: 2, phoneZoom: 1.2 }], "mobile");
-    expect(phone[0].shot).toMatchObject({ zoom: 1.2, exact: true });
-    const desk = resolveSteps(picture, "short", [{ at: 0, target: "save", zoom: 2, phoneZoom: 1.2 }], "desktop");
-    expect(desk[0].shot).toMatchObject({ zoom: 2 });
-    expect(desk[0].shot).not.toHaveProperty("exact");
+  test("手機版截圖也一樣：全景，再 close 到跟舞台一樣寬", () => {
+    const frames = resolveSteps(picture, "short", [{ at: 0, target: "save" }, { at: 900, view: "close" }], "mobile");
+    expect(frames[0].shot).toEqual({ zoom: 1 });
+    // 1500 / 1000 = 1.5 tall in a 1.3 stage
+    expect(frames[1].shot).toMatchObject({ zoom: expect.closeTo(1.5 / 1.3), exact: true });
   });
 
   test("hideCursor 藏起游標", () => {
     const frames = resolveSteps(picture, "short", [{ at: 0, target: "save" }, { at: 900, hideCursor: true }], "desktop");
     expect(frames[1].cursor?.hidden).toBe(true);
   });
-});
-
-test("scrollFor：目標已經在畫面裡就不捲", () => {
-  expect(scrollFor({ x: 0, y: 0.1, w: 0.1, h: 0.05 }, 2, 0.72, 0)).toBe(0);
-  expect(scrollFor({ x: 0, y: 0.9, w: 0.1, h: 0.05 }, 2, 0.72, 0)).toBeCloseTo(2 - 0.72);
 });
 
 test("chooseLayout：窄螢幕用手機版，但手機版缺目標時改用桌面版", () => {
@@ -146,17 +153,17 @@ describe("whole", () => {
     expect(card.y).toBeCloseTo(0);
   });
 
-  test("不捲動，游標照放好的位置指到目標", () => {
+  test("整張顯示，游標照放好的位置指到目標；close 也不放大第一張", () => {
     const [a, b] = resolveSteps(whole, "page", steps, "desktop", true);
-    expect(a.scroll).toBe(0);
-    expect(b.scroll).toBe(0);
+    expect(a.shot).toEqual({ zoom: 1 });
+    expect(resolveSteps(whole, "page", [{ at: 0, target: "button", view: "close" }], "desktop", true)[0].shot).toEqual({ zoom: 1 });
     expect(a.cursor).toMatchObject({ x: expect.closeTo(0.6), y: expect.closeTo(0.525) });
     // skip's centre (0.85, 0.125) on the card narrowed to 1/1.2 of the stage width
     const at = wholePlacement(1.2, 1);
     expect(b.cursor).toMatchObject({ x: expect.closeTo(at.x + 0.85 * at.w), y: expect.closeTo(0.125 * 1.2 * at.w) });
   });
 
-  test("手機版的截圖太高，照常捲動", () => {
+  test("手機版的截圖太高，不用第一張的比例", () => {
     expect(demoRatio(whole, "page", "mobile", true)).toBe(stageRatio(whole("page", "mobile"), "mobile"));
   });
 });

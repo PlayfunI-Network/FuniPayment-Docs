@@ -1,6 +1,6 @@
 "use client";
 // One DashboardDemo per dashboard shot for the dev page: the cursor visits up to four of the
-// shot's targets (zooming onto the second), then the camera pulls back. The steps are built
+// shot's targets (the camera close from the second), then the camera pulls back. The steps are built
 // once at module level, as DemoStage needs.
 import { DASHBOARD_SHOTS, DashboardDemo, type DashboardStep } from "@/components/demo";
 
@@ -12,10 +12,10 @@ function exampleSteps(id: string): DashboardStep[] {
     at: i * 1800,
     caption: `目標 ${name}`,
     target: name,
-    ...(i === 1 && { zoom: 2 }),
-    ...(i === 2 && { zoom: 1, click: true }),
+    ...(i === 1 && { view: "close" as const }),
+    ...(i === 2 && { click: true }),
   }));
-  steps.push({ at: names.length * 1800, caption: "全景", zoom: 1, hideCursor: true });
+  steps.push({ at: names.length * 1800, caption: "全景", view: "whole", hideCursor: true });
   return steps;
 }
 

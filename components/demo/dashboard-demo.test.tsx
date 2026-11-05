@@ -48,13 +48,13 @@ test("一般情況播放示範：每張用到的截圖都先載入，最後一�
 test("後台示範的範例在桌面和手機版截圖上都對得上", () => {
   const steps: DashboardStep[] = [
     { at: 0, caption: "打開「付款方式與手續費」分頁", target: "tabPayment" },
-    { at: 1500, caption: "關掉「萊爾富超商代碼」", target: "hilife", zoom: 2 },
+    { at: 1500, caption: "關掉「萊爾富超商代碼」", target: "hilife", view: "close" },
     { at: 2400, target: "hilife", click: true },
     { at: 2700, swapTo: "settings-payment-edited" },
-    { at: 4000, caption: "按「儲存變更」", target: "save", zoom: 1.6 },
+    { at: 4000, caption: "按「儲存變更」", target: "save", view: "whole" },
     { at: 4800, target: "save", click: true },
     { at: 5100, caption: "看到「已儲存」就完成了", swapTo: "settings-payment-saved", target: "saved" },
-    { at: 7500, zoom: 1, hideCursor: true },
+    { at: 7500, hideCursor: true },
   ];
   for (const layout of ["desktop", "mobile"] as const) {
     const frames = resolveSteps(dashboardPicture, "settings-payment", steps, layout);

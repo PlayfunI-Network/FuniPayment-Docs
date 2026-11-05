@@ -10,7 +10,6 @@ import {
   chooseLayout,
   demoRatio,
   markersFor,
-  showsWhole,
   wholePlacement,
   NARROW_BELOW,
   panoramaSpan,
@@ -68,36 +67,23 @@ function Animated({ shot, steps, label, layout, whole }: Props) {
   const frames = useMemo(() => resolveSteps(dashboardPicture, shot, steps, layout, whole), [shot, steps, layout, whole]);
   const ratio = demoRatio(dashboardPicture, shot, layout, whole);
   const ids = useMemo(() => shotsUsed(shot, steps), [shot, steps]);
-  const fixed = showsWhole(whole, layout);
   return (
     <DemoStage label={label} aspect={`1 / ${ratio}`} steps={frames} caption={steps.some((s) => s.caption)}>
       {(_, index) => {
         const frame = frames[index];
         return ids.map((id) => {
           const pic = dashboardPicture(id, layout);
-          const tall = pic.height / pic.width;
-          const visibility = id === frame.shotId ? undefined : ("hidden" as const);
-          if (fixed) {
-            const at = wholePlacement(tall, ratio);
-            return (
-              <div
-                key={id}
-                data-shot={id}
-                className="absolute"
-                style={{ left: `${at.x * 100}%`, top: `${(at.y / ratio) * 100}%`, width: `${at.w * 100}%`, visibility }}
-              >
-                <DashboardShot id={id} layout={layout} eager />
-              </div>
-            );
-          }
+          const at = wholePlacement(pic.height / pic.width, ratio);
           return (
             <div
               key={id}
               data-shot={id}
-              className="absolute inset-x-0 top-0 transition-transform duration-700 ease-in-out"
+              className="absolute"
               style={{
-                transform: `translateY(${(-frame.scroll / tall) * 100}%)`,
-                visibility,
+                left: `${at.x * 100}%`,
+                top: `${(at.y / ratio) * 100}%`,
+                width: `${at.w * 100}%`,
+                visibility: id === frame.shotId ? undefined : "hidden",
               }}
             >
               <DashboardShot id={id} layout={layout} eager />
