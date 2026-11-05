@@ -3,8 +3,9 @@ import type { BaseLayoutProps } from "fumadocs-ui/layouts/shared";
 export const SITE_NAME = "FunI 付款系統 說明文件";
 export const SITE_URL = "https://docs.funipay.net";
 export const CONTACT_EMAIL = "contact@funipay.net";
+export const OFFICIAL_URL = "https://funipay.net";
 
-const OFFICIAL = { text: "官網", url: "https://funipay.net" };
+const OFFICIAL = { text: "官網", url: OFFICIAL_URL };
 const COMMUNITY = { text: "社群", url: "https://go.funipay.net/discord" };
 
 /** The page footer's links; the contact address follows them. */

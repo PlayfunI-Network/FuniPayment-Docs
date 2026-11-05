@@ -2,7 +2,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { checkRedirects, checkRequired, checkSizes, findBannedWords, findBrokenLinks, walk } from "./check-export-lib.mjs";
+import { checkRedirects, checkRequired, checkSeo, checkSizes, findBannedWords, findBrokenLinks, walk } from "./check-export-lib.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const outDir = path.join(root, "out");
@@ -19,10 +19,11 @@ const redirectsFile = path.join(outDir, "_redirects");
 if (fs.existsSync(redirectsFile)) errors.push(...checkRedirects(fs.readFileSync(redirectsFile, "utf8"), outDir));
 
 errors.push(...findBrokenLinks(outDir));
+errors.push(...checkSeo(outDir));
 
-// Banned words: exported html and everything under content/.
+// Banned words: exported html and Markdown, llms*.txt, and everything under content/.
 const textFiles = [
-  ...walk(outDir).filter((f) => f.endsWith(".html")),
+  ...walk(outDir).filter((f) => /\.(html|md)$|[\\/]llms(-full)?\.txt$/.test(f)),
   ...(fs.existsSync(path.join(root, "content")) ? walk(path.join(root, "content")) : []),
 ];
 for (const file of textFiles) {

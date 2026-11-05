@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
 import { RootProvider } from "fumadocs-ui/provider/next";
 import type { ReactNode } from "react";
@@ -13,8 +13,18 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: { default: SITE_NAME, template: `%s｜${SITE_NAME}` },
   description: "在 Discord 伺服器用 FunI 付款系統收款：設定、指令、付款方式與常見問題。",
-  icons: { icon: "/brand/funi-icon.png" },
+  robots: { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1 },
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "48x48" },
+      { url: "/brand/funi-icon.png", type: "image/png", sizes: "64x64" },
+      { url: "/brand/icon-192.png", type: "image/png", sizes: "192x192" },
+    ],
+    apple: "/brand/apple-touch-icon.png",
+  },
 };
+
+export const viewport: Viewport = { themeColor: "#0a0a0a" };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (

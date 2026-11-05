@@ -3,8 +3,12 @@ import { DocsBody, DocsDescription, DocsPage, DocsTitle } from "fumadocs-ui/layo
 import type { Metadata } from "next";
 import type { ComponentProps } from "react";
 import { notFound } from "next/navigation";
+import { PageBreadcrumb } from "@/components/page-breadcrumb";
 import { SiteFooter } from "@/components/site-footer";
+import { breadcrumbs } from "@/lib/doc-tree";
 import { EXTERNAL_LINK_PROPS, isExternalHref } from "@/lib/external-link";
+import { extractFaq, FAQ_URL, formatDate, pageJsonLd, pageMetadata, serializeJsonLd } from "@/lib/seo";
+import { seoPage, sidebarSections } from "@/lib/seo-pages";
 import { getMDXComponents } from "@/mdx-components";
 import { source } from "@/lib/source";
 
@@ -18,7 +22,11 @@ export default async function Page(props: Props) {
   const MDX = page.data.body;
   // A page that opens with <DemoHero> gets the full width, so the demo and its text fit side by
   // side; its table of contents moves from the right column to the bar at the top (as on a phone).
-  const hero = (await page.data.getText("raw")).includes("<DemoHero>");
+  const raw = await page.data.getText("raw");
+  const hero = raw.includes("<DemoHero>");
+  const seo = seoPage(page);
+  const crumbs = breadcrumbs(sidebarSections(), page.url, page.data.title);
+  const jsonLd = pageJsonLd(seo, crumbs, page.url === FAQ_URL ? extractFaq(raw) : undefined);
   const PageLink = createRelativeLink(source, page);
   // A link to a file (/demo/tutorials/hilife.png) is a plain <a>: Next's Link would prefetch it as a page.
   // A link to another site (dashboard, official site, Discord) opens in a new tab.
@@ -36,13 +44,21 @@ export default async function Page(props: Props) {
       full={page.data.full || hero}
       tableOfContentPopover={hero ? { container: { className: "xl:block" } } : undefined}
       footer={{ children: <SiteFooter /> }}
-      breadcrumb={{ className: "max-md:hidden" }}
+      breadcrumb={{ enabled: false }}
     >
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }} />
+      <PageBreadcrumb crumbs={crumbs} />
       <DocsTitle className="max-md:text-[1.5em] max-md:leading-snug">{page.data.title}</DocsTitle>
       <DocsDescription className="mb-2 max-md:text-base">{page.data.description}</DocsDescription>
       <DocsBody>
         <MDX components={getMDXComponents({ a: Link })} />
       </DocsBody>
+      {/* Not Fumadocs' PageLastUpdate: that one fills the date in after hydration, so it is not in the HTML. */}
+      {seo.lastModified && (
+        <p className="text-sm text-fd-muted-foreground">
+          最後更新於 <time dateTime={seo.lastModified}>{formatDate(seo.lastModified)}</time>
+        </p>
+      )}
     </DocsPage>
   );
 }
@@ -55,5 +71,5 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
   const { slug } = await props.params;
   const page = source.getPage(slug);
   if (!page) notFound();
-  return { title: page.data.title, description: page.data.description };
+  return pageMetadata(seoPage(page));
 }

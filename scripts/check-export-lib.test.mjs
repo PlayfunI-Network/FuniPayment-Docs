@@ -2,7 +2,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { afterAll, beforeAll, expect, test } from "vitest";
-import { checkRedirects, checkRequired, checkSizes, findBannedWords, findBrokenLinks } from "./check-export-lib.mjs";
+import { checkRedirects, checkRequired, checkSeo, checkSizes, findBannedWords, findBrokenLinks } from "./check-export-lib.mjs";
 
 let tmp;
 beforeAll(() => {
@@ -40,10 +40,39 @@ test("站內連結找不到頁面時回報", () => {
   ]);
 });
 test("必要檔案與 out/dev", () => {
-  expect(checkRequired(tmp)).toEqual(["缺少 out/404.html", "缺少 out/_redirects"]);
+  expect(checkRequired(tmp)).toEqual(
+    ["404.html", "_redirects", "_headers", "robots.txt", "sitemap.xml", "llms.txt", "llms-full.txt", "favicon.ico", "manifest.webmanifest"].map((f) => `缺少 out/${f}`),
+  );
   fs.mkdirSync(path.join(tmp, "dev"));
   expect(checkRequired(tmp)).toContain("out/dev 不應存在（開發用頁面被匯出了）");
   fs.rmSync(path.join(tmp, "dev"), { recursive: true });
+});
+test("SEO：完整的頁面通過，缺東西或重複時回報", () => {
+  const out = fs.mkdtempSync(path.join(os.tmpdir(), "funipay-seo-"));
+  const head = (title, description, url) =>
+    `<title>${title}</title><meta name="description" content="${description}"/><link rel="canonical" href="${url}"/>` +
+    `<meta property="og:title" content="t"/><meta property="og:image" content="i"/><meta property="og:locale" content="zh_TW"/><meta name="twitter:card" content="c"/>`;
+  const ld = '<script type="application/ld+json">{"a":1}</script>';
+  fs.writeFileSync(path.join(out, "sitemap.xml"), "<loc>https://x/</loc><loc>https://x/a</loc>");
+  fs.writeFileSync(path.join(out, "index.html"), `${head("甲", "甲描述", "https://x/")}${ld}<h1>甲</h1>`);
+  fs.writeFileSync(path.join(out, "index.md"), "");
+  fs.writeFileSync(path.join(out, "a.html"), `${head("乙", "乙描述", "https://x/a")}${ld}<h1 class="x">乙</h1>`);
+  fs.writeFileSync(path.join(out, "a.md"), "");
+  fs.writeFileSync(path.join(out, "404.html"), "<title>不檢查</title>");
+  expect(checkSeo(out)).toEqual([]);
+
+  fs.writeFileSync(path.join(out, "b.html"), `${head("甲", "丙描述", "https://x/b")}<h1>一</h1><h1>二</h1>`);
+  const errors = checkSeo(out);
+  expect(errors).toEqual(
+    expect.arrayContaining([
+      "b.html：有 2 個 H1",
+      expect.stringMatching(/title 和 .* 相同$/),
+      "b.html：sitemap 沒有 https://x/b",
+      "b.html：缺少 JSON-LD",
+      "b.html：缺少 b.md",
+    ]),
+  );
+  fs.rmSync(out, { recursive: true, force: true });
 });
 test("大小：圖片 200 KB、每頁 HTML 500 KB、整站 60 MB", () => {
   const KB = 1024;

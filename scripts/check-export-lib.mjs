@@ -59,10 +59,64 @@ export function findBannedWords(text) {
   return BANNED_WORDS.filter((word) => text.includes(word));
 }
 
-/** Errors for out/ files the deploy needs: the home page, the 404 page, _redirects, and no out/dev. */
+/**
+ * Errors for what a crawler needs on every exported page: one H1, a title and description no other
+ * page has, a canonical URL listed in the sitemap, share tags, valid JSON-LD and a Markdown copy.
+ */
+export function checkSeo(outDir) {
+  const errors = [];
+  const sitemapFile = path.join(outDir, "sitemap.xml");
+  const sitemap = fs.existsSync(sitemapFile) ? fs.readFileSync(sitemapFile, "utf8") : "";
+  const seen = { title: new Map(), description: new Map() };
+  const pages = walk(outDir)
+    .filter((f) => f.endsWith(".html"))
+    .map((f) => path.relative(outDir, f).replace(/\\/g, "/"))
+    .filter((f) => f !== "404.html" && f !== "_not-found.html");
+  for (const file of pages) {
+    const html = fs.readFileSync(path.join(outDir, file), "utf8");
+    const report = (problem) => errors.push(`${file}：${problem}`);
+
+    const h1s = html.match(/<h1[\s>]/g)?.length ?? 0;
+    if (h1s !== 1) report(`有 ${h1s} 個 H1`);
+
+    const texts = {
+      title: /<title>([^<]+)<\/title>/.exec(html)?.[1],
+      description: /<meta name="description" content="([^"]+)"/.exec(html)?.[1],
+    };
+    for (const [key, value] of Object.entries(texts)) {
+      if (!value) report(`缺少 ${key}`);
+      else if (seen[key].has(value)) report(`${key} 和 ${seen[key].get(value)} 相同`);
+      else seen[key].set(value, file);
+    }
+
+    const canonical = /<link rel="canonical" href="([^"]+)"/.exec(html)?.[1];
+    if (!canonical) report("缺少 canonical");
+    else if (!sitemap.includes(`<loc>${canonical}</loc>`)) report(`sitemap 沒有 ${canonical}`);
+
+    for (const tag of ['property="og:title"', 'property="og:image"', 'property="og:locale"', 'name="twitter:card"']) {
+      if (!html.includes(`<meta ${tag}`)) report(`缺少 ${tag}`);
+    }
+
+    const jsonLd = /<script type="application\/ld\+json">(.*?)<\/script>/s.exec(html)?.[1];
+    if (!jsonLd) report("缺少 JSON-LD");
+    else {
+      try {
+        JSON.parse(jsonLd);
+      } catch {
+        report("JSON-LD 解析失敗");
+      }
+    }
+
+    const markdown = file === "index.html" ? "index.md" : file.replace(/\.html$/, ".md");
+    if (!fs.existsSync(path.join(outDir, markdown))) report(`缺少 ${markdown}`);
+  }
+  return errors;
+}
+
+/** Errors for out/ files the deploy needs (the pages and what crawlers ask for first), and no out/dev. */
 export function checkRequired(outDir) {
   const errors = [];
-  for (const required of ["index.html", "404.html", "_redirects"]) {
+  for (const required of ["index.html", "404.html", "_redirects", "_headers", "robots.txt", "sitemap.xml", "llms.txt", "llms-full.txt", "favicon.ico", "manifest.webmanifest"]) {
     if (!fs.existsSync(path.join(outDir, required))) errors.push(`缺少 out/${required}`);
   }
   if (fs.existsSync(path.join(outDir, "dev"))) errors.push("out/dev 不應存在（開發用頁面被匯出了）");
