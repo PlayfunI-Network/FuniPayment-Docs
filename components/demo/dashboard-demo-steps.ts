@@ -1,21 +1,24 @@
 // The pure part of DashboardDemo (dashboard-demo.tsx): turns steps that name targets of a
 // dashboard screenshot into DemoStage steps (camera shots and cursor positions as fractions of
-// the stage), and works out the reduced-motion markers. A screenshot taller than the stage is
-// scrolled like a page: `scroll` says how far, so a target is always in view when it is used.
-// A `whole` demo shows every picture whole instead (wholePlacement), and never scrolls.
+// the stage), and works out the reduced-motion markers. Every picture is drawn whole on the stage
+// (wholePlacement: as wide as the stage, or narrowed so a tall page fits), and the camera has two
+// views: "whole", the full picture, and "close", the picture as wide as the stage around the
+// target (as the page reads in a browser). A demo starts whole, goes close for the fields and
+// pulls back whole before a button that sends or moves on, so the reader sees what is pressed.
 import type { Rect, Shot } from "@/lib/camera";
 import type { CursorState } from "./cursor";
 import type { DashboardLayout, DashboardPicture, DashboardShotData } from "./dashboard-shot";
 import type { DemoStep } from "./stage";
 
+/** The camera's two views: the whole picture, or the picture as wide as the stage around the target. */
+export type DashboardView = "whole" | "close";
+
 /**
  * One moment of a dashboard demo, `at` ms after it starts.
  * - `target`: a target name of the shot on screen; the cursor moves to it (and stays there).
- * - `zoom`: the camera moves `zoom` times closer onto the target (this step's, or the last one);
- *   1 shows the whole stage again. Carries over like `shot` in DemoStep. While it is above 1, a
- *   step naming a new target moves the camera onto it.
- * - `phoneZoom`: the zoom on the phone pictures, which are drawn at phone size: there a step that
- *   sets `zoom` but no `phoneZoom` shows the whole picture. Not boosted on narrow stages.
+ * - `view`: from this step on, the camera shows the whole picture ("whole", how every demo
+ *   starts) or comes close around the target ("close"). Carries over; a close camera follows each
+ *   new target. Give the camera about a second (CAMERA_MS) before a click.
  * - `click` presses the cursor; `typing` turns it into a text I-beam.
  * - `hideCursor` hides the cursor (until a later step names a target).
  * - `swapTo`: from this step on, another shot is on screen (the page after a click, a typed
@@ -26,23 +29,22 @@ export type DashboardStep = {
   at: number;
   caption?: string;
   target?: string;
-  zoom?: number;
-  phoneZoom?: number;
+  view?: DashboardView;
   click?: boolean;
   typing?: boolean;
   hideCursor?: boolean;
   swapTo?: string;
 };
 
-/** A DemoStage step plus which shot is on screen and how far it is scrolled. */
-export type DashboardFrame = DemoStep & { shotId: string; scroll: number };
+/** A DemoStage step plus which shot is on screen and the camera's view. */
+export type DashboardFrame = DemoStep & { shotId: string; view: DashboardView };
 
 /** Below this stage width (px) the phone pictures are used. */
 export const NARROW_BELOW = 600;
-/** The tallest stage, as height ÷ width: taller pictures scroll inside it. */
+/** The tallest stage, as height ÷ width: taller pictures are narrowed to fit it. */
 export const MAX_RATIO: Readonly<Record<DashboardLayout, number>> = { desktop: 0.72, mobile: 1.3 };
-/** How close to the stage edge a target may sit before the picture scrolls (fraction of the stage height). */
-const EDGE = 0.06;
+/** Room kept above and below a target in the close view, as a fraction of what the stage shows. */
+const MARGIN = 0.06;
 
 export type PictureOf = (shotId: string, layout: DashboardLayout) => DashboardPicture;
 
@@ -77,15 +79,14 @@ export function stageRatio(picture: DashboardPicture, layout: DashboardLayout): 
 }
 
 /**
- * Whether a `whole` demo shows its pictures whole on this layout: only the desktop pictures,
- * since the phone ones are drawn at phone height (two screens and more) and would shrink past
- * reading; there the demo scrolls as usual.
+ * Whether a `whole` demo gets a stage of its first picture's own shape: only on the desktop
+ * pictures, since the phone ones are drawn at phone height (two screens and more).
  */
 export const showsWhole = (whole: boolean, layout: DashboardLayout) => whole && layout === "desktop";
 
 /**
  * The stage's height ÷ width for a demo: as stageRatio, or for a `whole` demo (see showsWhole)
- * the first picture's own, so it fills the stage without scrolling (wholePlacement fits the rest).
+ * the first picture's own, so the first picture fills the stage.
  */
 export function demoRatio(picture: PictureOf, shot: string, layout: DashboardLayout, whole = false): number {
   const pic = picture(shot, layout);
@@ -93,9 +94,9 @@ export function demoRatio(picture: PictureOf, shot: string, layout: DashboardLay
 }
 
 /**
- * Where a `whole` demo draws a picture `tall` widths high on a stage `ratio` widths high: the
- * whole of it, as wide as the stage or (when it is taller than the stage) narrowed to fit,
- * centred. `x` and `w` are fractions of the stage width, `y` is in stage widths.
+ * Where a picture `tall` widths high sits on a stage `ratio` widths high: the whole of it, as
+ * wide as the stage or (when it is taller than the stage) narrowed to fit, centred. `x` and `w`
+ * are fractions of the stage width, `y` is in stage widths.
  */
 export function wholePlacement(tall: number, ratio: number): { x: number; y: number; w: number } {
   const w = Math.min(1, ratio / tall);
@@ -108,28 +109,18 @@ export function wholeRect(rect: Rect, tall: number, ratio: number): Rect {
   return { x: at.x + rect.x * at.w, y: (at.y + rect.y * tall * at.w) / ratio, w: rect.w * at.w, h: (rect.h * tall * at.w) / ratio };
 }
 
-const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
-
-/** How far a picture of height `tall` (in widths) can scroll in a stage of height `ratio`. */
-const maxScroll = (tall: number, ratio: number) => Math.max(0, tall - ratio);
-
 /**
- * The scroll that keeps `rect` (fractions of a picture `tall` widths high) in a stage `ratio`
- * widths high: unchanged when it is already well inside, else centred on it (its top when it
- * is taller than the stage).
+ * The close view onto `target` (a Rect of the stage) of a picture placed at `at`: the picture as
+ * wide as the stage, centred on the target (its top, when it is taller than the stage shows).
+ * A picture already as wide as the stage has no close view: the whole one.
  */
-export function scrollFor(rect: Rect, tall: number, ratio: number, scroll: number): number {
-  const top = rect.y * tall;
-  const bottom = (rect.y + rect.h) * tall;
-  const edge = EDGE * ratio;
-  if (top >= scroll + edge && bottom <= scroll + ratio - edge) return scroll;
-  const want = bottom - top > ratio - 2 * edge ? top - edge : (top + bottom) / 2 - ratio / 2;
-  return clamp(want, 0, maxScroll(tall, ratio));
-}
-
-/** `rect` (fractions of the picture) as fractions of the stage, with the picture scrolled by `scroll`. */
-export function stageRect(rect: Rect, tall: number, ratio: number, scroll: number): Rect {
-  return { x: rect.x, y: (rect.y * tall - scroll) / ratio, w: rect.w, h: (rect.h * tall) / ratio };
+export function closeShot(target: Rect, at: { x: number; w: number }): Shot {
+  const zoom = 1 / at.w;
+  if (zoom < 1.02) return { zoom: 1 };
+  const band = 1 / zoom;
+  const room = MARGIN * band;
+  const h = Math.min(target.h + 2 * room, band);
+  return { zoom, focus: { x: at.x, w: at.w, y: target.y - room, h }, exact: true };
 }
 
 /** Where the cursor points on a target: its centre, or right of the text for typing. */
@@ -138,28 +129,20 @@ function pointOn(r: Rect, extra: Partial<CursorState>): CursorState {
   return { x, y: r.y + r.h / 2, ...extra };
 }
 
-/** Zoom onto `r`, never so close that it no longer fits the stage (like canvas zoomTo). */
-function zoomOn(r: Rect, zoom: number, layout: DashboardLayout): Shot {
-  if (zoom <= 1) return { zoom: 1 };
-  const shot: Shot = { zoom: Math.max(1, Math.min(zoom, 1 / r.w, 1 / r.h)), focus: r };
-  return layout === "mobile" ? { ...shot, exact: true } : shot;
-}
-
 /**
- * The DemoStage steps of a demo that starts on `shot`: each target becomes a Rect of the stage
- * (after scrolling the picture so it is in view), for the camera and the cursor. Throws, naming
- * the step, when a target is not on the shot that is on screen there.
+ * The DemoStage steps of a demo that starts on `shot`: each target becomes a Rect of the stage,
+ * for the cursor, and each step gets the camera of its view (every frame carries its own, so a
+ * step picked out of order shows right). Throws, naming the step, when a target is not on the
+ * shot that is on screen there.
  */
 export function resolveSteps(picture: PictureOf, shot: string, steps: readonly DashboardStep[], layout: DashboardLayout, whole = false): DashboardFrame[] {
   const ratio = demoRatio(picture, shot, layout, whole);
-  const fixed = showsWhole(whole, layout);
   let shotId = shot;
-  let scroll = 0;
   let target: string | undefined;
-  let zoom = 1;
+  let view: DashboardView = "whole";
   let hidden = true;
   return steps.map((s, i) => {
-    const before = { shotId, scroll };
+    const before = shotId;
     if (s.swapTo) shotId = s.swapTo;
     const pic = picture(shotId, layout);
     const tall = pic.height / pic.width;
@@ -169,23 +152,16 @@ export function resolveSteps(picture: PictureOf, shot: string, steps: readonly D
       hidden = false;
     }
     if (s.hideCursor) hidden = true;
-    const setZoom = layout === "mobile" ? (s.phoneZoom ?? (s.zoom === undefined ? undefined : 1)) : s.zoom;
-    if (setZoom !== undefined) zoom = setZoom;
+    if (s.view) view = s.view;
     const rect = target ? pic.targets[target] : undefined;
     // A target named on an earlier shot may be gone after a swap
     if (target && !rect) throw new Error(`第 ${i + 1} 步：換成「${shotId}」後，前面用的目標「${target}」不在這張截圖上，請重新指定 target`);
-    // A whole demo never scrolls: its pictures are placed by wholePlacement
-    if (!fixed) {
-      scroll = Math.min(scroll, maxScroll(tall, ratio));
-      if (rect && (s.target || setZoom !== undefined)) scroll = scrollFor(rect, tall, ratio, scroll);
-    }
 
-    const out: DashboardFrame = { at: s.at, shotId, scroll };
+    const onStage = rect ? wholeRect(rect, tall, ratio) : undefined;
+    const out: DashboardFrame = { at: s.at, shotId, view };
     if (s.caption) out.caption = s.caption;
-    const onStage = rect ? (fixed ? wholeRect(rect, tall, ratio) : stageRect(rect, tall, ratio, scroll)) : undefined;
-    if (setZoom !== undefined || (zoom > 1 && (s.target || scroll !== before.scroll))) out.shot = onStage ? zoomOn(onStage, zoom, layout) : { zoom: 1 };
-    const moved = scroll !== before.scroll || shotId !== before.shotId;
-    if (onStage && (s.target || s.click || s.typing || s.hideCursor || moved)) {
+    out.shot = view === "close" && onStage ? closeShot(onStage, wholePlacement(tall, ratio)) : { zoom: 1 };
+    if (onStage && (s.target || s.click || s.typing || s.hideCursor || shotId !== before)) {
       out.cursor = pointOn(onStage, { click: s.click, typing: s.typing, hidden });
     } else if (s.hideCursor) {
       out.cursor = { x: 0.5, y: 0.5, hidden: true };
@@ -193,6 +169,8 @@ export function resolveSteps(picture: PictureOf, shot: string, steps: readonly D
     return out;
   });
 }
+
+const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
 
 /** A numbered marker of the reduced-motion panorama: caption `number` (1-based) points at `rect` of `shotId`. */
 export type Marker = { number: number; caption: string; shotId: string; rect?: Rect };

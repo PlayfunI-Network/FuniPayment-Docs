@@ -2,10 +2,11 @@
 
 import { useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
 import type { Shot } from "@/lib/camera";
-import { useTimeline } from "@/lib/use-timeline";
+import { useTimeline, type Timeline } from "@/lib/use-timeline";
 import { Camera } from "./camera";
 import { Caption } from "./caption";
 import { Cursor, type CursorState } from "./cursor";
+import { ControlBar, type DemoControls } from "./controls";
 import { HeroFrame } from "./hero";
 
 /**
@@ -73,7 +74,10 @@ export function frameAt(steps: DemoStep[], index: number): DemoFrame {
  * stageWidth so the whole demo fits on one screen. To assistive tech it is one
  * image described by `label`; everything inside is hidden. The timeline plays once 30% of it
  * is visible, pauses off-screen, loops, and under reduced motion shows only the last step.
- * Inside a DemoHero it sits beside (or above) the hero's text, which lists its captions.
+ * With captions the reader can also pick a step (it plays that step and holds on its end), go a
+ * step back or on (buttons, ← →) and pause or play on; under the stage the caption sits over a
+ * bar of step dots. Inside a DemoHero it sits beside (or above) the hero's text, which lists
+ * the steps instead when side by side.
  * `children` draws the screen for a step, filling the stage. `steps` must keep its identity
  * between renders (define it at module level).
  */
@@ -90,43 +94,73 @@ export function DemoStage({
   caption?: boolean;
   children: (step: DemoStep, index: number) => ReactNode;
 }) {
-  const { ref, step: index } = useTimeline(steps);
+  const timeline = useTimeline(steps);
+  const { ref, step: index } = timeline;
   const viewportRef = useRef<HTMLDivElement>(null);
   const viewport = useSize(viewportRef);
   const frame = frameAt(steps, index);
-  const captions = caption ? steps.flatMap((s) => (s.caption ? [s.caption] : [])) : [];
+  const controls = caption ? demoControls(steps, frame, timeline) : undefined;
 
   return (
     <HeroFrame
-      steps={{ captions, index: frame.caption?.index ?? -1 }}
+      controls={controls}
       stage={(className) => (
-        <div ref={ref as RefObject<HTMLDivElement>} role="img" aria-label={label} className={className}>
-          <div aria-hidden="true" className="mx-auto" style={{ width: stageWidth(aspect) }}>
-            <div
-              ref={viewportRef}
-              className="relative overflow-hidden rounded-xl border border-[var(--line)] bg-[var(--card)]"
-              style={{ aspectRatio: aspect }}
-            >
-              <Camera shot={frame.shot} viewport={viewport}>
-                {children(steps[index], index)}
-                <Cursor state={frame.cursor} pressId={index} />
-              </Camera>
-            </div>
-            {caption && (
-              // Hidden beside a hero's text, which lists every caption instead
-              <div className="demo-hero-caption">
-                {frame.caption ? (
-                  <Caption text={frame.caption.text} index={frame.caption.index} total={frame.caption.total} />
-                ) : (
-                  <div className="mt-3 min-h-7" />
-                )}
+        <div className={className}>
+          <div ref={ref as RefObject<HTMLDivElement>} role="img" aria-label={label}>
+            <div aria-hidden="true" className="mx-auto" style={{ width: stageWidth(aspect) }}>
+              <div
+                ref={viewportRef}
+                className="relative overflow-hidden rounded-xl border border-[var(--line)] bg-[var(--card)]"
+                style={{ aspectRatio: aspect }}
+              >
+                <Camera shot={frame.shot} viewport={viewport}>
+                  {children(steps[index], index)}
+                  <Cursor state={frame.cursor} pressId={index} />
+                </Camera>
               </div>
-            )}
+            </div>
           </div>
+          {controls && (
+            // Hidden beside a hero's text, which lists every caption instead
+            <div className="demo-hero-caption mx-auto" style={{ width: stageWidth(aspect) }}>
+              {frame.caption ? <Caption text={frame.caption.text} index={frame.caption.index} /> : <div className="mt-3 min-h-7" />}
+              <div className="mt-1 flex justify-center">
+                <ControlBar controls={controls} />
+              </div>
+            </div>
+          )}
         </div>
       )}
     />
   );
+}
+
+/** Where each caption's steps start and end (inclusive): the first starts at step 0. */
+export function captionSpans(steps: DemoStep[]): { from: number; to: number }[] {
+  const starts = steps.flatMap((s, i) => (s.caption ? [i] : []));
+  if (starts.length > 0) starts[0] = 0;
+  return starts.map((from, k) => ({ from, to: (starts[k + 1] ?? steps.length) - 1 }));
+}
+
+/** The reader's controls over a timeline: a step plays its part and holds on its end. */
+function demoControls(steps: DemoStep[], frame: DemoFrame, timeline: Timeline): DemoControls {
+  const spans = captionSpans(steps);
+  const captions = steps.flatMap((s) => (s.caption ? [s.caption] : []));
+  const current = frame.caption?.index ?? -1;
+  const select = (k: number) => {
+    const span = spans[Math.max(0, Math.min(spans.length - 1, k))];
+    if (span) timeline.seek(span.from, span.to);
+  };
+  return {
+    captions,
+    current,
+    playing: timeline.playing,
+    animates: timeline.animates,
+    select,
+    prev: () => select(current - 1),
+    next: () => select(current + 1),
+    toggle: () => (timeline.playing ? timeline.pause() : timeline.resume()),
+  };
 }
 
 /** The element's content-box size in px, kept current with a ResizeObserver ({0, 0} until measured). */

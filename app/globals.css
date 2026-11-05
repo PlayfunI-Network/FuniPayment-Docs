@@ -217,27 +217,27 @@ h3 {
 
 /*
  * 示範舞台最高 100svh − --demo-fold（見 components/demo/stage.tsx 的 STAGE_MAX_H）。
- * --demo-fold 是頁首、標題、說明到 demo 的距離加上 caption，所以每頁開頭的 demo 一進頁面就整段看得到；
+ * --demo-fold 是頁首、標題、說明到 demo 的距離加上 caption 和控制列，所以每頁開頭的 demo 一進頁面就整段看得到；
  * 很矮的視窗至少留 420px（見 STAGE_MAX_H），寧可捲一點也不要縮到看不清楚。
  */
 :root {
-  --demo-fold: 330px;
+  --demo-fold: 366px;
 }
 @media (min-width: 768px) {
   :root {
-    --demo-fold: 296px;
+    --demo-fold: 332px;
   }
 }
 
 /*
  * DemoHero（components/demo/hero.tsx）：頁面開頭的 demo 和介紹它的文字。
- * 夠寬時左右排：demo 在左，右邊是文字和 demo 的步驟清單（目前這一步亮起），demo 下方的 caption 收起來；
- * 不夠寬時上下排：demo、caption、文字。用 container query 判斷，靜態 HTML 就是對的版面。
+ * 夠寬時左右排：demo 在左，右邊是文字、demo 的步驟清單（目前這一步亮起，每一步都能點）和上一步／暫停／下一步，
+ * demo 下方的 caption 和控制列收起來；不夠寬時上下排：demo、caption 和控制列、文字。用 container query 判斷，靜態 HTML 就是對的版面。
  */
 .demo-hero {
   container-type: inline-size;
 }
-.demo-hero-steps {
+.demo-hero-side-controls {
   display: none;
 }
 .demo-hero-text {
@@ -254,7 +254,7 @@ h3 {
     gap: 2rem;
     /* 文字欄至少 18rem，其餘給 demo */
     --demo-avail: calc(100cqw - 20rem);
-    /* 沒有 caption（在右邊的清單裡），但上方多了目錄列 */
+    /* 沒有 caption 和控制列（在右邊），但上方多了目錄列 */
     --demo-fold: 270px;
   }
   .demo-hero-stage {
@@ -273,23 +273,39 @@ h3 {
   .demo-hero-caption {
     display: none;
   }
-  .demo-hero-steps {
-    display: flex;
-    flex-direction: column;
-    gap: 0.625rem;
+  .demo-hero-side-controls {
+    display: block;
     margin-top: 1.5rem;
-    padding: 0;
-    list-style: none;
   }
+}
+.demo-hero-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  margin: 0 0 0.75rem;
+  padding: 0;
+  list-style: none;
 }
 .demo-hero-step {
   display: flex;
+  width: 100%;
   align-items: flex-start;
   gap: 0.625rem;
+  margin-inline: -0.375rem;
+  padding: 0.25rem 0.375rem;
+  border-radius: 0.5rem;
   font-size: 0.875rem;
   line-height: 1.5rem;
   color: var(--muted);
-  transition: color 0.3s;
+  cursor: pointer;
+  transition: color 0.3s, background-color 0.2s;
+}
+.demo-hero-step:hover {
+  color: var(--fg);
+  background: color-mix(in srgb, var(--fg) 6%, transparent);
+}
+.demo-hero-step:focus-visible {
+  outline: 2px solid var(--brand);
 }
 .demo-hero-step[data-on] {
   color: var(--fg);
