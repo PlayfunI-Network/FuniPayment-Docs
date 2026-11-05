@@ -46,6 +46,10 @@ npm run typecheck   # 型別檢查（TypeScript）
 
 搜尋索引於建置時產生為靜態檔案，由瀏覽器下載後在本機搜尋。中文斷詞由 `lib/search.ts` 處理，建立索引與查詢時共用同一套規則。
 
+## SEO 與 AI 搜尋
+
+每個文件頁的 frontmatter 要有 `seoDescription`（搜尋摘要與 llms.txt 用，顯示寬度 120 到 160，中文字算 2），`seoTitle` 選填。建置時會產生 sitemap、JSON-LD、`/llms.txt`、`/llms-full.txt` 和每頁的 Markdown 版本（網址加 `.md`）。最後更新日期取自 git。說明與待辦見 [docs/seo-report.md](docs/seo-report.md)。
+
 ## 部署
 
 網站部署於 Cloudflare Workers（靜態資源），設定檔為 `wrangler.jsonc`。推送至 `main` 分支後會自動建置（`npm run build`）並部署 `out/` 的內容。
